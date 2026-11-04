@@ -1,0 +1,25 @@
+# Build output
+/build/
+/out/
+CMakeUserPresets.json
+compile_commands.json
+
+# Qt
+*.qm
+*.autosave
+*.user
+*.user.*
+
+# Test and tool output
+/coverage/
+/test-results/
+*.log
+
+# IDE
+.vs/
+.vscode/
+.idea/
+.qtcreator/
+
+# Local Claude Code state
+.claude/settings.local.json
