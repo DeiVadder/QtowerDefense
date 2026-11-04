@@ -38,6 +38,25 @@ Simulation runningGame()
 using Change = std::function<void(SimulationState &)>;
 using NamedChanges = std::vector<std::pair<QString, Change>>;
 
+/// Every field has a value of its own, gold is negative. Mirrored in state_hash_reference.py.
+SimulationState handmadeState()
+{
+    SimulationState state;
+    state.contentHash = 0x0123456789ABCDEFULL;
+    state.tick = 42;
+    state.status = GameStatus::Lost;
+    state.gold = -5;
+    state.lives = 3;
+    state.random = qtd::core::Random(7, 54);
+    state.nextEntityId = 9;
+    state.spawnGroup = 1;
+    state.spawnedInGroup = 2;
+    state.spawnCountdownTicks = 4;
+    state.enemies.push_back({3, 0, Fixed::fromRaw(15000), Fixed::fromRaw(25000)});
+    state.towers.push_back({5, 1, 2, 6});
+    return state;
+}
+
 /// The names of the changes that leave the hash as it is.
 QStringList unnoticed(const SimulationState &base, const NamedChanges &changes)
 {
@@ -163,6 +182,18 @@ class TestStateHash : public QObject
     Q_OBJECT
 
 private slots:
+    /// The expected values come from tests/core/state_hash_reference.py, which shares no code with
+    /// the project. They hold on every compiler and in every process.
+    void theStateHashIsPinned()
+    {
+        QCOMPARE(stateHash(handmadeState()), 0x2F3184CCCB5A0EEDULL);
+    }
+
+    void theContentHashIsPinned()
+    {
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x37D3A1FB011664E8ULL);
+    }
+
     // The test vectors of the FNV authors.
     static void fnvMatchesPublishedValues()
     {
@@ -261,7 +292,8 @@ private slots:
 
     static void idsOfContentDoNotCount()
     {
-        const auto renamed = contentOf(editedJson(R"("id": "arrow")", R"("id": "bolt")"));
+        const qtd::core::Content renamed =
+            contentOf(editedJson(R"("id": "arrow")", R"("id": "bolt")"));
         QCOMPARE(contentHash(renamed), contentHash(contentOf(scenarioJson())));
     }
 };

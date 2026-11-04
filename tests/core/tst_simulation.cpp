@@ -183,7 +183,7 @@ private slots:
         game.advance(4);
         game.execute(BuildTowerCommand{1, 0});
         game.tick();
-        const auto &state = game.state();
+        const qtd::core::SimulationState &state = game.state();
         QCOMPARE(state.enemies[0].travelled.raw(), state.enemies[1].travelled.raw());
         QCOMPARE(state.enemies[0].health.raw(), 20'000);
         QCOMPARE(state.enemies[1].health.raw(), 40'000);

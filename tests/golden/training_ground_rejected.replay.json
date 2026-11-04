@@ -1,0 +1,129 @@
+{
+    "checkpoints": [
+        {
+            "hash": "b76395ff36a9ef86",
+            "tick": 0
+        },
+        {
+            "hash": "bad6e3f0b96a6e48",
+            "tick": 30
+        },
+        {
+            "hash": "c55f91dd86a1e928",
+            "tick": 60
+        },
+        {
+            "hash": "c8db6c7decf6de9d",
+            "tick": 90
+        },
+        {
+            "hash": "61ba700079f81ede",
+            "tick": 120
+        },
+        {
+            "hash": "28df85a05efd7805",
+            "tick": 150
+        },
+        {
+            "hash": "d8940b0b2e24cf62",
+            "tick": 180
+        },
+        {
+            "hash": "c0bb2b0bea2d6604",
+            "tick": 210
+        },
+        {
+            "hash": "7c8ddb54d7ba9858",
+            "tick": 240
+        },
+        {
+            "hash": "50c55883f828e395",
+            "tick": 270
+        },
+        {
+            "hash": "8086ef4b4b2306f4",
+            "tick": 300
+        },
+        {
+            "hash": "d66d6a0b3e23a2e2",
+            "tick": 330
+        },
+        {
+            "hash": "ea083ef5a33941a2",
+            "tick": 360
+        },
+        {
+            "hash": "6fc5000461a14b66",
+            "tick": 364
+        }
+    ],
+    "commands": [
+        {
+            "result": "unknownSlot",
+            "slot": 99,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "unknownSlot",
+            "slot": -1,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "unknownTowerType",
+            "slot": 0,
+            "tick": 0,
+            "towerType": 7,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 0,
+            "tick": 5,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "slotOccupied",
+            "slot": 0,
+            "tick": 5,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 1,
+            "tick": 6,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "notEnoughGold",
+            "slot": 2,
+            "tick": 6,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "notEnoughGold",
+            "slot": 2,
+            "tick": 30,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "gameOver",
+            "slot": 3,
+            "tick": 364,
+            "towerType": 0,
+            "type": "buildTower"
+        }
+    ],
+    "content": "training_ground.json",
+    "contentHash": "07bcdc69fb429718",
+    "formatVersion": 1,
+    "seed": "18446744073709551615"
+}

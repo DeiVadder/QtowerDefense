@@ -37,13 +37,13 @@ QString toString(const Version &version)
 
 std::optional<Version> parseVersion(QStringView text)
 {
-    const auto parts = text.split(QLatin1Char('.'));
+    const QList<QStringView> parts = text.split(QLatin1Char('.'));
     if (parts.size() != 3) {
         return std::nullopt;
     }
-    const auto majorNumber = parseNumber(parts[0]);
-    const auto minorNumber = parseNumber(parts[1]);
-    const auto patchNumber = parseNumber(parts[2]);
+    const std::optional<int> majorNumber = parseNumber(parts[0]);
+    const std::optional<int> minorNumber = parseNumber(parts[1]);
+    const std::optional<int> patchNumber = parseNumber(parts[2]);
     if (!majorNumber || !minorNumber || !patchNumber) {
         return std::nullopt;
     }

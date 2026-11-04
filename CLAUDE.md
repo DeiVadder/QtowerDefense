@@ -20,6 +20,9 @@ Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [Qtowe
 - Eigene Inhalte: nichts aus bestehenden Spielen übernehmen. Assets nur CC0, jedes in `docs/ASSETS.md`.
 - Code und UI-Texte Englisch, übersetzbar; Prozess-Doku Deutsch.
 
+## Stil
+- **`auto` nur, wenn der Typ ohne LSP lesbar ist** (Cast, `make_unique<T>`, Konstruktor in derselben Zeile) oder als Template-Ersatz bei Parametern (abgekürzte Templates, generische Lambdas). Sonst den Typ ausschreiben, auch bei Iteratoren und in `for`-Schleifen. Kein „Almost Always Auto". Wo die Sprache `auto` verlangt (Lambda-Variable, strukturierte Bindung), bleibt es.
+
 ## Tests
 - Tests ohne Echtzeit: Ticks von Hand weiterschalten. Keine Tautologien.
 - Absichtliche Regeländerungen aktualisieren Golden Replays in einem eigenen, begründeten Schritt.

@@ -28,7 +28,7 @@ Point Path::positionAt(Fixed travelled) const
     if (travelled >= length()) {
         return points_.back();
     }
-    const auto next = std::ranges::upper_bound(lengths_, travelled);
+    const std::vector<Fixed>::const_iterator next = std::ranges::upper_bound(lengths_, travelled);
     const auto end = static_cast<std::size_t>(std::distance(lengths_.begin(), next));
     const Point from = points_[end - 1];
     const Point to = points_[end];

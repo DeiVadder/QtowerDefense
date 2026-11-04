@@ -464,7 +464,7 @@ class ConfigurationTest(unittest.TestCase):
         building = (REPO / "docs" / "Building.md").read_text(encoding="utf-8")
         self.assertIn("Qt6TaskTree", building)
         performance = (REPO / "docs" / "Performance-Verlauf.md").read_text(encoding="utf-8")
-        self.assertIn("Etappe 5", performance)
+        self.assertIn("| 2 | 2026-11-04 |", performance)
 
 
 if __name__ == "__main__":

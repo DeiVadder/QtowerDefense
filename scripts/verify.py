@@ -134,12 +134,16 @@ def stage_cppcheck(log):
     return run(
         log, CPPCHECK, "--enable=warning,style,performance,portability", "--library=qt",
         f"--library={SCRIPTS / 'cppcheck-qtd.cfg'}",
-        "--language=c++", "--std=c++20", "--check-level=exhaustive", "--inline-suppr", "--quiet",
+        "--language=c++", "--std=c++20", "--check-level=exhaustive", "--inline-suppr",
         "--error-exitcode=1",
         f"--suppressions-list={SCRIPTS / 'cppcheck-suppressions.txt'}",
         "-I", REPO / "src", REPO / "src", REPO / "tests",
         cwd=configs,
     )  # fmt: skip
+
+
+def stage_golden_replays(log):
+    return run(log, "ctest", "--preset", "debug", "-L", "golden", "--no-tests=error")
 
 
 def stage_coverage(log):
@@ -156,7 +160,7 @@ QUICK_STAGES = [
     ("source rules (length, layers, determinism)", stage_source_rules),
     ("qmllint", stage_qmllint),
     ("clang-tidy, changed files", stage_tidy_changed),
-    ("golden replays", missing("arrives with stage 2 (replays)")),
+    ("golden replays", stage_golden_replays),
 ]
 FULL_STAGES = [
     ("clang-tidy, all files", stage_tidy_all),

@@ -161,29 +161,29 @@ class TestContent : public QObject
 private slots:
     static void readsEveryField()
     {
-        const auto result = parseContent(scenarioJson());
+        const qtd::core::ContentLoadResult result = parseContent(scenarioJson());
         QCOMPARE(result.error, QString());
-        const auto content = required(result.content);
+        const qtd::core::Content content = required(result.content);
         QCOMPARE(content.startGold, 100);
         QCOMPARE(content.startLives, 3);
         QCOMPARE(content.path.points().size(), 2U);
         QCOMPARE(content.path.length().raw(), 100'000);
         QCOMPARE(content.buildSlots.size(), 3U);
         QVERIFY(content.buildSlots[1] == at(2, 1));
-        const auto &tower = content.towers.at(0);
+        const qtd::core::TowerType &tower = content.towers.at(0);
         QCOMPARE(tower.id, QStringLiteral("arrow"));
         QCOMPARE(tower.cost, 40);
         QCOMPARE(tower.range.raw(), 30'000);
         QCOMPARE(tower.cooldownTicks, 4);
         QCOMPARE(tower.damageMin.raw(), 20'000);
         QCOMPARE(tower.damageMax.raw(), 20'000);
-        const auto &enemy = content.enemies.at(0);
+        const qtd::core::EnemyType &enemy = content.enemies.at(0);
         QCOMPARE(enemy.id, QStringLiteral("grunt"));
         QCOMPARE(enemy.health.raw(), 40'000);
         QCOMPARE(enemy.speedPerTick.raw(), 5'000);
         QCOMPARE(enemy.bounty, 7);
         QCOMPARE(enemy.lifeCost, 1);
-        const auto &group = content.wave.at(0);
+        const qtd::core::SpawnGroup &group = content.wave.at(0);
         QCOMPARE(group.enemyType, 0U);
         QCOMPARE(group.count, 2);
         QCOMPARE(group.delayTicks, 0);
@@ -192,7 +192,8 @@ private slots:
 
     static void decimalsArriveExactly()
     {
-        const auto result = parseContent(editedJson(R"("range": "3")", R"("range": "0.1")"));
+        const qtd::core::ContentLoadResult result =
+            parseContent(editedJson(R"("range": "3")", R"("range": "0.1")"));
         QCOMPARE(required(result.content).towers.at(0).range.raw(), 1'000);
     }
 
@@ -221,7 +222,7 @@ private slots:
     {
         QFETCH(const QByteArray, from);
         QFETCH(const QByteArray, to);
-        const auto result = parseContent(editedJson(from, to));
+        const qtd::core::ContentLoadResult result = parseContent(editedJson(from, to));
         QCOMPARE(result.error, QString());
         QVERIFY(result.content.has_value());
     }
@@ -239,7 +240,7 @@ private slots:
         QFETCH(const QString, error);
         const QByteArray json = editedJson(from, to);
         QVERIFY(!json.isEmpty());
-        const auto result = parseContent(json);
+        const qtd::core::ContentLoadResult result = parseContent(json);
         QVERIFY(!result.content.has_value());
         QVERIFY2(result.error.startsWith(error), qPrintable(result.error));
     }
@@ -272,7 +273,8 @@ private slots:
     static void rejectsEveryNumberThatIsNotAnExactInteger()
     {
         QFETCH(const QByteArray, number);
-        const auto result = parseContent(editedJson(R"("cost": 40)", R"("cost": )" + number));
+        const qtd::core::ContentLoadResult result =
+            parseContent(editedJson(R"("cost": 40)", R"("cost": )" + number));
         QVERIFY(!result.content.has_value());
         QCOMPARE(result.error,
                  QStringLiteral("line 9: number %1 is no integer, write decimal "
@@ -282,7 +284,7 @@ private slots:
 
     static void rejectsIntegersThatDoNotStayExact()
     {
-        const auto result =
+        const qtd::core::ContentLoadResult result =
             parseContent(editedJson(R"("cost": 40)", R"("cost": 9007199254740993000)"));
         QVERIFY(!result.content.has_value());
         QCOMPARE(result.error, QStringLiteral("line 9: number 9007199254740993000 is too large"));
@@ -301,7 +303,7 @@ private slots:
     static void rejectsInvalidJson()
     {
         QFETCH(const QByteArray, json);
-        const auto result = parseContent(json);
+        const qtd::core::ContentLoadResult result = parseContent(json);
         QVERIFY(!result.content.has_value());
         QVERIFY2(result.error.startsWith(QStringLiteral("invalid JSON at offset")),
                  qPrintable(result.error));
@@ -309,9 +311,9 @@ private slots:
 
     static void topLevelMustBeAnObject()
     {
-        const auto result = parseContent("[1, 2]");
+        const qtd::core::ContentLoadResult result = parseContent("[1, 2]");
         QVERIFY(!result.content.has_value());
-        QCOMPARE(result.error, QStringLiteral("the top level of the content must be an object"));
+        QCOMPARE(result.error, QStringLiteral("the top level must be an object"));
     }
 
     static void keepsTheFirstError()
@@ -323,7 +325,7 @@ private slots:
 
     static void loadsTheShippedContent()
     {
-        const auto result =
+        const qtd::core::ContentLoadResult result =
             loadContentFile(QStringLiteral(QTD_CONTENT_DIR "/training_ground.json"));
         QCOMPARE(result.error, QString());
         QCOMPARE(required(result.content).path.length().raw(), 220'000); // 8 + 6 + 8 tiles
@@ -344,7 +346,7 @@ private slots:
     {
         const QTemporaryDir folder;
         const QString name = folder.filePath(QStringLiteral("nothing.json"));
-        const auto result = loadContentFile(name);
+        const qtd::core::ContentLoadResult result = loadContentFile(name);
         QVERIFY(!result.content.has_value());
         QVERIFY2(result.error.startsWith(name + QStringLiteral(": ")), qPrintable(result.error));
     }

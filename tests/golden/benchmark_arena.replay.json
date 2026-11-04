@@ -1,0 +1,548 @@
+{
+    "checkpoints": [
+        {
+            "hash": "2376367b031944ed",
+            "tick": 0
+        },
+        {
+            "hash": "5184fa989e9b367a",
+            "tick": 30
+        },
+        {
+            "hash": "ded795c638c237f8",
+            "tick": 60
+        },
+        {
+            "hash": "1b51c6d405c75ab7",
+            "tick": 90
+        },
+        {
+            "hash": "eacae237524c8465",
+            "tick": 120
+        },
+        {
+            "hash": "b4eb9bbcbcac6edf",
+            "tick": 150
+        },
+        {
+            "hash": "ed715a6bce1c86b6",
+            "tick": 180
+        },
+        {
+            "hash": "b4317ca2aaef571a",
+            "tick": 210
+        },
+        {
+            "hash": "6837a4f7cffe155c",
+            "tick": 240
+        },
+        {
+            "hash": "01ead6fd153cfbf9",
+            "tick": 270
+        },
+        {
+            "hash": "cdb16d65c7a9da38",
+            "tick": 300
+        },
+        {
+            "hash": "853b60be0537cadc",
+            "tick": 330
+        },
+        {
+            "hash": "590bbbccb7562972",
+            "tick": 360
+        },
+        {
+            "hash": "d7fdc8e429978de5",
+            "tick": 390
+        },
+        {
+            "hash": "c8743d3d58613994",
+            "tick": 420
+        },
+        {
+            "hash": "0cb6db3f0588fda0",
+            "tick": 450
+        },
+        {
+            "hash": "5192f982e391715d",
+            "tick": 480
+        },
+        {
+            "hash": "1c01ad61626cc33f",
+            "tick": 510
+        },
+        {
+            "hash": "c189a17d0fb6e032",
+            "tick": 540
+        },
+        {
+            "hash": "0793157e985f1784",
+            "tick": 570
+        },
+        {
+            "hash": "9c87c49a85116acd",
+            "tick": 600
+        },
+        {
+            "hash": "215d8cbe51610b43",
+            "tick": 630
+        },
+        {
+            "hash": "de89022f3d5aea44",
+            "tick": 660
+        },
+        {
+            "hash": "d39ba6e246f0a907",
+            "tick": 690
+        },
+        {
+            "hash": "576ac50f443a4a49",
+            "tick": 720
+        },
+        {
+            "hash": "92b9707296bb1ff3",
+            "tick": 750
+        },
+        {
+            "hash": "20528552fa002e3f",
+            "tick": 780
+        },
+        {
+            "hash": "88b2599fd758f97c",
+            "tick": 810
+        },
+        {
+            "hash": "695740659a090810",
+            "tick": 840
+        },
+        {
+            "hash": "3aa2d398521b419c",
+            "tick": 870
+        },
+        {
+            "hash": "4709a7677a18793c",
+            "tick": 900
+        },
+        {
+            "hash": "bbb9a15948dcc3c9",
+            "tick": 930
+        },
+        {
+            "hash": "b13b1c5c66a3b9bd",
+            "tick": 960
+        },
+        {
+            "hash": "6def292dc98455f7",
+            "tick": 990
+        },
+        {
+            "hash": "967b4042ffa619a1",
+            "tick": 1020
+        },
+        {
+            "hash": "0365a2473e08f6cc",
+            "tick": 1050
+        },
+        {
+            "hash": "fef0ee0b0d12a955",
+            "tick": 1080
+        },
+        {
+            "hash": "8513f11f8dddeefe",
+            "tick": 1110
+        },
+        {
+            "hash": "9d90652b4d9ab554",
+            "tick": 1140
+        },
+        {
+            "hash": "1138778b96ad9c79",
+            "tick": 1170
+        },
+        {
+            "hash": "0a96d7ba54ad716b",
+            "tick": 1200
+        },
+        {
+            "hash": "852e150d24d27836",
+            "tick": 1230
+        },
+        {
+            "hash": "ae57923776d49cc9",
+            "tick": 1260
+        },
+        {
+            "hash": "19cce160c8497d4e",
+            "tick": 1290
+        },
+        {
+            "hash": "beb5c9b2920e27a4",
+            "tick": 1320
+        },
+        {
+            "hash": "1358d8a2781d3ce7",
+            "tick": 1350
+        },
+        {
+            "hash": "d003e95e01b5d911",
+            "tick": 1380
+        },
+        {
+            "hash": "d305ca22746b038c",
+            "tick": 1410
+        },
+        {
+            "hash": "c9f7791dff78199b",
+            "tick": 1440
+        },
+        {
+            "hash": "5547953b3aa5266c",
+            "tick": 1470
+        },
+        {
+            "hash": "ad1e70e5e5c4b7d5",
+            "tick": 1500
+        },
+        {
+            "hash": "efa5a0609c7d3554",
+            "tick": 1530
+        },
+        {
+            "hash": "97198c184054f3ea",
+            "tick": 1560
+        },
+        {
+            "hash": "b6a89b59edf6d0aa",
+            "tick": 1590
+        },
+        {
+            "hash": "ca6adef324b8ce8c",
+            "tick": 1620
+        },
+        {
+            "hash": "aa768b40023017e1",
+            "tick": 1650
+        },
+        {
+            "hash": "69406930c3249ae0",
+            "tick": 1680
+        },
+        {
+            "hash": "cbbea22fe9aef857",
+            "tick": 1710
+        },
+        {
+            "hash": "ea22e4194649bb95",
+            "tick": 1740
+        },
+        {
+            "hash": "d6d0df9830f27e6d",
+            "tick": 1770
+        },
+        {
+            "hash": "ea0dcb521aeced89",
+            "tick": 1800
+        },
+        {
+            "hash": "a0cdf04211762e7b",
+            "tick": 1830
+        },
+        {
+            "hash": "eb76be2fc5d166a0",
+            "tick": 1860
+        },
+        {
+            "hash": "ce4f83e859210ad3",
+            "tick": 1890
+        },
+        {
+            "hash": "765b95e1f09f1817",
+            "tick": 1920
+        },
+        {
+            "hash": "8a8b85eb35c61f07",
+            "tick": 1950
+        },
+        {
+            "hash": "629c0d20777a9c41",
+            "tick": 1980
+        },
+        {
+            "hash": "4317c727caf2fc8d",
+            "tick": 2010
+        },
+        {
+            "hash": "3da4f58e5773eb92",
+            "tick": 2040
+        },
+        {
+            "hash": "a26e91a35e0fcee5",
+            "tick": 2070
+        },
+        {
+            "hash": "81182634fca9b8b6",
+            "tick": 2100
+        },
+        {
+            "hash": "d53402368deb07c9",
+            "tick": 2130
+        },
+        {
+            "hash": "b8ec53e4cabd6ee8",
+            "tick": 2160
+        },
+        {
+            "hash": "54a82c91d0d941a6",
+            "tick": 2190
+        },
+        {
+            "hash": "d7185b06a06ea419",
+            "tick": 2220
+        },
+        {
+            "hash": "a22d7a79ec139e91",
+            "tick": 2250
+        },
+        {
+            "hash": "42a435fdadff2b25",
+            "tick": 2280
+        },
+        {
+            "hash": "b580cddb06c80f1f",
+            "tick": 2310
+        },
+        {
+            "hash": "03e2ccb199e7165f",
+            "tick": 2340
+        },
+        {
+            "hash": "6203ae216fc4a273",
+            "tick": 2370
+        },
+        {
+            "hash": "acfdb6b406fa79fd",
+            "tick": 2400
+        },
+        {
+            "hash": "fefbe8340e3db0fd",
+            "tick": 2421
+        }
+    ],
+    "commands": [
+        {
+            "result": "accepted",
+            "slot": 0,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 1,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 2,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 3,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 4,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 5,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 6,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 7,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 8,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 9,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 10,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 11,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 12,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 13,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 14,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 15,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 16,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 17,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 18,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 19,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 20,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 21,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 22,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 23,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 24,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 25,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 26,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 27,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 28,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        },
+        {
+            "result": "accepted",
+            "slot": 29,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower"
+        }
+    ],
+    "content": "benchmark_arena.json",
+    "contentHash": "58f03ca11a8ef48c",
+    "formatVersion": 1,
+    "seed": "7"
+}

@@ -116,3 +116,22 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Warum:** Weil nie Speicher am Stück in den Hash geht, spielen Padding, Zeiger, Kapazität und Plattform keine Rolle. Listen sind nach ID geordnet, eine Iterationsreihenfolge gibt es nicht. FNV hat veröffentlichte Testvektoren. Kryptografische Sicherheit braucht es nicht: Der Hash soll Abweichungen finden, keine Angriffe abwehren.
 - **Folge:** Ein neues Feld in `SimulationState` muss in `stateHash()` und in die Tabelle von `everyFieldOfTheStateCounts`. Die IDs der Inhalte zählen nicht, die Simulation kennt nur Indizes.
 - **Verworfen:** `qHash` (je Prozess gesalzen), `QCryptographicHash` (langsamer, ohne Nutzen hier).
+
+## E-19 cppcheck: kurze Laufzeit ist echt
+- **Was:** `verify` ruft cppcheck ohne `--quiet` auf, das Log nennt jede Datei.
+- **Befund:** Rund 0,4 s für 22 Übersetzungseinheiten sind korrekt. In einer Kopie des Baums fand cppcheck mit denselben Optionen einen eingepflanzten Nullzeiger in allen 33 Quell- und Header-Dateien, dazu Fehler, die Datenfluss brauchen (Zugriff auf leeren Vektor, Nullzeiger über einen Zweig). Der Exit-Code war 1. Schnell ist es, weil es nur rund 3.100 Zeilen sind und Qt- und STL-Header bewusst nicht geparst werden.
+- **Grenze:** Ohne diese Header kennt cppcheck Qt-Typen nur aus `qt.cfg`, Datenfluss durch Qt-Aufrufe sieht es also kaum. Die `.qml`-Dateien liest es wegen `--language=c++` als C++ mit, das ist wirkungslos.
+- **Verworfen:** Qt-Header mitgeben: Jeder Lauf würde ganz Qt parsen, die Tiefe liefert clang-tidy schon.
+
+## E-20 Replays und festgeschriebene Hashes
+- **Was:** Ein Replay besteht aus Seed, Inhalts-Hash, allen Befehlen samt Ergebnis und Checkpoints (Tick, Zustands-Hash) einmal je Sekunde Spielzeit. Ein Checkpoint gilt nach den Befehlen seines Ticks. Der Rekorder schreibt ihn deshalb erst unmittelbar vor dem nächsten Tick. `ReplayPlayer` meldet die erste Abweichung mit Tick und beiden Werten.
+- **Warum Checkpoints statt nur Endhash:** Eine Abweichung lässt sich auf eine Sekunde eingrenzen. Abgelehnte Befehle gehören dazu, weil sie der Fuzz-Bot braucht und ihr Ergebnis eine Regel festschreibt.
+- **Zahlen:** Seed und Hashes stehen als Text in der Datei, 64 Bit übersteht `QJsonValue` nicht ohne Weiteres (E-16). `slot` und `towerType` dürfen beliebige 18-stellige Zahlen sein, ungültige Befehle sind Teil einer Aufzeichnung.
+- **Unabhängige Werte:** `tests/core/state_hash_reference.py` rechnet FNV-1a und PCG32 ohne Projektcode nach, `tst_state_hash` prüft den Zustands- und den Inhalts-Hash gegen diese Werte. Die Golden-Dateien schreiben ganze Partien fest und gelten in `debug`, `release`, `asan` und `coverage`. Damit eine versehentliche Neuerzeugung auffällt, steht ein Endhash zusätzlich in `tests/CMakeLists.txt`.
+- **Skripte:** Ein Skript ist ein Replay ohne Pflicht zu Hashes. So reicht ein Format, und `scripts/update_golden.py` erzeugt Golden-Dateien aus sich selbst.
+- **Verworfen:** Binärformat: nicht diffbar. Nur Endhash: Fehlersuche über die ganze Partie. Inhalte ins Replay kopieren: Eine Regeländerung in den Daten fiele nicht als abweichender Inhalts-Hash auf.
+
+## E-21 TickClock in Core
+- **Was:** `TickClock` macht aus vergangenen Mikrosekunden, Tempo und Pause eine Anzahl Ticks, in reiner Ganzzahl-Rechnung ohne Verlust von Bruchteilen. Die Zeit misst der Aufrufer.
+- **Warum:** Der Tempo-Test aus Abschnitt 3 soll den Weg prüfen, den der Client später nimmt: ungleiche Frames, Stapel von Ticks, Pause. Der alte Vergleich von `tick()` mit `advance()` zeigte das nicht. In Core darf die Klasse liegen, weil sie keine Uhr kennt.
+- **Verworfen:** Klasse im Client: Dann wäre sie ohne GUI-Abhängigkeit nicht testbar und der Golden-Test bliebe ohne echten Tempo-Pfad.
