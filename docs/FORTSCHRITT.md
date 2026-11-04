@@ -2,7 +2,7 @@
 
 ## Stand
 
-- **Etappe:** 0, 1 und 2 sind geprüft und in `dev` (Etappe 2: `37fe03f`). `feature/llvm-update` ist geprüft und in `dev` (`87ceb1a`, E-22). In Arbeit ist `feature/enums-statt-strings`.
+- **Etappe:** 0, 1 und 2 sind geprüft und in `dev` (Etappe 2: `37fe03f`). `feature/llvm-update` (`87ceb1a`, E-22) und `feature/enums-statt-strings` (`5bb0021`) sind geprüft und in `dev`. In Arbeit ist `feature/typ-index`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Vier Golden Replays. Keine Anbindung an den Client.
 - **Letzter voller `verify`:** grün, 12 bestanden, 3 MISSING (Fuzz, Balancing, Smoke). Coverage Core 99,3 %, Automation 98,7 %. Benchmark rund 4.700-fache Echtzeit (`docs/Performance-Verlauf.md`).
 - **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
@@ -10,9 +10,8 @@
 
 ## Nächster Schritt
 
-1. Feature `feature/enums-statt-strings` abschließen: Review und Merge.
-2. Vorschlag `feature/typ-index`, wartet auf das Ja des Menschen: generierter Typ-Index `docs/Typen.md`, Prüfung auf doppelte Typnamen in `verify`, Regel „erst nachsehen, dann neu anlegen" in `CLAUDE.md`, feste Frage im Review.
-3. Etappe 3 (Steuerschnittstelle und Bots).
+1. Feature `feature/typ-index` abschließen: Review und Merge.
+2. Etappe 3 (Steuerschnittstelle und Bots).
 
 ## Bekannte Mängel und offene Punkte
 
@@ -32,7 +31,7 @@
   - Falscher Alarm bei `__has_include(<foo/1.2/bar.h>)` und bei auskommentierten Link-Zeilen.
   - Eine getestete Datei mit Nicht-ASCII-Namen sprengt den OpenCppCoverage-Export (`scripts/coverage.py`).
   - Ohne lokalen Branch `dev` scheitert `check_length` laut, der Hook blockiert dann. `BASELINE_NAME` steht in `scripts/check_length.py` doppelt.
-- **MSVC-Absturz C1001, ungeklärt:** Im Review von `feature/llvm-update` brach der Coverage-Build einmal mit einem internen Compilerfehler ab (`src/app/main.cpp`, Header `ranges`). 36 Einzelläufe mit und ohne LLVM im `PATH` blieben ohne Absturz, Datei und Flags waren unverändert. Ein Zusammenhang mit dem Feature ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen.
+- **MSVC-Absturz C1001, ungeklärt, zweimal gesehen:** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen.
 - **Auftrag, Sache des Menschen:** `QtowerDefense-Agent-Auftrag.md` nennt für `clang-tidy` und `clang-format` noch den Pfad der VS Build Tools. Gültig ist jetzt E-22.
 - **Plugin `qtd-lsp`:** Am 2026-11-04 vom Menschen in einer neuen Sitzung geprüft: Es lädt, `clangd` fand bei fertigem Index alle Verwendungen von `projectVersion`. Bei laufendem Index fehlten Treffer ohne Warnung (Regel in `CLAUDE.md`). `qmlls` wurde dort nicht abgefragt, nur seine LSP-Initialisierung ist geprüft. clangds Hinweis auf ein unbenutztes `<compare>` in `version.h` ist ein Fehlalarm (`operator<=>`).
 - **OpenCppCoverage-Setup** hat einen HKLM-Uninstall-Schlüssel und einen Benutzer-`PATH`-Eintrag außerhalb von `C:\dev` hinterlassen (`docs/Building.md`).

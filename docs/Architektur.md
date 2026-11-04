@@ -12,7 +12,7 @@ Stand Etappe 2: Simulationskern, Replays und `qtd_headless`, noch ohne Anbindung
 | `QtowerDefense` | `src/app` | `qtd_client` |
 | `qtd_headless` | `src/headless` | `qtd_automation`, `qtd_core`, ohne Gui |
 
-`scripts/check_layers.py` prüft das an Includes und `target_link_libraries`, `scripts/check_determinism.py` die Verbote in Core.
+Alle Typen stehen im generierten Index `docs/Typen.md`. `scripts/check_layers.py` prüft das an Includes und `target_link_libraries`, `scripts/check_determinism.py` die Verbote in Core.
 
 ## Simulation (`src/core`)
 

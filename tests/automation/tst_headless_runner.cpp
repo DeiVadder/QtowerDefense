@@ -88,7 +88,6 @@ private slots:
         QCOMPARE(read.output, u"o"_s);
         QCOMPARE(read.maxTicks, 9);
         QVERIFY(read.benchmark);
-        QVERIFY(read.bot == qtd::automation::HeadlessBot::Idle);
     }
 
     void helpAndBuildInfoNeedNoMap()

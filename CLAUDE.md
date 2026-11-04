@@ -23,6 +23,7 @@ Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [Qtowe
 ## Stil
 - **`auto` nur, wenn der Typ ohne LSP lesbar ist** (Cast, `make_unique<T>`, Konstruktor in derselben Zeile) oder als Template-Ersatz bei Parametern (abgekürzte Templates, generische Lambdas). Sonst den Typ ausschreiben, auch bei Iteratoren und in `for`-Schleifen. Kein „Almost Always Auto". Wo die Sprache `auto` verlangt (Lambda-Variable, strukturierte Bindung), bleibt es.
 
+- **Erst nachsehen, dann neu anlegen:** Vor jedem neuen Typ `docs/Typen.md` und die LSP-Symbolsuche prüfen. Der Index ist generiert: `python scripts/check_types.py --write`, Hook und `verify` scheitern, wenn er veraltet ist oder ein Typname doppelt vorkommt. Gleiche Bedeutung unter anderem Namen sieht kein Skript, deshalb fragt jedes Review ausdrücklich: Gibt es das schon?
 - **Enums statt Strings:** Eine feste Menge von Werten ist im Code ein `enum class`. Strings gibt es nur an der Grenze nach außen (Dateiformat, Kommandozeile, Anzeige), dort werden sie sofort umgewandelt.
 
 ## Tests

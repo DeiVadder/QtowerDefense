@@ -76,7 +76,7 @@ def stage_script(*arguments):
 def stage_source_rules(log):
     results = [
         run(log, PYTHON, SCRIPTS / name)
-        for name in ("check_length.py", "check_layers.py", "check_determinism.py")
+        for name in ("check_length.py", "check_layers.py", "check_determinism.py", "check_types.py")
     ]
     results.append(run(log, PYTHON, "-m", "unittest", "discover", "-s", SCRIPTS / "tests"))
     return all(results)
@@ -157,7 +157,7 @@ def missing(reason):
 QUICK_STAGES = [
     ("build and tests (debug)", stage_build_and_test("debug")),
     ("format (clang-format, qmlformat)", stage_script(SCRIPTS / "check_format.py")),
-    ("source rules (length, layers, determinism)", stage_source_rules),
+    ("source rules (length, layers, determinism, types)", stage_source_rules),
     ("qmllint", stage_qmllint),
     ("clang-tidy, changed files", stage_tidy_changed),
     ("golden replays", stage_golden_replays),

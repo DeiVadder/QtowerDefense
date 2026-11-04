@@ -16,6 +16,7 @@ def main():
         return 1
     formatted = [str(REPO / n) for n in staged if is_cpp(n) or n.endswith(".qml")]
     commands = [[f"{REPO}/scripts/{script}"] for script in SCRIPTS]
+    commands.append([f"{REPO}/scripts/check_types.py", "--staged"])
     if formatted:
         commands.append([f"{REPO}/scripts/check_format.py", *formatted])
     failed = False
