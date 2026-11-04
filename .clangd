@@ -1,0 +1,24 @@
+# clangd: the compilation database of the debug build (`cmake --preset debug`, build once for moc).
+# Claude Code starts clangd without vcvarsall, so the paths of the MSVC STL and the Windows SDK
+# stand here; the database itself has none, cl takes them from the environment.
+CompileFlags:
+  CompilationDatabase: build/debug
+  Add:
+    - /vctoolsdir
+    - C:/Dev/VS2022BuildTools/VC/Tools/MSVC/14.44.35207
+    - /winsdkdir
+    - C:/Program Files (x86)/Windows Kits/10
+    - /winsdkversion
+    - 10.0.26100.0
+---
+# No background index in worktrees of parallel work: each would index all its files from scratch.
+If:
+  PathMatch: \.claude/worktrees/.*
+Index:
+  Background: Skip
+---
+# No background index for sources from rcc and qmlcachegen: large and without useful symbols.
+If:
+  PathMatch: build/.*/(\.rcc|\.qt/rcc)/.*
+Index:
+  Background: Skip

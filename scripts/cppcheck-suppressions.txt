@@ -1,0 +1,2 @@
+// Qt system headers are not given to cppcheck on purpose: it would parse all of Qt on every run.
+missingIncludeSystem

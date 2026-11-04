@@ -1,0 +1,6 @@
+{
+    "name": "qtd-lsp",
+    "version": "1.0.0",
+    "author": { "name": "the QtowerDefense authors" },
+    "description": "clangd and qmlls as LSP tools of Claude Code for QtowerDefense (build/debug, see .clangd)"
+}

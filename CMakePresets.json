@@ -1,0 +1,64 @@
+{
+    "version": 6,
+    "cmakeMinimumRequired": { "major": 3, "minor": 30, "patch": 0 },
+    "configurePresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_PREFIX_PATH": "$env{QTD_QT_DIR}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+            },
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Windows" }
+        },
+        {
+            "name": "debug",
+            "inherits": "base",
+            "displayName": "Debug",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+        },
+        {
+            "name": "release",
+            "inherits": "base",
+            "displayName": "Release",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+        },
+        {
+            "name": "asan",
+            "inherits": "base",
+            "displayName": "AddressSanitizer (RelWithDebInfo: /RTC1 of Debug excludes ASan)",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "QTD_ENABLE_ASAN": "ON" }
+        },
+        {
+            "name": "coverage",
+            "inherits": "base",
+            "displayName": "Coverage (unoptimized with PDBs for OpenCppCoverage)",
+            "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+        }
+    ],
+    "buildPresets": [
+        { "name": "debug", "configurePreset": "debug" },
+        { "name": "release", "configurePreset": "release" },
+        { "name": "asan", "configurePreset": "asan" },
+        { "name": "coverage", "configurePreset": "coverage" }
+    ],
+    "testPresets": [
+        {
+            "name": "base",
+            "hidden": true,
+            "output": { "outputOnFailure": true },
+            "execution": { "noTestsAction": "error" }
+        },
+        { "name": "debug", "inherits": "base", "configurePreset": "debug" },
+        { "name": "release", "inherits": "base", "configurePreset": "release" },
+        {
+            "name": "asan",
+            "inherits": "base",
+            "configurePreset": "asan",
+            "filter": { "include": { "label": "core|automation|asan" } }
+        }
+    ]
+}

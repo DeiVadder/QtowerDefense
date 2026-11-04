@@ -1,0 +1,19 @@
+{
+    "clangd": {
+        "command": "C:/dev/clangd/clangd_23.1.0/bin/clangd.exe",
+        "args": ["--background-index", "--background-index-priority=low", "-j=4", "--header-insertion=never", "--log=error"],
+        "extensionToLanguage": {
+            ".cpp": "cpp",
+            ".h": "cpp"
+        },
+        "startupTimeout": 30000
+    },
+    "qmlls": {
+        "command": "C:/Dev/Qt/6.12.0/msvc2022_64/bin/qmlls.exe",
+        "args": ["-b", "build/debug"],
+        "extensionToLanguage": {
+            ".qml": "qml"
+        },
+        "startupTimeout": 30000
+    }
+}

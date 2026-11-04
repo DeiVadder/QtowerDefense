@@ -1,0 +1,3 @@
+qt_add_executable(QtowerDefense WIN32 main.cpp)
+target_link_libraries(QtowerDefense PRIVATE qtd_client qtd_clientplugin)
+qtd_set_strict_warnings(QtowerDefense)

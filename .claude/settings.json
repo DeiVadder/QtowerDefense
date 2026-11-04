@@ -1,0 +1,13 @@
+{
+    "extraKnownMarketplaces": {
+        "qtowerdefense-tools": {
+            "source": {
+                "source": "directory",
+                "path": "./tools/claude-plugins"
+            }
+        }
+    },
+    "enabledPlugins": {
+        "qtd-lsp@qtowerdefense-tools": true
+    }
+}

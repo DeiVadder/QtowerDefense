@@ -1,0 +1,65 @@
+# Check selection follows QtCraft, docs/Entscheidungen.md E-12 gives the reason of every exclusion.
+# WarningsAsErrors: every finding is fixed or justified with a NOLINT that carries its reason.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  performance-*,
+  -performance-enum-size,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -modernize-avoid-c-arrays,
+  -modernize-use-designated-initializers,
+  -modernize-use-auto,
+  -modernize-return-braced-init-list,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  -misc-no-recursion,
+  -misc-use-anonymous-namespace,
+  readability-container-size-empty,
+  readability-redundant-*,
+  readability-make-member-function-const,
+  readability-else-after-return,
+  readability-inconsistent-declaration-parameter-name,
+  cppcoreguidelines-pro-type-member-init,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-pro-type-cstyle-cast,
+  cppcoreguidelines-pro-type-const-cast,
+  cppcoreguidelines-pro-type-reinterpret-cast,
+  cppcoreguidelines-pro-type-static-cast-downcast,
+  cppcoreguidelines-pro-type-union-access,
+  cppcoreguidelines-pro-type-vararg,
+  cppcoreguidelines-avoid-goto,
+  cppcoreguidelines-no-malloc,
+  cppcoreguidelines-macro-usage,
+  cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-virtual-class-destructor,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-prefer-member-initializer,
+  cppcoreguidelines-missing-std-forward,
+  cppcoreguidelines-rvalue-reference-param-not-moved,
+  cppcoreguidelines-misleading-capture-default-by-value,
+  cppcoreguidelines-avoid-non-const-global-variables,
+  cppcoreguidelines-interfaces-global-init,
+  readability-function-size,
+  readability-function-cognitive-complexity
+WarningsAsErrors: '*'
+# Only first-party headers; Qt and generated code stay out.
+HeaderFilterRegex: '(src|tests)[/\\].*\.(h|hh|hpp|hxx|inl)$'
+FormatStyle: none
+# Without the resource headers of clang, the UCRT offsetof is no constant expression in qplugin.h.
+ExtraArgsBefore: ['-D_CRT_USE_BUILTIN_OFFSETOF']
+CheckOptions:
+  bugprone-assert-side-effect.AssertMacros: assert,Q_ASSERT,Q_ASSERT_X
+  readability-function-size.LineThreshold: none
+  readability-function-size.ParameterThreshold: 5
+  readability-function-size.NestingThreshold: 4
+  readability-function-cognitive-complexity.Threshold: 25
+  readability-function-cognitive-complexity.IgnoreMacros: true
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: true
+  cppcoreguidelines-special-member-functions.AllowMissingMoveFunctionsWhenCopyIsDeleted: true
+  cppcoreguidelines-rvalue-reference-param-not-moved.AllowPartialMove: true
+  cppcoreguidelines-rvalue-reference-param-not-moved.IgnoreUnnamedParams: true
+  cppcoreguidelines-avoid-non-const-global-variables.AllowInternalLinkage: true

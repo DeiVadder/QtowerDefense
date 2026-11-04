@@ -1,0 +1,21 @@
+BasedOnStyle: LLVM
+Language: Cpp
+Standard: Latest
+IndentWidth: 4
+ColumnLimit: 100
+AccessModifierOffset: -4
+PointerAlignment: Right
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortLambdasOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterStruct: true
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+IncludeBlocks: Preserve
+SortIncludes: CaseSensitive

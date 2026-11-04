@@ -1,0 +1,12 @@
+{
+    "name": "qtowerdefense-tools",
+    "owner": { "name": "the QtowerDefense authors" },
+    "description": "Project plugins of QtowerDefense for Claude Code",
+    "plugins": [
+        {
+            "name": "qtd-lsp",
+            "source": "./plugins/qtd-lsp",
+            "description": "clangd for C++ and qmlls for QML as LSP tools"
+        }
+    ]
+}

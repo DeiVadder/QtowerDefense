@@ -1,0 +1,4 @@
+qt_add_executable(qtd_headless main.cpp)
+set_target_properties(qtd_headless PROPERTIES WIN32_EXECUTABLE OFF)
+target_link_libraries(qtd_headless PRIVATE qtd_automation)
+qtd_set_strict_warnings(qtd_headless)

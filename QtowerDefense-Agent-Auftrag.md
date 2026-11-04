@@ -35,6 +35,7 @@ Am Ende ist ein **spielbares** Spiel fertig. „Spielbar" heißt: Ein Mensch sta
 - 3D-Szene in Qt Quick 3D mit **frei schwenkbarer Kamera** (Zoom, Verschieben, Drehen um die Karte).
 - Animierte Modelle für Türme und Gegner, Projektile und Effekte.
 - HUD und Menüs in Qt Quick (QML), Sound und Musik.
+- **UI-Thema (vom Menschen 2026-11-04):** HUD und Menüs greifen die Qt-Signaturfarbe **Neon `#2CDE85`** als Akzent auf, auf dunklen Flächen und passend zum Fantasy-Setting. Alle Farben, Abstände und Schriften stehen zentral in einem QML-Theme-Singleton, nie hartkodiert in einzelnen Komponenten. Texte und Bedienelemente bleiben gut lesbar (Kontrast mindestens 4,5:1). Nur die Farbe wird übernommen: kein Qt-Logo und nichts, das nach einem offiziellen Qt-Produkt aussieht.
 - Bedienbar mit **Maus und Touch** (siehe Plattformen).
 - **Speichern und Laden:** Kampagnenfortschritt, Highscores, Einstellungen und ein laufendes Spiel.
 
@@ -186,15 +187,15 @@ Ziel: Der Agent navigiert über Sprachserver und Doku-Werkzeuge, statt große Da
 - **Wiederaufnahme muss immer möglich sein:** Halte `docs/FORTSCHRITT.md` so aktuell, dass ein frischer Agent ohne Chatverlauf weitermachen kann (Etappe, nächster Schritt, Branch, offene Befunde).
 - **Kontingent:** Ist dein Token-Limit erreicht, pausierst du und machst nach dem Zurücksetzen selbstständig weiter. Keine zusätzlichen Kosten: keine Overage, keine kostenpflichtigen Dienste.
 - **Etappen-Nummern** sind ganze Zahlen und feste Kennungen, Teil-Etappen heißen `<Etappe>.<n>`. Eingeschobene Etappen bekommen die nächste freie Nummer.
-- **Unabhängige Verifikation:** Vor jedem Etappen-Abschluss prüft ein **neuer Subagent** (nicht der Verfasser): frischer Build, Tests, Diff gegen das Etappenziel. Befunde arbeitest du ein.
+- **Unabhängiges Review vor jedem Merge (vom Menschen 2026-11-04):** Kein Merge nach `dev` ohne Review. Das gilt für jede Etappe, jede Teil-Etappe und jedes einzelne Feature, ohne Ausnahme für kleine Änderungen. Ein **neuer Subagent** (nicht der Verfasser) prüft: frischer Build, Tests, Diff gegen das Ziel. Befunde arbeitest du ein; nach nennenswerten Korrekturen wird erneut geprüft. Das Ergebnis steht in `docs/FORTSCHRITT.md`.
 - Entscheide selbst, solange du innerhalb dieses Dokuments bleibst.
 
 ### Git
 - Git ist **rein lokal**: keine Remotes, kein Push. Hauptlinie ist `dev`.
 - **Autor:** Das Repo nutzt die lokale neutrale Identität `QtowerDefense Dev`. Ändere sie nicht. Der Mensch zieht die Identität vor dem ersten Push selbst nach.
 - Der erste Commit auf `dev` enthält nur Grundgerüst und Dokumente. **Danach nie mehr direkt auf `dev` oder `main` committen.**
-- Pro Etappe ein **Feature-Branch** `feature/<Etappe>-<kurzname>`. Im Branch darfst du kleinteilig committen, auch WIP.
-- Du **darfst selbst nach `dev` mergen**, wenn alle Prüfungen und die unabhängige Verifikation grün sind. Der Merge ist ein **Squash** (`git merge --squash`): pro Etappe ein aussagekräftiger Commit, Präfix `Stage <Etappe>:`. Der Feature-Branch bleibt erhalten.
+- **Jede Etappe und jedes Feature bekommt einen eigenen Branch (vom Menschen 2026-11-04):** `feature/<Etappe>-<kurzname>`, Teil-Etappen `feature/<Etappe>-<n>-<kurzname>`, Features außerhalb einer Etappe `feature/<kurzname>`. Im Branch darfst du kleinteilig committen, auch WIP.
+- Du **darfst selbst nach `dev` mergen**, wenn alle Prüfungen grün sind und das unabhängige Review bestanden ist. Der Merge ist ein **Squash** (`git merge --squash`): pro Etappe ein aussagekräftiger Commit, Präfix `Stage <Etappe>:`. Der Feature-Branch bleibt erhalten.
 - Nach `main` merged nur der Mensch.
 - Messages ohne externe Links.
 
