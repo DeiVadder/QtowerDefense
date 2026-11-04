@@ -2,18 +2,17 @@
 
 ## Stand
 
-- **Etappe:** 0, 1 und 2 sind geprüft und in `dev` (Etappe 2: `37fe03f`). In Arbeit ist das Feature `feature/llvm-update`.
+- **Etappe:** 0, 1 und 2 sind geprüft und in `dev` (Etappe 2: `37fe03f`). `feature/llvm-update` ist geprüft und in `dev` (`87ceb1a`, E-22). In Arbeit ist `feature/enums-statt-strings`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Vier Golden Replays. Keine Anbindung an den Client.
-- **Letzter voller `verify` (Etappe 2):** grün, 11 bestanden, 3 MISSING (Fuzz, Balancing, Smoke). Coverage Core 99,3 %, Automation 98,7 %. Benchmark rund 4.700-fache Echtzeit (`docs/Performance-Verlauf.md`).
+- **Letzter voller `verify`:** grün, 12 bestanden, 3 MISSING (Fuzz, Balancing, Smoke). Coverage Core 99,3 %, Automation 98,7 %. Benchmark rund 4.700-fache Echtzeit (`docs/Performance-Verlauf.md`).
 - **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
 - **cppcheck** analysiert wirklich alle Dateien, siehe E-19.
 
 ## Nächster Schritt
 
-1. Feature `feature/llvm-update` abschließen (E-22): Review und Merge.
-2. Feature `feature/enums-statt-strings`: Regel „Enums statt Strings" in `CLAUDE.md`, `HeadlessOptions::bot` und die Feldauswahl in `tst_headless_runner.cpp` umstellen.
-3. Vorschlag `feature/typ-index`, wartet auf das Ja des Menschen: generierter Typ-Index `docs/Typen.md`, Prüfung auf doppelte Typnamen in `verify`, Regel „erst nachsehen, dann neu anlegen" in `CLAUDE.md`, feste Frage im Review.
-4. Etappe 3 (Steuerschnittstelle und Bots).
+1. Feature `feature/enums-statt-strings` abschließen: Review und Merge.
+2. Vorschlag `feature/typ-index`, wartet auf das Ja des Menschen: generierter Typ-Index `docs/Typen.md`, Prüfung auf doppelte Typnamen in `verify`, Regel „erst nachsehen, dann neu anlegen" in `CLAUDE.md`, feste Frage im Review.
+3. Etappe 3 (Steuerschnittstelle und Bots).
 
 ## Bekannte Mängel und offene Punkte
 

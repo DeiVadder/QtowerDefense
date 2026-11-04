@@ -187,9 +187,6 @@ QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
     if (options.maxTicks < 0) {
         return u"--max-ticks must not be negative"_s;
     }
-    if (options.bot != "idle"_L1) {
-        return u"unknown bot \"%1\", available: idle"_s.arg(options.bot);
-    }
     if (options.runs > 1 && !options.record.isEmpty()) {
         return u"--record takes a single run"_s;
     }
@@ -225,6 +222,14 @@ bool readNumber(const QCommandLineParser &parser,
     return ok;
 }
 
+std::optional<HeadlessBot> botFromName(const QString &name)
+{
+    if (name == "idle"_L1) {
+        return HeadlessBot::Idle;
+    }
+    return std::nullopt;
+}
+
 /// The options of the command line.
 struct CommandLine
 {
@@ -251,12 +256,20 @@ void readOptions(const QCommandLineParser &parser,
 {
     HeadlessOptions options;
     options.map = parser.value(line.map);
-    options.bot = parser.isSet(line.bot) ? parser.value(line.bot) : options.bot;
     options.script = parser.value(line.script);
     options.replay = parser.value(line.replay);
     options.record = parser.value(line.record);
     options.output = parser.value(line.output);
     options.benchmark = parser.isSet(line.benchmark);
+    if (parser.isSet(line.bot)) {
+        const QString name = parser.value(line.bot);
+        const std::optional<HeadlessBot> bot = botFromName(name);
+        if (!bot) {
+            result->error = u"unknown bot \"%1\", available: idle"_s.arg(name);
+            return;
+        }
+        options.bot = *bot;
+    }
     quint64 seed = kDefaultSeed;
     if (readNumber(parser, line.seed, &seed, &result->error) &&
         readNumber(parser, line.runs, &options.runs, &result->error) &&

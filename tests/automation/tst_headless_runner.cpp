@@ -88,6 +88,7 @@ private slots:
         QCOMPARE(read.output, u"o"_s);
         QCOMPARE(read.maxTicks, 9);
         QVERIFY(read.benchmark);
+        QVERIFY(read.bot == qtd::automation::HeadlessBot::Idle);
     }
 
     void helpAndBuildInfoNeedNoMap()
@@ -326,31 +327,20 @@ private slots:
         QCOMPARE(fileText(game.output), outcome.json + '\n');
     }
 
-    void problemsEndUpInTheReport_data()
-    {
-        QTest::addColumn<QString>("field");
-        QTest::addColumn<QString>("value");
-        QTest::newRow("map") << u"map"_s << u"missing.json"_s;
-        QTest::newRow("script") << u"script"_s << u"missing.json"_s;
-        QTest::newRow("replay") << u"replay"_s << u"missing.json"_s;
-        QTest::newRow("record") << u"record"_s << u"missing/dir/file.json"_s;
-        QTest::newRow("output") << u"output"_s << u"missing/dir/file.json"_s;
-    }
-
     void problemsEndUpInTheReport()
     {
-        QFETCH(const QString, field);
-        QFETCH(const QString, value);
-        HeadlessOptions game = options();
-        game.maxTicks = 1;
-        (field == "map"_L1      ? game.map
-         : field == "script"_L1 ? game.script
-         : field == "replay"_L1 ? game.replay
-         : field == "record"_L1 ? game.record
-                                : game.output) = value;
-        const HeadlessOutcome outcome = runHeadless(game);
-        QCOMPARE(outcome.exitCode, 1);
-        QVERIFY(parsed(outcome.json)["error"_L1].toString().contains(u"missing"_s));
+        for (QString HeadlessOptions::*const file : {&HeadlessOptions::map,
+                                                     &HeadlessOptions::script,
+                                                     &HeadlessOptions::replay,
+                                                     &HeadlessOptions::record,
+                                                     &HeadlessOptions::output}) {
+            HeadlessOptions game = options();
+            game.maxTicks = 1;
+            game.*file = u"missing/dir/file.json"_s;
+            const HeadlessOutcome outcome = runHeadless(game);
+            QCOMPARE(outcome.exitCode, 1);
+            QVERIFY(parsed(outcome.json)["error"_L1].toString().contains(u"missing"_s));
+        }
     }
 };
 

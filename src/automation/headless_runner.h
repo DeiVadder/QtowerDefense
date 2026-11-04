@@ -11,13 +11,18 @@ namespace qtd::automation {
 
 constexpr quint64 kDefaultSeed = 1;
 
+/// Who plays a game without a script. The command line names them, see parseHeadlessArguments.
+enum class HeadlessBot : quint8 {
+    Idle,
+};
+
 /// What a run of qtd_headless should do, see docs/Architektur.md.
 struct HeadlessOptions
 {
     QString map;
     std::optional<quint64> seed; // otherwise the seed of the script, or kDefaultSeed
     qint64 runs = 1;
-    QString bot = QStringLiteral("idle");
+    HeadlessBot bot = HeadlessBot::Idle;
     QString script;
     QString replay;
     QString record;
