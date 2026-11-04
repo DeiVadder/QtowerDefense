@@ -82,20 +82,22 @@ set_tests_properties(headless_golden_defence PROPERTIES
     LABELS golden
     PASS_REGULAR_EXPRESSION "\"hash\":\"673da2402c04fc84\".*\"matches\":true")
 
-# Needs the GPU: renders the real main window once, without real-time waits of its own.
-qtd_add_test(tst_client_window
-    SOURCES client/tst_window.cpp
-    LIBS qtd_client qtd_clientplugin
-    LABELS client)
+if(NOT QTD_ENABLE_UBSAN)
+    # Needs the GPU: renders the real main window once, without real-time waits of its own.
+    qtd_add_test(tst_client_window
+        SOURCES client/tst_window.cpp
+        LIBS qtd_client qtd_clientplugin
+        LABELS client)
 
-qt_add_executable(tst_qml qml/tst_qml.cpp)
-set_target_properties(tst_qml PROPERTIES WIN32_EXECUTABLE OFF)
-target_compile_definitions(tst_qml PRIVATE
-    QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml")
-target_link_libraries(tst_qml PRIVATE Qt6::QuickTest qtd_client qtd_clientplugin)
-qtd_set_strict_warnings(tst_qml)
-add_test(NAME tst_qml COMMAND tst_qml)
-set_tests_properties(tst_qml PROPERTIES LABELS client TIMEOUT 60)
+    qt_add_executable(tst_qml qml/tst_qml.cpp)
+    set_target_properties(tst_qml PROPERTIES WIN32_EXECUTABLE OFF)
+    target_compile_definitions(tst_qml PRIVATE
+        QUICK_TEST_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/qml")
+    target_link_libraries(tst_qml PRIVATE Qt6::QuickTest qtd_client qtd_clientplugin)
+    qtd_set_strict_warnings(tst_qml)
+    add_test(NAME tst_qml COMMAND tst_qml)
+    set_tests_properties(tst_qml PROPERTIES LABELS client TIMEOUT 60)
+endif()
 
 if(QTD_ENABLE_ASAN)
     # Proves that the sanitizer is really active: this program must die with an ASan report.
@@ -105,4 +107,14 @@ if(QTD_ENABLE_ASAN)
     set_tests_properties(asan_selfcheck PROPERTIES
         LABELS asan
         PASS_REGULAR_EXPRESSION "AddressSanitizer: heap-buffer-overflow")
+endif()
+
+if(QTD_ENABLE_UBSAN)
+    # Proves that the sanitizer is really active: this program must die from its trap.
+    qt_add_executable(ubsan_selfcheck ubsan/ubsan_selfcheck.cpp)
+    set_target_properties(ubsan_selfcheck PROPERTIES WIN32_EXECUTABLE OFF)
+    add_test(NAME ubsan_selfcheck COMMAND "${CMAKE_COMMAND}"
+        -DPROGRAM=$<TARGET_FILE:ubsan_selfcheck>
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/ubsan/expect_trap.cmake")
+    set_tests_properties(ubsan_selfcheck PROPERTIES LABELS ubsan)
 endif()

@@ -5,7 +5,6 @@ Checks: >
   bugprone-*,
   -bugprone-easily-swappable-parameters,
   performance-*,
-  -performance-enum-size,
   modernize-*,
   -modernize-use-trailing-return-type,
   -modernize-use-nodiscard,
@@ -16,8 +15,6 @@ Checks: >
   misc-*,
   -misc-include-cleaner,
   -misc-non-private-member-variables-in-classes,
-  -misc-no-recursion,
-  -misc-use-anonymous-namespace,
   readability-container-size-empty,
   readability-redundant-*,
   readability-make-member-function-const,
@@ -52,6 +49,7 @@ FormatStyle: none
 # Without the resource headers of clang, the UCRT offsetof is no constant expression in qplugin.h.
 ExtraArgsBefore: ['-D_CRT_USE_BUILTIN_OFFSETOF']
 CheckOptions:
+  misc-use-internal-linkage.AnalyzeTypes: false
   bugprone-assert-side-effect.AssertMacros: assert,Q_ASSERT,Q_ASSERT_X
   readability-function-size.LineThreshold: none
   readability-function-size.ParameterThreshold: 5

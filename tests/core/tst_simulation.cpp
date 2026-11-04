@@ -249,11 +249,11 @@ private slots:
         QTest::addColumn<qint64>("slot");
         QTest::addColumn<qint64>("towerType");
         QTest::addColumn<CommandResult>("result");
-        QTest::newRow("slot below") << qint64(-1) << qint64(0) << CommandResult::UnknownSlot;
-        QTest::newRow("slot above") << qint64(3) << qint64(0) << CommandResult::UnknownSlot;
-        QTest::newRow("type below") << qint64(1) << qint64(-1) << CommandResult::UnknownTowerType;
-        QTest::newRow("type above") << qint64(1) << qint64(1) << CommandResult::UnknownTowerType;
-        QTest::newRow("occupied") << qint64(0) << qint64(0) << CommandResult::SlotOccupied;
+        QTest::newRow("slot below") << qint64{-1} << qint64{0} << CommandResult::UnknownSlot;
+        QTest::newRow("slot above") << qint64{3} << qint64{0} << CommandResult::UnknownSlot;
+        QTest::newRow("type below") << qint64{1} << qint64{-1} << CommandResult::UnknownTowerType;
+        QTest::newRow("type above") << qint64{1} << qint64{1} << CommandResult::UnknownTowerType;
+        QTest::newRow("occupied") << qint64{0} << qint64{0} << CommandResult::SlotOccupied;
     }
 
     static void invalidCommandsChangeNothing()

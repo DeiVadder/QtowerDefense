@@ -62,14 +62,14 @@ private slots:
     {
         QTest::addColumn<QString>("text");
         QTest::addColumn<qint64>("raw");
-        QTest::newRow("integer") << QStringLiteral("12") << qint64(120'000);
-        QTest::newRow("zero") << QStringLiteral("0") << qint64(0);
-        QTest::newRow("minus zero") << QStringLiteral("-0") << qint64(0);
-        QTest::newRow("one decimal") << QStringLiteral("1.5") << qint64(15'000);
-        QTest::newRow("all decimals") << QStringLiteral("12.3456") << qint64(123'456);
-        QTest::newRow("smallest") << QStringLiteral("0.0001") << qint64(1);
-        QTest::newRow("negative") << QStringLiteral("-0.25") << qint64(-2'500);
-        QTest::newRow("leading zero") << QStringLiteral("007") << qint64(70'000);
+        QTest::newRow("integer") << QStringLiteral("12") << qint64{120'000};
+        QTest::newRow("zero") << QStringLiteral("0") << qint64{0};
+        QTest::newRow("minus zero") << QStringLiteral("-0") << qint64{0};
+        QTest::newRow("one decimal") << QStringLiteral("1.5") << qint64{15'000};
+        QTest::newRow("all decimals") << QStringLiteral("12.3456") << qint64{123'456};
+        QTest::newRow("smallest") << QStringLiteral("0.0001") << qint64{1};
+        QTest::newRow("negative") << QStringLiteral("-0.25") << qint64{-2'500};
+        QTest::newRow("leading zero") << QStringLiteral("007") << qint64{70'000};
         QTest::newRow("largest") << QStringLiteral("922337203685477.5807") << kMaxRaw;
         QTest::newRow("lowest") << QStringLiteral("-922337203685477.5807") << -kMaxRaw;
     }
@@ -110,11 +110,11 @@ private slots:
     {
         QTest::addColumn<qint64>("raw");
         QTest::addColumn<QString>("text");
-        QTest::newRow("integer") << qint64(20'000) << QStringLiteral("2");
-        QTest::newRow("fraction") << qint64(12'500) << QStringLiteral("1.25");
-        QTest::newRow("inner zero") << qint64(10'005) << QStringLiteral("1.0005");
-        QTest::newRow("negative fraction") << qint64(-5'000) << QStringLiteral("-0.5");
-        QTest::newRow("zero") << qint64(0) << QStringLiteral("0");
+        QTest::newRow("integer") << qint64{20'000} << QStringLiteral("2");
+        QTest::newRow("fraction") << qint64{12'500} << QStringLiteral("1.25");
+        QTest::newRow("inner zero") << qint64{10'005} << QStringLiteral("1.0005");
+        QTest::newRow("negative fraction") << qint64{-5'000} << QStringLiteral("-0.5");
+        QTest::newRow("zero") << qint64{0} << QStringLiteral("0");
     }
 
     static void writesShortestText()
@@ -136,17 +136,17 @@ private slots:
         QTest::addColumn<QString>("left");
         QTest::addColumn<QString>("right");
         QTest::addColumn<qint64>("raw");
-        QTest::newRow("exact") << QStringLiteral("1.5") << QStringLiteral("2.25") << qint64(33'750);
-        QTest::newRow("signs") << QStringLiteral("-1.5") << QStringLiteral("2") << qint64(-30'000);
+        QTest::newRow("exact") << QStringLiteral("1.5") << QStringLiteral("2.25") << qint64{33'750};
+        QTest::newRow("signs") << QStringLiteral("-1.5") << QStringLiteral("2") << qint64{-30'000};
         QTest::newRow("both negative")
-            << QStringLiteral("-1.5") << QStringLiteral("-2") << qint64(30'000);
+            << QStringLiteral("-1.5") << QStringLiteral("-2") << qint64{30'000};
         // 0.0003 * 0.3333 = 0.00009999 rounds up, 0.0001 * 0.4 = 0.00004 rounds down.
-        QTest::newRow("up") << QStringLiteral("0.0003") << QStringLiteral("0.3333") << qint64(1);
-        QTest::newRow("down") << QStringLiteral("0.0001") << QStringLiteral("0.4") << qint64(0);
+        QTest::newRow("up") << QStringLiteral("0.0003") << QStringLiteral("0.3333") << qint64{1};
+        QTest::newRow("down") << QStringLiteral("0.0001") << QStringLiteral("0.4") << qint64{0};
         // 0.0001 * 0.5 = 0.00005 is a tie: away from zero on both sides.
-        QTest::newRow("tie") << QStringLiteral("0.0001") << QStringLiteral("0.5") << qint64(1);
+        QTest::newRow("tie") << QStringLiteral("0.0001") << QStringLiteral("0.5") << qint64{1};
         QTest::newRow("negative tie")
-            << QStringLiteral("-0.0001") << QStringLiteral("0.5") << qint64(-1);
+            << QStringLiteral("-0.0001") << QStringLiteral("0.5") << qint64{-1};
     }
 
     static void multipliesAndRounds()
@@ -162,18 +162,18 @@ private slots:
         QTest::addColumn<QString>("left");
         QTest::addColumn<QString>("right");
         QTest::addColumn<qint64>("raw");
-        QTest::newRow("exact") << QStringLiteral("7.5") << QStringLiteral("2.5") << qint64(30'000);
-        QTest::newRow("down") << QStringLiteral("1") << QStringLiteral("3") << qint64(3'333);
-        QTest::newRow("up") << QStringLiteral("2") << QStringLiteral("3") << qint64(6'667);
+        QTest::newRow("exact") << QStringLiteral("7.5") << QStringLiteral("2.5") << qint64{30'000};
+        QTest::newRow("down") << QStringLiteral("1") << QStringLiteral("3") << qint64{3'333};
+        QTest::newRow("up") << QStringLiteral("2") << QStringLiteral("3") << qint64{6'667};
         QTest::newRow("negative up")
-            << QStringLiteral("-2") << QStringLiteral("3") << qint64(-6'667);
+            << QStringLiteral("-2") << QStringLiteral("3") << qint64{-6'667};
         QTest::newRow("negative divisor")
-            << QStringLiteral("2") << QStringLiteral("-3") << qint64(-6'667);
+            << QStringLiteral("2") << QStringLiteral("-3") << qint64{-6'667};
         QTest::newRow("both negative")
-            << QStringLiteral("-1") << QStringLiteral("-3") << qint64(3'333);
-        QTest::newRow("tie") << QStringLiteral("0.0001") << QStringLiteral("2") << qint64(1);
+            << QStringLiteral("-1") << QStringLiteral("-3") << qint64{3'333};
+        QTest::newRow("tie") << QStringLiteral("0.0001") << QStringLiteral("2") << qint64{1};
         QTest::newRow("negative tie")
-            << QStringLiteral("-0.0001") << QStringLiteral("2") << qint64(-1);
+            << QStringLiteral("-0.0001") << QStringLiteral("2") << qint64{-1};
     }
 
     static void dividesAndRounds()
@@ -188,15 +188,15 @@ private slots:
     {
         QTest::addColumn<QString>("input");
         QTest::addColumn<qint64>("raw");
-        QTest::newRow("zero") << QStringLiteral("0") << qint64(0);
-        QTest::newRow("one") << QStringLiteral("1") << qint64(10'000);
-        QTest::newRow("square") << QStringLiteral("16") << qint64(40'000);
-        QTest::newRow("smallest") << QStringLiteral("0.0001") << qint64(100);
+        QTest::newRow("zero") << QStringLiteral("0") << qint64{0};
+        QTest::newRow("one") << QStringLiteral("1") << qint64{10'000};
+        QTest::newRow("square") << QStringLiteral("16") << qint64{40'000};
+        QTest::newRow("smallest") << QStringLiteral("0.0001") << qint64{100};
         // sqrt(2) = 1.41421..., sqrt(0.0002) = 0.0141421..., sqrt(3) = 1.73205...
-        QTest::newRow("two") << QStringLiteral("2") << qint64(14'142);
-        QTest::newRow("small") << QStringLiteral("0.0002") << qint64(141);
-        QTest::newRow("rounds up") << QStringLiteral("3") << qint64(17'321);
-        QTest::newRow("large") << QStringLiteral("90000000000") << qint64(3'000'000'000);
+        QTest::newRow("two") << QStringLiteral("2") << qint64{14'142};
+        QTest::newRow("small") << QStringLiteral("0.0002") << qint64{141};
+        QTest::newRow("rounds up") << QStringLiteral("3") << qint64{17'321};
+        QTest::newRow("large") << QStringLiteral("90000000000") << qint64{3'000'000'000};
     }
 
     static void takesRoots()

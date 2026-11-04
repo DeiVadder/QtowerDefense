@@ -167,6 +167,7 @@ FULL_STAGES = [
     ("cppcheck", stage_cppcheck),
     ("build and tests (release)", stage_build_and_test("release")),
     ("AddressSanitizer", stage_build_and_test("asan")),
+    ("UBSan", stage_build_and_test("ubsan")),
     ("coverage", stage_coverage),
     ("fuzz bot", missing("arrives with stage 3 (fuzz bot)")),
     ("balancing runs", missing("arrives with stage 12 (balancing)")),

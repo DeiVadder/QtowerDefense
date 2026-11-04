@@ -9,13 +9,26 @@ endfunction()
 
 # Qt is not instrumented, so the container annotations of the MSVC STL must stay off: a std::vector
 # or std::string that crosses into Qt would report a false container-overflow.
-function(qtd_enable_sanitizers)
-    if(NOT QTD_ENABLE_ASAN)
-        return()
-    endif()
+function(qtd_enable_asan)
     add_compile_options(/fsanitize=address)
     add_compile_definitions(_DISABLE_VECTOR_ANNOTATION _DISABLE_STRING_ANNOTATION)
     add_link_options(/INCREMENTAL:NO)
+endfunction()
+
+# Trap mode: a finding executes an illegal instruction, so no test can pass over it. It needs no
+# runtime, which matters here: the UBSan runtime of LLVM is static, Qt needs the dynamic CRT (E-22).
+# vptr is left out, it does not exist for the MSVC ABI.
+function(qtd_enable_ubsan)
+    add_compile_options(-fsanitize=undefined -fsanitize-trap=undefined -fno-sanitize=vptr)
+endfunction()
+
+function(qtd_enable_sanitizers)
+    if(QTD_ENABLE_ASAN)
+        qtd_enable_asan()
+    endif()
+    if(QTD_ENABLE_UBSAN)
+        qtd_enable_ubsan()
+    endif()
 endfunction()
 
 # qtd_add_test(<name> SOURCES <files> LIBS <targets> LABELS <labels>)

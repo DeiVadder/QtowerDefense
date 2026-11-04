@@ -74,104 +74,35 @@ QStringList unnoticed(const SimulationState &base, const NamedChanges &changes)
 NamedChanges fieldChanges()
 {
     return {
-        {"content",
-         [](auto &s) {
-             ++s.contentHash;
-         }},
-        {"tick",
-         [](auto &s) {
-             ++s.tick;
-         }},
-        {"status",
-         [](auto &s) {
-             s.status = GameStatus::Won;
-         }},
-        {"gold",
-         [](auto &s) {
-             ++s.gold;
-         }},
-        {"lives",
-         [](auto &s) {
-             ++s.lives;
-         }},
-        {"random state",
-         [](auto &s) {
-             s.random.next();
-         }},
-        {"random stream",
-         [](auto &s) {
-             s.random = qtd::core::Random(7, 55);
-         }},
-        {"next id",
-         [](auto &s) {
-             ++s.nextEntityId;
-         }},
-        {"spawn group",
-         [](auto &s) {
-             ++s.spawnGroup;
-         }},
-        {"spawned",
-         [](auto &s) {
-             ++s.spawnedInGroup;
-         }},
-        {"spawn countdown",
-         [](auto &s) {
-             ++s.spawnCountdownTicks;
-         }},
+        {"content", [](auto &s) { ++s.contentHash; }},
+        {"tick", [](auto &s) { ++s.tick; }},
+        {"status", [](auto &s) { s.status = GameStatus::Won; }},
+        {"gold", [](auto &s) { ++s.gold; }},
+        {"lives", [](auto &s) { ++s.lives; }},
+        {"random state", [](auto &s) { s.random.next(); }},
+        {"random stream", [](auto &s) { s.random = qtd::core::Random(7, 55); }},
+        {"next id", [](auto &s) { ++s.nextEntityId; }},
+        {"spawn group", [](auto &s) { ++s.spawnGroup; }},
+        {"spawned", [](auto &s) { ++s.spawnedInGroup; }},
+        {"spawn countdown", [](auto &s) { ++s.spawnCountdownTicks; }},
     };
 }
 
 NamedChanges entityChanges()
 {
     return {
-        {"enemy added",
-         [](auto &s) {
-             s.enemies.push_back(Enemy{});
-         }},
-        {"enemy removed",
-         [](auto &s) {
-             s.enemies.clear();
-         }},
-        {"enemy id",
-         [](auto &s) {
-             ++s.enemies[0].id;
-         }},
-        {"enemy type",
-         [](auto &s) {
-             ++s.enemies[0].type;
-         }},
-        {"enemy health",
-         [](auto &s) {
-             s.enemies[0].health = Fixed::fromRaw(1);
-         }},
-        {"enemy place",
-         [](auto &s) {
-             s.enemies[0].travelled = Fixed::fromRaw(1);
-         }},
-        {"tower added",
-         [](auto &s) {
-             s.towers.push_back(Tower{});
-         }},
-        {"tower removed",
-         [](auto &s) {
-             s.towers.clear();
-         }},
-        {"tower id",
-         [](auto &s) {
-             ++s.towers[0].id;
-         }},
-        {"tower type",
-         [](auto &s) {
-             ++s.towers[0].type;
-         }},
-        {"tower slot",
-         [](auto &s) {
-             ++s.towers[0].slot;
-         }},
-        {"tower cooldown",
-         [](auto &s) {
-             ++s.towers[0].cooldownTicks;
-         }},
+        {"enemy added", [](auto &s) { s.enemies.push_back(Enemy{}); }},
+        {"enemy removed", [](auto &s) { s.enemies.clear(); }},
+        {"enemy id", [](auto &s) { ++s.enemies[0].id; }},
+        {"enemy type", [](auto &s) { ++s.enemies[0].type; }},
+        {"enemy health", [](auto &s) { s.enemies[0].health = Fixed::fromRaw(1); }},
+        {"enemy place", [](auto &s) { s.enemies[0].travelled = Fixed::fromRaw(1); }},
+        {"tower added", [](auto &s) { s.towers.push_back(Tower{}); }},
+        {"tower removed", [](auto &s) { s.towers.clear(); }},
+        {"tower id", [](auto &s) { ++s.towers[0].id; }},
+        {"tower type", [](auto &s) { ++s.towers[0].type; }},
+        {"tower slot", [](auto &s) { ++s.towers[0].slot; }},
+        {"tower cooldown", [](auto &s) { ++s.towers[0].cooldownTicks; }},
     };
 }
 

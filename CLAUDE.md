@@ -31,7 +31,7 @@ Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [Qtowe
 ## Werkzeuge
 - Alles liegt unter `C:\dev`, auch neue Werkzeuge. Gebaut wird **nur** mit MSVC und der CMake aus `C:\Dev\Qt\Tools`, nicht mit `g++` oder der CMake aus Strawberry.
 - Qt: `C:\Dev\Qt\6.12.0\msvc2022_64`. Module nur ergänzen (`aqt` mit `--noarchives`), das Qt teilt sich das Projekt mit QtCraft.
-- `clang-tidy`, `clang-format`: `C:\Dev\VS2022BuildTools\VC\Tools\Llvm\x64\bin`. `cppcheck`: `C:\Dev\Strawberry\c\bin`. `qmllint`, `qmlformat`, `qmlls`: `bin` von Qt.
+- `clang-tidy`, `clang-format`, `clang-cl`: `C:\dev\LLVM\clang+llvm-23.1.5-x86_64-pc-windows-msvc\bin` (E-22). `cppcheck`: `C:\Dev\Strawberry\c\bin`. `qmllint`, `qmlformat`, `qmlls`: `bin` von Qt.
 - **Navigation:** erst LSP (`clangd`, `qmlls`), dann `grep`, ganze Dateien nur wenn nötig. Das LSP gibt es nur in Sitzungen, die nach dem Einrichten des Plugins `qtd-lsp` gestartet wurden.
 - **LSP-Referenzsuche kann unvollständig sein:** Der Index entsteht im Hintergrund (`build/debug/.cache`) und verschwindet mit `build/`. Solange er läuft, fehlen Treffer ohne Warnung. Vor Änderungen an einer API deshalb mit `grep` gegenprüfen.
 - **Qt-APIs** im MCP `qt-docs` nachschlagen, wenn verfügbar, statt sie zu raten. Für UI-Arbeit gibt es optional den QmlPreview MCP.
@@ -46,4 +46,4 @@ Aus PowerShell mit `cmd /c`, die `.cmd`-Dateien brauchen `.\`. Details: `docs/Bu
 - Vollprüfung (vor Etappen-Abschluss): `cmd /c ".\scripts\verify.cmd"`. Protokolle: `build/verify-logs/`.
 - Formatieren: `clang-format -i <Dateien>`, `qmlformat -i <Dateien>` (beide nach `env.cmd` auf dem `PATH`).
 - Hook einrichten (einmal je Klon): `cmd /c ".\scripts\setup-hooks.cmd"`
-- Presets: `debug`, `release`, `asan`, `coverage`.
+- Presets: `debug`, `release`, `asan`, `ubsan`, `coverage`.

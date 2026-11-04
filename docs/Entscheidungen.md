@@ -15,7 +15,7 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 ## E-3 UBSan mit clang-cl: in Etappe 0 nicht möglich
 - **Was:** Kein UBSan-Preset. Die VS Build Tools enthalten unter `VC\Tools\Llvm\x64\bin` nur `clang-tidy` und `clang-format`, kein `clang-cl` und keine Sanitizer-Laufzeit. Die Bewertung endete deshalb ohne Versuch; ob Core mit clang-cl und Qt zusammen baut, ist ungeprüft.
 - **Warum:** Der Weg bräuchte ein weiteres Werkzeug (offizielles LLVM-Release unter `C:\dev\LLVM` oder die VS-Komponente „C++ Clang tools"). Das war nicht im Etappenumfang, und das Gerüst hat noch keine Arithmetik, die UBSan prüfen könnte.
-- **Empfehlung:** In Etappe 1 mit dem Festkomma-Code erneut bewerten. Aussichtsreich ist ein LLVM-Release und `-fsanitize=undefined -fsanitize-trap=undefined` nur für Core-Tests; der Trap-Modus braucht keine Laufzeit. Bis dahin gilt der Ersatz aus Auftrag Abschnitt 4 (Warnstufe, clang-tidy, Überlaufprüfungen in Debug).
+- **Überholt durch E-22.** Empfehlung damals: In Etappe 1 mit dem Festkomma-Code erneut bewerten. Aussichtsreich ist ein LLVM-Release und `-fsanitize=undefined -fsanitize-trap=undefined` nur für Core-Tests; der Trap-Modus braucht keine Laufzeit. Bis dahin gilt der Ersatz aus Auftrag Abschnitt 4 (Warnstufe, clang-tidy, Überlaufprüfungen in Debug).
 - **Verworfen:** LLVM jetzt ungefragt nachinstallieren.
 
 ## E-4 clazy weggelassen
@@ -41,6 +41,7 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 ## E-8 Wiederholung nach clang-tidy-Absturz
 - **Was:** `verify.py` wiederholt eine Datei einzeln, wenn clang-tidy hängt (Timeout 300 s) oder mit einem Windows-Ausnahmecode ab `0xC0000000` endet. Beobachtet wurden `0xC0000005`, `0xC000001D` und ein Hänger über 35 Minuten, jeweils an harmlosen Dateien. Andere Fehler zählen sofort, ein zweiter Ausfall lässt die Stufe scheitern. Das Protokoll nennt die Zahl der Ausfälle.
 - **Warum:** clang-tidy 19.1.5 stürzte bei sechs parallelen Läufen in etwa jedem zweiten Lauf bei einer Datei ohne Ausgabe ab, wechselnde Dateien. Acht serielle Läufe blieben stabil. Ursache unbekannt. Ein Absturz sagt nichts über die Datei, und die Wiederholung prüft sie wirklich.
+- **Nachtrag E-22:** Mit clang-tidy 23.1.5 gab es in drei vollen Läufen keinen Ausfall mehr. Die Wiederholung bleibt als Schutz, sie kostet nichts.
 - **Verworfen:** Absturz als grün werten; ganz seriell laufen (mehrfache Laufzeit).
 
 ## E-9 cppcheck mit `--std=c++20`
@@ -60,21 +61,18 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Verworfen:** Unterordner `qml/` ab sofort.
 
 ## E-12 Ausschlüsse in `.clang-tidy`
-- **Was:** `bugprone-narrowing-conversions` ist seit dem Review aktiv, das Gerüst ist damit sauber (eine Probe mit `long long` nach `int` meldet den Fehler). Die Zahl in Klammern nennt die Treffer im Gerüst, gemessen am 2026-11-04 mit clang-tidy 19.1.5. Ein Selbsttest verlangt für jeden Ausschluss einen Eintrag hier.
+- **Was:** `bugprone-narrowing-conversions` ist seit dem Review aktiv, das Gerüst ist damit sauber (eine Probe mit `long long` nach `int` meldet den Fehler). Die Zahl in Klammern nennt die Treffer nach Etappe 2, eindeutig je Datei und Zeile über alle Übersetzungseinheiten, gemessen am 2026-11-04 mit clang-tidy 23.1.5. Ein Selbsttest verlangt für jeden Ausschluss einen Eintrag hier.
 - **Warum, je Ausschluss:**
-  - `bugprone-easily-swappable-parameters` (0): Trifft jede Funktion mit zwei gleichartigen Parametern, in der Simulation also Koordinaten und Festkomma-Paare. Die Schwelle ließe sich nur raten; Verwechslungen fangen eigene Typen und Tests besser.
-  - `performance-enum-size` (0): Verlangt kleine Basistypen für jedes `enum`. Der Speichergewinn ist hier ohne Bedeutung, und in Replays und JSON zählt ein einheitlicher Basistyp mehr.
-  - `modernize-use-trailing-return-type` (18): Reiner Stil, der Qt-Code und das Projekt schreiben Rückgabetypen vorne.
-  - `modernize-use-nodiscard` (0): Würde fast jede const-Methode markieren. `[[nodiscard]]` steht dort von Hand, wo Ignorieren wirklich ein Fehler ist.
+  - `bugprone-easily-swappable-parameters` (1): Trifft jede Funktion mit zwei gleichartigen Parametern, in der Simulation also Koordinaten und Festkomma-Paare. Die Schwelle ließe sich nur raten; Verwechslungen fangen eigene Typen und Tests besser.
+  - `modernize-use-trailing-return-type` (244): Reiner Stil, der Qt-Code und das Projekt schreiben Rückgabetypen vorne.
+  - `modernize-use-nodiscard` (18): Würde fast jede const-Methode markieren. `[[nodiscard]]` steht dort von Hand, wo Ignorieren wirklich ein Fehler ist.
   - `modernize-avoid-c-arrays` (1): Der Treffer ist das absichtliche Feld in `tests/asan/asan_selfcheck.cpp`. Der Test braucht genau diesen Überlauf eines rohen Felds.
-  - `modernize-use-designated-initializers` (2): Bei kleinen Wertetypen wie `Version{1, 2, 3}` bringt es nur Länge, die Reihenfolge ist durch Tests gesichert.
-  - `modernize-use-auto` (0): `auto` bleibt eine Entscheidung im Einzelfall, in der Simulation soll der Typ sichtbar sein.
-  - `modernize-return-braced-init-list` (0): Reiner Stil, nennt den Typ im `return` nicht mehr.
-  - `misc-include-cleaner` (42): Verlangt für jeden Typ einen eigenen Include, auch für `QChar` oder `QStringView`, die `<QString>` ohnehin mitbringt, und für alles aus einem eigenen Header. Das bläht die Include-Listen auf, ohne dass ein Fehler verhindert wird.
-  - `misc-non-private-member-variables-in-classes` (3): Trifft reine Wertetypen wie `Version`, deren öffentliche Felder gewollt sind.
-  - `misc-no-recursion` (0): Rekursion ist erlaubt, etwa beim Durchlaufen von Daten. Tiefe und Abbruch prüfen Tests.
-  - `misc-use-anonymous-namespace` (0): `static` und anonymer Namensraum sind beide zulässig, dazu prüft `misc-use-internal-linkage` weiter die Bindung.
-- **Verworfen:** Ausschlüsse ohne Begründung lassen. Die Checks mit 0 Treffern jetzt schon zuschalten: Das wäre eine Stilentscheidung ohne Code, an dem sie sich messen ließe. Mit Etappe 1 neu ansehen.
+  - `modernize-use-designated-initializers` (43): Bei kleinen Wertetypen wie `Version{1, 2, 3}` bringt es nur Länge, die Reihenfolge ist durch Tests gesichert.
+  - `modernize-use-auto` (2): Widerspricht der Regel des Menschen in `CLAUDE.md`: `auto` nur, wenn der Typ ohne LSP lesbar ist.
+  - `modernize-return-braced-init-list` (1): Reiner Stil, nennt den Typ im `return` nicht mehr.
+  - `misc-include-cleaner` (259): Verlangt für jeden Typ einen eigenen Include, auch für `QChar` oder `QStringView`, die `<QString>` ohnehin mitbringt, und für alles aus einem eigenen Header. Das bläht die Include-Listen auf, ohne dass ein Fehler verhindert wird.
+  - `misc-non-private-member-variables-in-classes` (5): Trifft reine Wertetypen wie `Version`, deren öffentliche Felder gewollt sind.
+- **Verworfen:** Ausschlüsse ohne Begründung lassen. Mit Etappe 2 neu bewertet: `performance-enum-size`, `misc-no-recursion` und `misc-use-anonymous-namespace` hatten 0 Treffer und sind jetzt aktiv, Rekursion braucht also ein begründetes NOLINT. `misc-use-internal-linkage` prüft keine Typen (`AnalyzeTypes: false`), weil Testklassen mit `Q_OBJECT` wegen moc nicht in einen anonymen Namensraum können.
 
 ## E-13 Coverage gleicht die Dateiliste ab
 - **Was:** `coverage.py` vergleicht die Quelldateien von `src/core` und `src/automation` mit den Berichten. Eine Datei ohne gemessene Zeile lässt das Gate scheitern und wird namentlich genannt.
@@ -135,3 +133,14 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Was:** `TickClock` macht aus vergangenen Mikrosekunden, Tempo und Pause eine Anzahl Ticks, in reiner Ganzzahl-Rechnung ohne Verlust von Bruchteilen. Die Zeit misst der Aufrufer.
 - **Warum:** Der Tempo-Test aus Abschnitt 3 soll den Weg prüfen, den der Client später nimmt: ungleiche Frames, Stapel von Ticks, Pause. Der alte Vergleich von `tick()` mit `advance()` zeigte das nicht. In Core darf die Klasse liegen, weil sie keine Uhr kennt.
 - **Verworfen:** Klasse im Client: Dann wäre sie ohne GUI-Abhängigkeit nicht testbar und der Golden-Test bliebe ohne echten Tempo-Pfad.
+
+## E-22 LLVM 23.1.5, UBSan mit clang-cl
+- **Was:** `C:\dev\LLVM` enthält das offizielle Archiv von LLVM 23.1.5. `clang-tidy`, `clang-format` und `clang-cl` kommen von dort, `scripts/env.cmd` und `qtd_common.py` zeigen darauf. Das Preset `ubsan` baut Core, Automation, `qtd_headless` und ihre Tests mit `clang-cl` und `-fsanitize=undefined -fsanitize-trap=undefined`. `verify` führt es in der vollen Stufe aus, `ubsan_selfcheck` beweist, dass der Sanitizer wirkt.
+- **Warum Archiv statt MSI:** Es wird nur entpackt, nichts außerhalb von `C:\dev` ändert sich.
+- **Warum Trap-Modus:** Die UBSan-Laufzeit von LLVM gibt es nur statisch (`MT_StaticRelease`), Qt braucht die dynamische Laufzeit. Der Link scheitert daran an `/failifmismatch`. Im Trap-Modus endet das Programm bei einem Fund mit einem unerlaubten Befehl. Die Stelle zeigt der Debugger, einen Text gibt es nicht.
+- **Umfang:** Ohne Client: Dort steckt keine Regelarithmetik, und die Laufzeit des Builds bliebe klein. RelWithDebInfo, weil die Debug-Laufzeit keinen Gewinn bringt; in diesem Build sättigt `Fixed` also, statt zu werfen (E-14).
+- **Ergebnis clang-tidy (E-8):** Drei volle Läufe mit sechs parallelen Prozessen, 90 Dateiläufe, kein Absturz und kein Hänger. Ein Lauf dauert rund 10 s statt rund 130 s mit 19.1.5. Dass es trotzdem prüft, zeigten eingepflanzte Fehler (`use-after-move`, identische Zweige, Narrowing). Neue Treffer waren funktionale Casts wie `qint64(1)`, sie sind behoben.
+- **Nebeneffekt:** Die Golden Replays bestehen auch mit `clang-cl`, also mit einem zweiten Compiler. Das stützt die Bitgleichheit aus Abschnitt 2.
+- **clang-format:** Version 23 formatiert Lambdas in Listen anders, der Bestand ist einmal neu formatiert.
+- **Verworfen:** UBSan mit `/MT`: Qt liegt nur als DLL mit dynamischer Laufzeit vor. Nur `clang-tidy` tauschen: Zwei Werkzeugstände für eine Aufgabe, und `clang-format` passte dann nicht mehr zu `clangd` 23.
+

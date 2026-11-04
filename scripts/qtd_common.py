@@ -14,7 +14,7 @@ for _stream in (sys.stdout, sys.stderr):
 
 REPO = Path(__file__).resolve().parent.parent
 QT_DIR = Path(os.environ.get("QTD_QT_DIR", r"C:\Dev\Qt\6.12.0\msvc2022_64"))
-LLVM_DIR = Path(os.environ.get("QTD_LLVM_DIR", r"C:\Dev\VS2022BuildTools\VC\Tools\Llvm\x64\bin"))
+LLVM_DIR = Path(os.environ.get("QTD_LLVM_DIR", r"C:\dev\LLVM\clang+llvm-23.1.5-x86_64-pc-windows-msvc\bin"))
 CPPCHECK = Path(os.environ.get("QTD_CPPCHECK", r"C:\Dev\Strawberry\c\bin\cppcheck.exe"))
 OPENCPPCOVERAGE = Path(
     os.environ.get("QTD_OPENCPPCOVERAGE", r"C:\dev\OpenCppCoverage\OpenCppCoverage.exe")

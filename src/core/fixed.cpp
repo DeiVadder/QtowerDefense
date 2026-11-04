@@ -31,7 +31,7 @@ quint64 roundedRoot(quint64 value)
 {
     quint64 rest = value;
     quint64 root = 0;
-    quint64 bit = quint64(1) << 62U;
+    quint64 bit = static_cast<quint64>(1) << 62U;
     while (bit > rest) {
         bit >>= 2U;
     }
@@ -52,7 +52,7 @@ bool appendDigits(QStringView digits, qint64 *value)
     for (const QChar digit : digits) {
         const std::optional<qint64> shifted = product(*value, 10);
         if (digit < QLatin1Char('0') || digit > QLatin1Char('9') || !shifted ||
-            qAddOverflow(*shifted, qint64(digit.unicode() - u'0'), value)) {
+            qAddOverflow(*shifted, static_cast<qint64>(digit.unicode() - u'0'), value)) {
             return false;
         }
     }

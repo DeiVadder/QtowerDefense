@@ -2,31 +2,30 @@
 
 ## Stand
 
-- **Etappe:** 2 (Headless und Replays), Branch `feature/2-headless-replays`, in Arbeit. Etappe 0 und 1 sind geprüft und in `dev` (`ac51ad6`).
-- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16, Beispiel `content/training_ground.json`), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18). Keine Anbindung an den Client.
-- **Letzter voller `verify` vor dem Review von Etappe 2:** grün, 11 bestanden, 3 MISSING (Fuzz, Balancing, Smoke). Coverage Core 99,3 %, Automation 98,7 %.
+- **Etappe:** 0, 1 und 2 sind geprüft und in `dev` (Etappe 2: `37fe03f`). In Arbeit ist das Feature `feature/llvm-update`.
+- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Vier Golden Replays. Keine Anbindung an den Client.
+- **Letzter voller `verify` (Etappe 2):** grün, 11 bestanden, 3 MISSING (Fuzz, Balancing, Smoke). Coverage Core 99,3 %, Automation 98,7 %. Benchmark rund 4.700-fache Echtzeit (`docs/Performance-Verlauf.md`).
+- **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
 - **cppcheck** analysiert wirklich alle Dateien, siehe E-19.
-- **Auf dem Branch:** Replays (E-20), `TickClock` (E-21), `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark, vier Golden Replays, Stufe „golden replays" in `verify`. Regel zu `auto` in `CLAUDE.md`, der Bestand ist angepasst.
 
 ## Nächster Schritt
 
-1. Etappe 2 fertigstellen, unabhängiges Review, Squash-Merge nach `dev`.
-2. Feature `feature/llvm-update`: aktuelles LLVM nach `C:\dev`, UBSan und `clang-cl`, neueres clang-tidy gegen die Abstürze und Hänger (E-3, E-8), dabei die Neubewertung aus E-12 nachholen.
-3. Etappe 3 (Steuerschnittstelle und Bots).
+1. Feature `feature/llvm-update` abschließen (E-22): Review und Merge.
+2. Feature `feature/enums-statt-strings`: Regel „Enums statt Strings" in `CLAUDE.md`, `HeadlessOptions::bot` und die Feldauswahl in `tst_headless_runner.cpp` umstellen.
+3. Vorschlag `feature/typ-index`, wartet auf das Ja des Menschen: generierter Typ-Index `docs/Typen.md`, Prüfung auf doppelte Typnamen in `verify`, Regel „erst nachsehen, dann neu anlegen" in `CLAUDE.md`, feste Frage im Review.
+4. Etappe 3 (Steuerschnittstelle und Bots).
 
 ## Bekannte Mängel und offene Punkte
 
 - **Stufen ohne Inhalt (MISSING in `verify`):** Fuzz-Bot (3), Smoke-Test mit Screenshot (5), Balancing (12).
-- **UBSan:** nicht vorhanden, `clang-cl` fehlt (E-3). Wird ein eigenes Feature zusammen mit einem neueren LLVM. Bis dahin prüft `Fixed` Überläufe in Debug-Builds (E-14).
 - **Simulation, bewusst offen:** Doppelte Schlüssel im Inhalts-JSON bleiben unerkannt (E-16). `distance()` rundet schon das Quadrat auf vier Stellen, sehr kurze Pfadstücke unter etwa 0,01 Felder werden dadurch ungenau; abstürzen kann das nicht. Lesbare Texte der Ladefehler sind Englisch und noch nicht übersetzbar, sie richten sich an Autoren der Daten.
+- **Aus dem Review von Etappe 2, nicht behoben:** `--replay --runs 1` wird angenommen, obwohl die Doku `--runs` ausschließt; wirkungslos, weil genau ein Lauf gemeint ist. `count_if` in `headless_runner.cpp` ist für Linux und Android gecastet, dort aber nicht kompiliert.
 - **Hinweise aus dem Review von Etappe 1, nicht behoben:**
   - Ein Pfad kann die Länge 0 haben, wenn Stücke unter etwa 0,01 Felder runden; das stürzt nicht ab, sollte der Lader aber ablehnen.
   - Keine Grenze für Listenlängen und Gegnerzahlen: `content_loader.cpp` prüft Bauplätze quadratisch (40.000 Plätze 2,8 s in Debug), Wellen mit 10^9 Gegnern begrenzen weder Speicher noch Tick-Kosten.
   - `gold` ist ungeprüftes `qint64`. Ein Überlauf bräuchte mindestens 9,2e9 Kills, E-14 gilt also praktisch, nicht streng.
   - `Simulation(Content, seed)` prüft nichts, leere `wave` wäre undefiniert; über `parseContent` nicht erreichbar.
 - **moc** verliert sich an Raw-Strings, die Backslash und Anführungszeichen zusammen enthalten: Der Test kompiliert, das Linken scheitert an `metaObject`. Ein solcher Text steht in `tst_content.cpp` als normaler String.
-- **Offen aus E-12:** Die dort für Etappe 1 vorgesehene neue Sicht auf die clang-tidy-Checks mit 0 Treffern ist nicht erfolgt.
-- **clang-tidy 19.1.5 stürzt parallel gelegentlich ab oder hängt**, Ursache unbekannt; `verify` bricht nach 300 s ab und wiederholt die Datei einzeln, ein zweiter Ausfall lässt die Stufe scheitern (E-8). Ein neueres clang-tidy passend zu `clangd` wäre zu bewerten.
 - **Restpunkte der Prüfskripte aus dem Nach-Review, niedrig:**
   - Nirgends eingebundene Header sieht clang-tidy nicht; `--quick` prüft geänderte Header ohne gleichnamige Quelle nicht; `.HPP` fällt durch den `HeaderFilterRegex`.
   - Die Endungen `.ipp .tpp .txx .ixx .cppm .c .c++ .h++` kennt die gemeinsame Liste nicht.
@@ -34,6 +33,8 @@
   - Falscher Alarm bei `__has_include(<foo/1.2/bar.h>)` und bei auskommentierten Link-Zeilen.
   - Eine getestete Datei mit Nicht-ASCII-Namen sprengt den OpenCppCoverage-Export (`scripts/coverage.py`).
   - Ohne lokalen Branch `dev` scheitert `check_length` laut, der Hook blockiert dann. `BASELINE_NAME` steht in `scripts/check_length.py` doppelt.
+- **MSVC-Absturz C1001, ungeklärt:** Im Review von `feature/llvm-update` brach der Coverage-Build einmal mit einem internen Compilerfehler ab (`src/app/main.cpp`, Header `ranges`). 36 Einzelläufe mit und ohne LLVM im `PATH` blieben ohne Absturz, Datei und Flags waren unverändert. Ein Zusammenhang mit dem Feature ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen.
+- **Auftrag, Sache des Menschen:** `QtowerDefense-Agent-Auftrag.md` nennt für `clang-tidy` und `clang-format` noch den Pfad der VS Build Tools. Gültig ist jetzt E-22.
 - **Plugin `qtd-lsp`:** Am 2026-11-04 vom Menschen in einer neuen Sitzung geprüft: Es lädt, `clangd` fand bei fertigem Index alle Verwendungen von `projectVersion`. Bei laufendem Index fehlten Treffer ohne Warnung (Regel in `CLAUDE.md`). `qmlls` wurde dort nicht abgefragt, nur seine LSP-Initialisierung ist geprüft. clangds Hinweis auf ein unbenutztes `<compare>` in `version.h` ist ein Fehlalarm (`operator<=>`).
 - **OpenCppCoverage-Setup** hat einen HKLM-Uninstall-Schlüssel und einen Benutzer-`PATH`-Eintrag außerhalb von `C:\dev` hinterlassen (`docs/Building.md`).
 - **QmlPreview MCP** ist nicht installiert (Qt Maintenance Tool, Komponente „Agentic Development Tools", macht der Mensch). `qt-docs` und das LSP standen den Subagenten von Etappe 1 nicht zur Verfügung, weil ihre Sitzung vor dem Plugin gestartet war.
@@ -46,7 +47,7 @@
 |---|---|---|
 | 0 | Fundament | fertig, in `dev` |
 | 1 | Simulationskern | fertig, in `dev` |
-| 2 | Headless und Replays | in Arbeit |
+| 2 | Headless und Replays | fertig, in `dev` |
 | 3 | Steuerschnittstelle und Bots | offen |
 | 4 | Dünne 3D-Version | offen |
 | 5 | Smoke-Test | offen |
