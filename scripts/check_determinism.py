@@ -62,7 +62,7 @@ def main():
     core = REPO / "src" / "core"
     for path in project_files(*CPP_SUFFIXES):
         if core in path.parents:
-            for number, token, reason in findings(path.read_text(encoding="utf-8")):
+            for number, token, reason in findings(path.read_text(encoding="utf-8-sig")):
                 print(f"{relative(path)}:{number}: {token} is forbidden in core ({reason})")
                 count += 1
     print(f"check_determinism: {count} problems")

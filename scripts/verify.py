@@ -134,7 +134,8 @@ def stage_cppcheck(log):
     return run(
         log, CPPCHECK, "--enable=warning,style,performance,portability", "--library=qt",
         f"--library={SCRIPTS / 'cppcheck-qtd.cfg'}",
-        "--language=c++", "--std=c++20", "--inline-suppr", "--quiet", "--error-exitcode=1",
+        "--language=c++", "--std=c++20", "--check-level=exhaustive", "--inline-suppr", "--quiet",
+        "--error-exitcode=1",
         f"--suppressions-list={SCRIPTS / 'cppcheck-suppressions.txt'}",
         "-I", REPO / "src", REPO / "src", REPO / "tests",
         cwd=configs,

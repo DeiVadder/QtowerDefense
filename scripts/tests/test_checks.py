@@ -1,5 +1,6 @@
 """The rule scripts must find what they are for, and only that."""
 
+import contextlib
 import io
 import os
 import re
@@ -49,6 +50,12 @@ class TempRepo(unittest.TestCase):
 
 
 class StripTest(unittest.TestCase):
+    def test_line_comment_continues_after_a_backslash(self):
+        stripped = strip_comments_and_strings("// a \\\ndouble b;\nint c;\n")
+        self.assertEqual(stripped.count("\n"), 3)
+        self.assertNotIn("double", stripped)
+        self.assertIn("int c;", stripped)
+
     def test_keeps_lines_and_removes_content(self):
         text = 'int a; // float\n/* double\n*/ auto s = "QHash"; auto r = R"x(rand())x";\n'
         stripped = strip_comments_and_strings(text)
@@ -255,12 +262,38 @@ class SuffixTest(TempRepo):
             path.unlink()
 
     def test_non_ascii_file_name_is_checked(self):
+        # This fixture is where "größe.cpp:1: double" in a test log comes from, not from a false hit.
         self.write("src/core/größe.cpp", "double a;\n")
-        self.assertEqual(check_determinism.main(), 1)
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(check_determinism.main(), 1)
+        self.assertIn("src/core/größe.cpp:1: double is forbidden", output.getvalue())
 
-    def test_layers_reads_every_suffix(self):
+    def test_determinism_ignores_a_byte_order_mark(self):
+        path = self.root / "src/core/bom.h"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"\xef\xbb\xbf#include <lib/1.2/a.h>\n")
+        self.assertEqual(check_determinism.main(), 0)
+
+    def layer_files(self):
         for layer in check_layers.LAYERS:
             self.write(f"src/{layer}/CMakeLists.txt")
+
+    def test_layers_sees_an_include_behind_a_byte_order_mark(self):
+        self.layer_files()
+        path = self.root / "src/core/bom.h"
+        path.write_bytes(b'\xef\xbb\xbf#include "../client/app_info.h"\n')
+        with mock.patch.object(check_layers, "qt_header_index", return_value={}):
+            self.assertEqual(check_layers.main(), 1)
+
+    def test_layers_reads_cmake_files_as_utf8(self):
+        self.layer_files()
+        # In the ANSI code page of Windows the third byte of this quotation mark is undefined.
+        self.write("src/core/CMakeLists.txt", "# ”\ntarget_link_libraries(x PUBLIC Qt6::Gui)\n")
+        with mock.patch.object(check_layers, "qt_header_index", return_value={}):
+            self.assertEqual(check_layers.main(), 1)
+
+    def test_layers_reads_every_suffix(self):
+        self.layer_files()
         for suffix in BYPASS_SUFFIXES:
             path = self.write(f"src/core/a{suffix}", '#include "../client/app_info.h"\n')
             with mock.patch.object(check_layers, "qt_header_index", return_value={}):
@@ -339,7 +372,12 @@ class TidyHangTest(unittest.TestCase):
         with mock.patch.object(verify, "execute", side_effect=codes) as execute:
             result = verify.tidy_files(io.StringIO(), [Path("a.cpp")])
         self.assertEqual(execute.call_count, len(codes))
+        self.limits = [call.kwargs.get("timeout") for call in execute.call_args_list]
         return result
+
+    def test_first_run_and_repetition_have_a_timeout(self):
+        self.tidy(verify.TIMED_OUT, 0)
+        self.assertEqual(self.limits, [verify.TIDY_TIMEOUT_SECONDS] * 2)
 
     def test_one_hang_is_repeated(self):
         self.assertTrue(self.tidy(verify.TIMED_OUT, 0))

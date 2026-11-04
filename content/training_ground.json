@@ -1,0 +1,39 @@
+{
+    "formatVersion": 1,
+    "startGold": 120,
+    "startLives": 5,
+    "path": [
+        { "x": 0, "y": 2 },
+        { "x": 8, "y": 2 },
+        { "x": 8, "y": 8 },
+        { "x": 16, "y": 8 }
+    ],
+    "buildSlots": [
+        { "x": 4, "y": 4 },
+        { "x": 6, "y": 0 },
+        { "x": 10, "y": 6 },
+        { "x": 12, "y": 10 }
+    ],
+    "towers": [
+        {
+            "id": "ballista",
+            "cost": 50,
+            "range": "3.5",
+            "cooldownTicks": 20,
+            "damageMin": "2",
+            "damageMax": "4.5"
+        }
+    ],
+    "enemies": [
+        {
+            "id": "mire_goblin",
+            "health": "12",
+            "speedPerTick": "0.05",
+            "bounty": 8,
+            "lifeCost": 1
+        }
+    ],
+    "wave": [
+        { "enemy": "mire_goblin", "count": 6, "delayTicks": 60, "intervalTicks": 45 }
+    ]
+}

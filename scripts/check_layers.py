@@ -91,7 +91,7 @@ def main():
         parts = relative(path).split("/")
         if parts[0] != "src" or parts[1] not in LAYERS:
             continue
-        for include in INCLUDE.findall(path.read_text(encoding="utf-8")):
+        for include in INCLUDE.findall(path.read_text(encoding="utf-8-sig")):
             problem = include_problems(parts[1], include, index, "/".join(parts[:-1]))
             if problem:
                 problems.append(f"{relative(path)}: {problem}")

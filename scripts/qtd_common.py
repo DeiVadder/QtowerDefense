@@ -62,7 +62,7 @@ def relative(path):
 
 _TOKEN = re.compile(
     rf"""
-    //[^\n]*                                  # line comment
+    //(?:\\\n|[^\n])*                         # line comment, a final backslash continues it
     | /\*.*?\*/                               # block comment
     | R"(?P<delim>[^(\s]*)\(.*?\)(?P=delim)"  # raw string
     | "(?:\\.|[^"\\\n])*"                     # string

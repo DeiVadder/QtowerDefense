@@ -6,6 +6,35 @@ qtd_add_test(tst_core_version
 target_compile_definitions(tst_core_version PRIVATE
     QTD_EXPECTED_VERSION="${PROJECT_VERSION}")
 
+qtd_add_test(tst_core_fixed
+    SOURCES core/tst_fixed.cpp
+    LIBS qtd_core
+    LABELS core)
+
+qtd_add_test(tst_core_random
+    SOURCES core/tst_random.cpp
+    LIBS qtd_core
+    LABELS core)
+
+qtd_add_test(tst_core_content
+    SOURCES core/scenario.h core/tst_content.cpp
+    LIBS qtd_core
+    LABELS core)
+target_compile_definitions(tst_core_content PRIVATE
+    QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
+qtd_add_test(tst_core_state_hash
+    SOURCES core/scenario.h core/tst_state_hash.cpp
+    LIBS qtd_core
+    LABELS core)
+
+qtd_add_test(tst_core_simulation
+    SOURCES core/scenario.h core/tst_simulation.cpp
+    LIBS qtd_core
+    LABELS core)
+target_compile_definitions(tst_core_simulation PRIVATE
+    QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
 qtd_add_test(tst_automation_build_info
     SOURCES automation/tst_build_info.cpp
     LIBS qtd_automation
