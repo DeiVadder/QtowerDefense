@@ -11,3 +11,4 @@ qtd_headless --map content/benchmark_arena.json --seed 7 --script tests/golden/b
 | Etappe | Datum | ns je Tick | Ticks je Sekunde | Vielfaches der Echtzeit |
 |---|---|---|---|---|
 | 2 | 2026-11-04 | 7.021 | 142.400 | 4.748 |
+| 3 | 2026-11-04 | 6.961 | 143.640 | 4.787 |

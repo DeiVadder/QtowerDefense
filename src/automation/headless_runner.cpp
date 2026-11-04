@@ -1,5 +1,6 @@
 #include "automation/headless_runner.h"
 
+#include "automation/report.h"
 #include "core/content_loader.h"
 #include "core/replay.h"
 #include "core/simulation.h"
@@ -9,13 +10,13 @@
 #include <QElapsedTimer>
 #include <QFileInfo>
 #include <QJsonArray>
-#include <QJsonDocument>
 #include <QJsonObject>
 #include <QLatin1StringView>
-#include <QSaveFile>
+#include <QTextStream>
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -30,37 +31,9 @@ constexpr int kExitOk = 0;
 constexpr int kExitFailed = 1;
 constexpr qint64 kNanosecondsPerSecond = 1'000'000'000;
 
-QByteArray compact(const QJsonObject &object)
-{
-    return QJsonDocument(object).toJson(QJsonDocument::Compact);
-}
-
 HeadlessOutcome failure(const QString &message)
 {
     return {kExitFailed, compact({{"error"_L1, message}})};
-}
-
-QString statusName(core::GameStatus status)
-{
-    switch (status) {
-    case core::GameStatus::Won:
-        return u"won"_s;
-    case core::GameStatus::Lost:
-        return u"lost"_s;
-    case core::GameStatus::Running:
-        break;
-    }
-    return u"running"_s;
-}
-
-QJsonObject stateReport(const core::Simulation &game)
-{
-    const core::SimulationState &state = game.state();
-    return {{"status"_L1, statusName(state.status)},
-            {"tick"_L1, state.tick},
-            {"gold"_L1, state.gold},
-            {"lives"_L1, state.lives},
-            {"hash"_L1, core::hashToText(game.hash())}};
 }
 
 /// Plays the commands of the script at their ticks, then goes on until the game ends. Commands for
@@ -80,14 +53,53 @@ void playGame(core::ReplayRecorder *recorder,
     recorder->advance(maxTicks - recorder->simulation().state().tick);
 }
 
-bool writeFile(const QString &fileName, const QByteArray &data, QString *error)
+/// The state check of a game as a text with its tick, or nothing.
+QString problemOf(const core::Simulation &game, const StateCheck &check)
 {
-    QSaveFile file(fileName);
-    if (file.open(QIODevice::WriteOnly) && file.write(data) == data.size() && file.commit()) {
-        return true;
+    const QString problem = check(game.content(), game.state());
+    return problem.isEmpty() ? problem : u"tick %1: %2"_s.arg(game.state().tick).arg(problem);
+}
+
+/// All commands of a bot for the current tick. Rejected commands must not change the game.
+QString playCommands(core::ReplayRecorder *recorder, Bot *bot, const StateCheck &check)
+{
+    const core::Simulation &game = recorder->simulation();
+    while (const std::optional<core::Command> command = bot->nextCommand(game)) {
+        const quint64 before = game.hash();
+        const bool over = game.state().status != core::GameStatus::Running;
+        const core::CommandResult result = recorder->execute(*command);
+        if (over && result != core::CommandResult::GameOver) {
+            return u"tick %1: a command ran after the end"_s.arg(game.state().tick);
+        }
+        if (result != core::CommandResult::Accepted && recorder->simulation().hash() != before) {
+            return u"tick %1: a rejected command changed the state"_s.arg(game.state().tick);
+        }
+        const QString problem = problemOf(game, check);
+        if (!problem.isEmpty()) {
+            return problem;
+        }
     }
-    *error = u"%1: %2"_s.arg(fileName, file.errorString());
-    return false;
+    return {};
+}
+
+/// Lets a bot play, also after the end of the game, where commands must be rejected. Checks the
+/// state from the start on. Gives a text for the first broken rule, or nothing.
+QString
+playWithBot(core::ReplayRecorder *recorder, Bot *bot, const StateCheck &check, qint64 maxTicks)
+{
+    const core::Simulation &game = recorder->simulation();
+    QString problem = problemOf(game, check);
+    while (problem.isEmpty()) {
+        problem = playCommands(recorder, bot, check);
+        if (game.state().status != core::GameStatus::Running || game.state().tick >= maxTicks) {
+            break;
+        }
+        if (problem.isEmpty()) {
+            recorder->advance(1);
+            problem = problemOf(game, check);
+        }
+    }
+    return problem;
 }
 
 QJsonObject benchmarkReport(qint64 ticks, qint64 nanoseconds)
@@ -108,13 +120,67 @@ HeadlessOutcome verify(const HeadlessOptions &options, core::Content content)
         return failure(loaded.error);
     }
     core::ReplayPlayer player(std::move(content), *std::move(loaded.replay));
-    player.step(std::numeric_limits<qint64>::max());
+    QString problem = problemOf(player.simulation(), options.check);
+    while (problem.isEmpty() && !player.finished()) {
+        player.step(1);
+        problem = problemOf(player.simulation(), options.check);
+    }
     QJsonObject report = stateReport(player.simulation());
     report.insert("matches"_L1, player.error().isEmpty());
     if (!player.error().isEmpty()) {
         report.insert("difference"_L1, player.error());
     }
-    return {player.error().isEmpty() ? kExitOk : kExitFailed, compact(report)};
+    if (!problem.isEmpty()) {
+        report.insert("invariant"_L1, problem);
+    }
+    const bool good = player.error().isEmpty() && problem.isEmpty();
+    return {good ? kExitOk : kExitFailed, compact(report)};
+}
+
+QJsonObject gameReport(const core::Simulation &game, const core::Replay &replay, quint64 seed)
+{
+    QJsonObject report = stateReport(game);
+    report.insert("seed"_L1, QString::number(seed));
+    report.insert("commands"_L1, static_cast<qint64>(replay.commands.size()));
+    report.insert(
+        "rejected"_L1,
+        static_cast<qint64>(std::ranges::count_if(replay.commands, [](const auto &recorded) {
+            return recorded.result != core::CommandResult::Accepted;
+        })));
+    return report;
+}
+
+/// Keeps a broken game as a replay, so that the problem can be repeated.
+HeadlessOutcome keepBrokenGame(const QString &problem, const core::Replay &replay, QString fileName)
+{
+    if (fileName.isEmpty()) {
+        fileName = u"failure-%1.replay.json"_s.arg(replay.seed);
+    }
+    QString error;
+    if (!writeFile(fileName, core::toJson(replay), &error)) {
+        return failure(u"%1, and no replay: %2"_s.arg(problem, error));
+    }
+    return {kExitFailed,
+            compact({{"error"_L1, problem},
+                     {"seed"_L1, QString::number(replay.seed)},
+                     {"replay"_L1, fileName}})};
+}
+
+/// Plays one game. A crash leaves no replay, so a fuzz run names each seed before it starts.
+QString playOneGame(core::ReplayRecorder *recorder,
+                    const HeadlessOptions &options,
+                    const std::vector<core::RecordedCommand> &commands,
+                    quint64 seed)
+{
+    if (options.bot == BotKind::Idle) {
+        playGame(recorder, commands, options.maxTicks);
+        return {};
+    }
+    if (options.bot == BotKind::Fuzz) {
+        QTextStream(stderr) << "fuzz game with seed " << seed << '\n';
+    }
+    const std::unique_ptr<Bot> bot = makeBot(options.bot, seed);
+    return playWithBot(recorder, bot.get(), options.check, options.maxTicks);
 }
 
 HeadlessOutcome playGames(const HeadlessOptions &options, const core::Content &content)
@@ -138,20 +204,15 @@ HeadlessOutcome playGames(const HeadlessOptions &options, const core::Content &c
         core::ReplayRecorder recorder(content, contentName, seed);
         QElapsedTimer timer;
         timer.start();
-        playGame(&recorder, commands, options.maxTicks);
+        const QString problem = playOneGame(&recorder, options, commands, seed);
         nanoseconds += timer.nsecsElapsed();
         ticks += recorder.simulation().state().tick;
 
         const core::Replay replay = recorder.replay();
-        QJsonObject report = stateReport(recorder.simulation());
-        report.insert("seed"_L1, QString::number(seed));
-        report.insert("commands"_L1, static_cast<qint64>(replay.commands.size()));
-        report.insert(
-            "rejected"_L1,
-            static_cast<qint64>(std::ranges::count_if(replay.commands, [](const auto &recorded) {
-                return recorded.result != core::CommandResult::Accepted;
-            })));
-        games.append(report);
+        if (!problem.isEmpty()) {
+            return keepBrokenGame(problem, replay, options.record);
+        }
+        games.append(gameReport(recorder.simulation(), replay, seed));
 
         QString error;
         if (!options.record.isEmpty() && !writeFile(options.record, core::toJson(replay), &error)) {
@@ -178,8 +239,18 @@ HeadlessOutcome run(const HeadlessOptions &options)
 /// The first rule that the given options break, or nothing.
 QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
 {
+    if (options.control) {
+        const bool alone = options.map.isEmpty() && options.replay.isEmpty() &&
+                           options.script.isEmpty() && options.record.isEmpty() &&
+                           options.output.isEmpty() && !options.seed && options.runs == 1 &&
+                           options.bot == BotKind::Idle && !maxTicksGiven && !options.benchmark;
+        return alone ? QString() : u"--control takes its games from the protocol"_s;
+    }
     if (options.map.isEmpty()) {
         return u"--map is required"_s;
+    }
+    if (options.bot != BotKind::Idle && !options.script.isEmpty()) {
+        return u"--bot and --script both want to play"_s;
     }
     if (options.runs < 1) {
         return u"--runs must be at least 1"_s;
@@ -190,8 +261,9 @@ QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
     if (options.runs > 1 && !options.record.isEmpty()) {
         return u"--record takes a single run"_s;
     }
-    if (!options.replay.isEmpty() && (options.seed || options.runs > 1 ||
-                                      !options.script.isEmpty() || !options.record.isEmpty())) {
+    if (!options.replay.isEmpty() &&
+        (options.seed || options.runs > 1 || options.bot != BotKind::Idle ||
+         !options.script.isEmpty() || !options.record.isEmpty())) {
         return u"--replay brings its own seed and commands"_s;
     }
     if (!options.replay.isEmpty() && (maxTicksGiven || options.benchmark)) {
@@ -222,10 +294,16 @@ bool readNumber(const QCommandLineParser &parser,
     return ok;
 }
 
-std::optional<HeadlessBot> botFromName(const QString &name)
+std::optional<BotKind> botFromName(const QString &name)
 {
     if (name == "idle"_L1) {
-        return HeadlessBot::Idle;
+        return BotKind::Idle;
+    }
+    if (name == "naive"_L1) {
+        return BotKind::Naive;
+    }
+    if (name == "fuzz"_L1) {
+        return BotKind::Fuzz;
     }
     return std::nullopt;
 }
@@ -240,7 +318,7 @@ struct CommandLine
         u"seed"_s, u"Seed of the first game, default: of the script, or 1."_s, u"number"_s};
     QCommandLineOption runs{
         u"runs"_s, u"Number of games, seeds count up, default 1."_s, u"number"_s};
-    QCommandLineOption bot{u"bot"_s, u"Who plays: idle, the default."_s, u"name"_s};
+    QCommandLineOption bot{u"bot"_s, u"Who plays: idle, the default, naive or fuzz."_s, u"name"_s};
     QCommandLineOption script{u"script"_s, u"Play the commands of a file."_s, u"file"_s};
     QCommandLineOption replay{u"replay"_s, u"Check a replay against --map."_s, u"file"_s};
     QCommandLineOption record{u"record"_s, u"Write the game as a replay."_s, u"file"_s};
@@ -248,6 +326,7 @@ struct CommandLine
     QCommandLineOption maxTicks{
         u"max-ticks"_s, u"Stop a game at this tick, default 1000000."_s, u"number"_s};
     QCommandLineOption benchmark{u"benchmark"_s, u"Add measured tick durations."_s};
+    QCommandLineOption control{u"control"_s, u"Speak the JSON protocol on stdin and stdout."_s};
 };
 
 void readOptions(const QCommandLineParser &parser,
@@ -261,11 +340,12 @@ void readOptions(const QCommandLineParser &parser,
     options.record = parser.value(line.record);
     options.output = parser.value(line.output);
     options.benchmark = parser.isSet(line.benchmark);
+    options.control = parser.isSet(line.control);
     if (parser.isSet(line.bot)) {
         const QString name = parser.value(line.bot);
-        const std::optional<HeadlessBot> bot = botFromName(name);
+        const std::optional<BotKind> bot = botFromName(name);
         if (!bot) {
-            result->error = u"unknown bot \"%1\", available: idle"_s.arg(name);
+            result->error = u"unknown bot \"%1\", available: idle, naive, fuzz"_s.arg(name);
             return;
         }
         options.bot = *bot;
@@ -299,7 +379,8 @@ HeadlessArguments parseHeadlessArguments(const QStringList &arguments)
                        line.record,
                        line.output,
                        line.maxTicks,
-                       line.benchmark});
+                       line.benchmark,
+                       line.control});
 
     HeadlessArguments result;
     result.helpText = parser.helpText();

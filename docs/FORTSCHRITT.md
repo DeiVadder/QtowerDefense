@@ -2,22 +2,25 @@
 
 ## Stand
 
-- **Etappe:** 0, 1 und 2 sind geprüft und in `dev` (Etappe 2: `37fe03f`). `feature/llvm-update` (`87ceb1a`, E-22) und `feature/enums-statt-strings` (`5bb0021`) sind geprüft und in `dev`. In Arbeit ist `feature/typ-index`.
+- **Etappe:** 0, 1, 2 und 3 sind geprüft und in `dev` (Etappe 2: `37fe03f`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Vier Golden Replays. Keine Anbindung an den Client.
-- **Letzter voller `verify`:** grün, 12 bestanden, 3 MISSING (Fuzz, Balancing, Smoke). Coverage Core 99,3 %, Automation 98,7 %. Benchmark rund 4.700-fache Echtzeit (`docs/Performance-Verlauf.md`).
+- **Dazu aus Etappe 3:** `naive` und `fuzz` als Bots, Invarianten, JSON-Steuerschnittstelle über `qtd_headless --control`, Fuzz-Stufe in `verify` (E-23).
+- **Letzter voller `verify`:** grün, 13 bestanden, 2 MISSING (Balancing, Smoke). Coverage Core 99,2 %, Automation 97,3 %. Benchmark rund 4.800-fache Echtzeit (`docs/Performance-Verlauf.md`).
 - **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
+- **Review von Etappe 3:** Zwei Runden nicht bestanden: `saveReplay` hing bei NUL und bei rund 32.760 Zeichen im Dateinamen, Ctrl-Z beendete die Sitzung, Invarianten liefen zu selten, der Fehlerpfad hatte keinen Test, dazu doppelte Logik. Alles behoben oder in E-23 und unten begründet, die dritte Runde bestand mit Mutanten (`285e8a2`). Die Coverage von Core maß das Review im frischen Klon mit 882/888 statt 881/888; ungeklärt, ohne Folgen für die Schwelle.
 - **cppcheck** analysiert wirklich alle Dateien, siehe E-19.
 
 ## Nächster Schritt
 
-1. Feature `feature/typ-index` abschließen: Review und Merge.
-2. Etappe 3 (Steuerschnittstelle und Bots).
+1. Etappe 4.
 
 ## Bekannte Mängel und offene Punkte
 
-- **Stufen ohne Inhalt (MISSING in `verify`):** Fuzz-Bot (3), Smoke-Test mit Screenshot (5), Balancing (12).
+- **Stufen ohne Inhalt (MISSING in `verify`):** Smoke-Test mit Screenshot (5), Balancing (12).
+- **Steuerschnittstelle:** Bisher nur `qtd_headless --control` auf Standard-Ein- und -Ausgabe. Die Aktionen zu Regeln, die es noch nicht gibt, fehlen, der localhost-Transport für das echte Spiel auch (E-23, `docs/Steuerschnittstelle.md`). Für den localhost-Transport muss `startMap` und `saveReplay` auf erlaubte Pfade beschränkt werden, heute lesen und überschreiben sie jeden Pfad. Bauplätze und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
+- **Fuzz-Prüfung:** Die Zeilen für „abgelehnter Befehl änderte den Zustand" und „Befehl lief nach Spielende" in `headless_runner.cpp` laufen in keinem Test, weil dafür die Simulation fehlerhaft sein müsste. Das Review hat die erste mit einem Mutanten geprüft.
 - **Simulation, bewusst offen:** Doppelte Schlüssel im Inhalts-JSON bleiben unerkannt (E-16). `distance()` rundet schon das Quadrat auf vier Stellen, sehr kurze Pfadstücke unter etwa 0,01 Felder werden dadurch ungenau; abstürzen kann das nicht. Lesbare Texte der Ladefehler sind Englisch und noch nicht übersetzbar, sie richten sich an Autoren der Daten.
-- **Aus dem Review von Etappe 2, nicht behoben:** `--replay --runs 1` wird angenommen, obwohl die Doku `--runs` ausschließt; wirkungslos, weil genau ein Lauf gemeint ist. `count_if` in `headless_runner.cpp` ist für Linux und Android gecastet, dort aber nicht kompiliert.
+- **Aus dem Review von Etappe 2, nicht behoben:** `--replay --runs 1` und `--control --runs 1` werden angenommen, obwohl die Doku `--runs` ausschließt; wirkungslos, weil genau ein Lauf gemeint ist. `count_if` in `headless_runner.cpp` ist für Linux und Android gecastet, dort aber nicht kompiliert.
 - **Hinweise aus dem Review von Etappe 1, nicht behoben:**
   - Ein Pfad kann die Länge 0 haben, wenn Stücke unter etwa 0,01 Felder runden; das stürzt nicht ab, sollte der Lader aber ablehnen.
   - Keine Grenze für Listenlängen und Gegnerzahlen: `content_loader.cpp` prüft Bauplätze quadratisch (40.000 Plätze 2,8 s in Debug), Wellen mit 10^9 Gegnern begrenzen weder Speicher noch Tick-Kosten.
@@ -37,7 +40,7 @@
 - **OpenCppCoverage-Setup** hat einen HKLM-Uninstall-Schlüssel und einen Benutzer-`PATH`-Eintrag außerhalb von `C:\dev` hinterlassen (`docs/Building.md`).
 - **QmlPreview MCP** ist nicht installiert (Qt Maintenance Tool, Komponente „Agentic Development Tools", macht der Mensch). `qt-docs` und das LSP standen den Subagenten von Etappe 1 nicht zur Verfügung, weil ihre Sitzung vor dem Plugin gestartet war.
 - **Inline-Code in Headern** zählt für Coverage nur, wenn eine Übersetzungseinheit ihn nutzt. Der Abgleich aus E-13 erfasst nur Quelldateien.
-- `qtd_headless --bot` kennt nur `idle`, Bots folgen in Etappe 3. `QtowerDefense.exe` startet nur mit Qt auf dem `PATH` (kein Deployment).
+- `QtowerDefense.exe` startet nur mit Qt auf dem `PATH` (kein Deployment).
 
 ## Etappen
 

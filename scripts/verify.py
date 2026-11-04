@@ -27,6 +27,9 @@ LOGS = REPO / "build" / "verify-logs"
 SCRIPTS = REPO / "scripts"
 PYTHON = sys.executable
 TIDY_JOBS = 6
+FUZZ_MAPS = ("training_ground.json", "benchmark_arena.json")
+FUZZ_RUNS = 40
+FUZZ_TIMEOUT_SECONDS = 300
 FIRST_WINDOWS_EXCEPTION = 0xC0000000
 TIMED_OUT = -1
 TIDY_TIMEOUT_SECONDS = 300
@@ -150,6 +153,19 @@ def stage_coverage(log):
     return build(log, "coverage") and run(log, PYTHON, SCRIPTS / "coverage.py")
 
 
+def stage_fuzz(log):
+    """Runs after the sanitizer stages, which build the programs. A broken game leaves its replay
+    in the folder of the logs."""
+    LOGS.mkdir(parents=True, exist_ok=True)
+    for preset in ("asan", "ubsan"):
+        program = REPO / "build" / preset / "bin" / "qtd_headless.exe"
+        for name in FUZZ_MAPS:
+            arguments = ("--map", REPO / "content" / name, "--bot", "fuzz", "--runs", FUZZ_RUNS)
+            if not run(log, program, *arguments, cwd=LOGS, timeout=FUZZ_TIMEOUT_SECONDS):
+                return False
+    return True
+
+
 def missing(reason):
     return reason
 
@@ -169,7 +185,7 @@ FULL_STAGES = [
     ("AddressSanitizer", stage_build_and_test("asan")),
     ("UBSan", stage_build_and_test("ubsan")),
     ("coverage", stage_coverage),
-    ("fuzz bot", missing("arrives with stage 3 (fuzz bot)")),
+    ("fuzz bot (ASan, UBSan)", stage_fuzz),
     ("balancing runs", missing("arrives with stage 12 (balancing)")),
     ("smoke test with screenshot", missing("arrives with stage 5 (smoke test)")),
 ]

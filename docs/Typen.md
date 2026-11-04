@@ -7,11 +7,18 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 
 | Typ | Art | Datei | Zweck |
 |---|---|---|---|
+| `FuzzBot` | class | `bot.cpp` |  |
+| `IdleBot` | class | `bot.cpp` |  |
+| `NaiveBot` | class | `bot.cpp` |  |
+| `Bot` | class | `bot.h` | Decides what to do. |
+| `BotKind` | enum class | `bot.h` | The players that need no script. |
+| `Action` | enum class | `control_session.cpp` |  |
+| `ControlSession` | class | `control_session.h` | The control interface without its transport: one JSON request in, one JSON answer out. |
 | `CommandLine` | struct | `headless_runner.cpp` | The options of the command line. |
 | `HeadlessArguments` | struct | `headless_runner.h` | Holds the options, or an error text. |
-| `HeadlessBot` | enum class | `headless_runner.h` | Who plays a game without a script. |
 | `HeadlessOptions` | struct | `headless_runner.h` | What a run of qtd_headless should do, see docs/Architektur.md. |
 | `HeadlessOutcome` | struct | `headless_runner.h` | The report as JSON, and the exit code of the program. |
+| `StateCheck` | using | `invariants.h` | Judges a state: a text for the first problem, or nothing. |
 
 ## client
 

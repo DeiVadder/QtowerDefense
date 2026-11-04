@@ -56,6 +56,10 @@ std::optional<quint64> hashFromText(QStringView text);
 
 /// The text of a command result in files and reports.
 QString toString(CommandResult result);
+QString toString(GameStatus status);
+
+/// A seed from its decimal text, the only form it has outside. Signs and spaces do not count.
+std::optional<quint64> seedFromText(const QString &text);
 
 /// The file format, stable for equal replays. See docs/Architektur.md.
 QByteArray toJson(const Replay &replay);

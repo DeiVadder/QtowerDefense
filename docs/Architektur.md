@@ -1,6 +1,6 @@
 # Architektur
 
-Stand Etappe 2: Simulationskern, Replays und `qtd_headless`, noch ohne Anbindung an den Client. Steuerschnittstelle und Bots folgen ab Etappe 3.
+Stand Etappe 3: Simulationskern, Replays, `qtd_headless`, Bots und Steuerschnittstelle, noch ohne Anbindung an den Client.
 
 ## Module
 
@@ -69,13 +69,14 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | `--map <Datei>` | Inhaltsdatei, Pflicht |
 | `--seed <Zahl>` | Seed des ersten Spiels. Standard: der Seed des Skripts, ohne Skript 1 |
 | `--runs <Zahl>` | Anzahl Spiele, die Seeds zählen hoch |
-| `--bot <Name>` | Wer spielt, bisher nur `idle` |
+| `--bot <Name>` | Wer spielt: `idle`, `naive` oder `fuzz`. Schließt `--script` aus. Verletzt ein Spiel eine Invariante, endet der Lauf mit Exit-Code 1 und das Spiel liegt als Replay in `--record` oder `failure-<Seed>.replay.json`. `fuzz` nennt jeden Seed vorab auf der Fehlerausgabe, denn ein Absturz hinterlässt kein Replay |
 | `--script <Datei>` | Spielt die Befehle der Datei |
-| `--replay <Datei>` | Prüft ein Replay gegen `--map` bis zu seinem Ende, schließt `--seed`, `--runs`, `--script`, `--record`, `--max-ticks` und `--benchmark` aus |
+| `--replay <Datei>` | Prüft ein Replay gegen `--map` bis zu seinem Ende, Tick für Tick auch die Invarianten (Bericht `"invariant"`, Exit-Code 1). Schließt `--seed`, `--runs`, `--bot`, `--script`, `--record`, `--max-ticks` und `--benchmark` aus |
 | `--record <Datei>` | Schreibt das Spiel als Replay, nur für einen Lauf |
 | `--output <Datei>` | Schreibt den Bericht zusätzlich in eine Datei |
 | `--max-ticks <Zahl>` | Beendet ein Spiel spätestens bei diesem Tick, spätere Befehle entfallen. Standard 1000000 |
 | `--benchmark` | Ergänzt gemessene Tick-Dauern, sonst ist der Bericht je Eingabe gleich |
+| `--control` | Spricht das JSON-Protokoll auf Standard-Ein- und -Ausgabe (`docs/Steuerschnittstelle.md`). Schließt alle anderen Optionen aus. Standardmäßig aus |
 | `--build-info` | Programm und Version als JSON |
 
 ## Tests
@@ -83,7 +84,7 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | Label | Inhalt |
 |---|---|
 | `core` | QtTest: `tst_core_version`, `_fixed`, `_random`, `_content`, `_state_hash`, `_simulation`, `_tick_clock`, `_replay`. Tests schalten Ticks von Hand weiter; `tests/core/scenario.h` ist die von Hand nachrechenbare Beispielpartie |
-| `automation` | QtTest, dazu `qtd_headless --build-info` |
+| `automation` | QtTest: `tst_automation_headless_runner`, `_invariants`, `_control_session`, `_build_info`; dazu `qtd_headless --build-info` und `headless_control` (echter Prozess, beide Zeilenenden, Leerzeile, Ctrl-Z) |
 | `golden` | `tst_golden` (festgeschriebene Hashes, Tempo 1x bis 3x mit ungleichen Frames und Pause, Neuaufzeichnung Byte für Byte), `headless_golden_defence` (eigener Prozess, Hash zusätzlich in `tests/CMakeLists.txt`) |
 | `client` | `tst_client_window` (rendert das echte Fenster auf der GPU), `tst_qml` (QuickTest) |
 | `asan` | `asan_selfcheck`, nur im Preset `asan`: muss mit einem ASan-Bericht sterben |

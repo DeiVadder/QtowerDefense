@@ -10,6 +10,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <cstddef>
+#include <set>
+
 using qtd::automation::HeadlessArguments;
 using qtd::automation::HeadlessOptions;
 using qtd::automation::HeadlessOutcome;
@@ -36,6 +39,18 @@ HeadlessOptions options()
     HeadlessOptions result;
     result.map = mapFile();
     return result;
+}
+
+/// A fuzz game whose state check calls tick 5 broken.
+HeadlessOptions brokenAtTick5()
+{
+    HeadlessOptions game = options();
+    game.bot = qtd::automation::BotKind::Fuzz;
+    game.seed = 11;
+    game.check = [](const qtd::core::Content &, const qtd::core::SimulationState &state) {
+        return state.tick == 5 ? u"broken"_s : QString();
+    };
+    return game;
 }
 
 QJsonObject parsed(const QByteArray &json)
@@ -116,7 +131,7 @@ private slots:
         QTest::newRow("max ticks") << map + QStringList{u"--max-ticks"_s, u"-1"_s}
                                    << u"--max-ticks must not be negative"_s;
         QTest::newRow("bot") << map + QStringList{u"--bot"_s, u"clever"_s}
-                             << u"unknown bot \"clever\", available: idle"_s;
+                             << u"unknown bot \"clever\", available: idle, naive, fuzz"_s;
         QTest::newRow("record many")
             << map + QStringList{u"--runs"_s, u"2"_s, u"--record"_s, u"r"_s}
             << u"--record takes a single run"_s;
@@ -129,6 +144,18 @@ private slots:
         QTest::newRow("replay and benchmark")
             << map + QStringList{u"--replay"_s, u"r"_s, u"--benchmark"_s}
             << u"--replay runs to its end and measures nothing"_s;
+        QTest::newRow("bot and script")
+            << map + QStringList{u"--bot"_s, u"naive"_s, u"--script"_s, u"s"_s}
+            << u"--bot and --script both want to play"_s;
+        QTest::newRow("control and bot") << QStringList{u"--control"_s, u"--bot"_s, u"fuzz"_s}
+                                         << u"--control takes its games from the protocol"_s;
+        QTest::newRow("control and output") << QStringList{u"--control"_s, u"--output"_s, u"o"_s}
+                                            << u"--control takes its games from the protocol"_s;
+        QTest::newRow("replay and bot")
+            << map + QStringList{u"--replay"_s, u"r"_s, u"--bot"_s, u"fuzz"_s}
+            << u"--replay brings its own seed and commands"_s;
+        QTest::newRow("control and map") << map + QStringList{u"--control"_s}
+                                         << u"--control takes its games from the protocol"_s;
         QTest::newRow("replay and script")
             << map + QStringList{u"--replay"_s, u"r"_s, u"--script"_s, u"s"_s}
             << u"--replay brings its own seed and commands"_s;
@@ -245,6 +272,125 @@ private slots:
         QCOMPARE(report["commands"_L1].toInteger(), 1);
         QCOMPARE(report["gold"_L1].toInteger(), 70);
         QCOMPARE(report["tick"_L1].toInteger(), 10);
+    }
+
+    void theNaiveBotDefendsTheTrainingGround()
+    {
+        HeadlessOptions game = options();
+        game.bot = qtd::automation::BotKind::Naive;
+        game.seed = 7;
+        const QJsonObject report =
+            parsed(runHeadless(game).json)["games"_L1].toArray().first().toObject();
+        QCOMPARE(report["status"_L1].toString(), u"won"_s);
+        QCOMPARE(report["rejected"_L1].toInteger(), 0);
+        QVERIFY(report["commands"_L1].toInteger() >= 2); // 120 gold pay for two towers at once
+    }
+
+    void aFuzzRunIsRepeatable()
+    {
+        HeadlessOptions game = options();
+        game.bot = qtd::automation::BotKind::Fuzz;
+        game.seed = 3;
+        game.runs = 10;
+        const HeadlessOutcome first = runHeadless(game);
+        QCOMPARE(first.exitCode, 0);
+        QCOMPARE(runHeadless(game).json, first.json);
+        qint64 commands = 0;
+        qint64 rejected = 0;
+        const QJsonArray games = parsed(first.json)["games"_L1].toArray();
+        for (const QJsonValueConstRef report : games) {
+            commands += report.toObject()["commands"_L1].toInteger();
+            rejected += report.toObject()["rejected"_L1].toInteger();
+        }
+        QVERIFY(rejected > 0);
+        QVERIFY(commands > rejected);
+    }
+
+    void aBrokenGameStaysRepeatable()
+    {
+        const QTemporaryDir directory;
+        HeadlessOptions game = brokenAtTick5();
+        game.record = directory.filePath(u"broken.replay.json"_s);
+        const HeadlessOutcome outcome = runHeadless(game);
+        QCOMPARE(outcome.exitCode, 1);
+        const QJsonObject report = parsed(outcome.json);
+        QCOMPARE(report["error"_L1].toString(), u"tick 5: broken"_s);
+        QCOMPARE(report["seed"_L1].toString(), u"11"_s);
+        QCOMPARE(report["replay"_L1].toString(), game.record);
+
+        HeadlessOptions healthy = options();
+        healthy.replay = game.record;
+        QCOMPARE(runHeadless(healthy).exitCode, 0);
+
+        HeadlessOptions check = healthy;
+        check.check = game.check;
+        const HeadlessOutcome repeated = runHeadless(check);
+        QCOMPARE(repeated.exitCode, 1);
+        QCOMPARE(parsed(repeated.json)["invariant"_L1].toString(), u"tick 5: broken"_s);
+        QVERIFY(parsed(repeated.json)["matches"_L1].toBool());
+    }
+
+    void aBrokenGameFindsAPlaceOfItsOwn()
+    {
+        const QTemporaryDir directory;
+        const QString before = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(directory.path()));
+        const HeadlessOutcome outcome = runHeadless(brokenAtTick5());
+        const bool written = QFile::exists(u"failure-11.replay.json"_s);
+        QVERIFY(QDir::setCurrent(before));
+        QCOMPARE(outcome.exitCode, 1);
+        QVERIFY(written);
+    }
+
+    void aBrokenGameWithoutAPlaceForItsReplaySaysSo()
+    {
+        HeadlessOptions game = brokenAtTick5();
+        game.record = u"no/such/folder/x"_s;
+        const HeadlessOutcome outcome = runHeadless(game);
+        QCOMPARE(outcome.exitCode, 1);
+        QVERIFY(parsed(outcome.json)["error"_L1].toString().startsWith(
+            u"tick 5: broken, and no replay"_s));
+    }
+
+    void aBrokenStartIsFound()
+    {
+        HeadlessOptions game = brokenAtTick5();
+        game.check = [](const qtd::core::Content &, const qtd::core::SimulationState &) {
+            return u"broken"_s;
+        };
+        const QTemporaryDir directory;
+        game.record = directory.filePath(u"broken.replay.json"_s);
+        QCOMPARE(parsed(runHeadless(game).json)["error"_L1].toString(), u"tick 0: broken"_s);
+    }
+
+    void fuzzGamesEndBothWays()
+    {
+        HeadlessOptions game = options();
+        game.bot = qtd::automation::BotKind::Fuzz;
+        game.seed = 1;
+        game.runs = 40;
+        const HeadlessOutcome outcome = runHeadless(game);
+        QCOMPARE(outcome.exitCode, 0);
+        std::set<QString> ends;
+        const QJsonArray games = parsed(outcome.json)["games"_L1].toArray();
+        for (const QJsonValueConstRef report : games) {
+            ends.insert(report.toObject()["status"_L1].toString());
+        }
+        QCOMPARE(ends.size(), std::size_t{2});
+    }
+
+    void aRecordedFuzzGamePassesItsCheck()
+    {
+        const QTemporaryDir directory;
+        HeadlessOptions game = options();
+        game.bot = qtd::automation::BotKind::Fuzz;
+        game.seed = 5;
+        game.record = directory.filePath(u"fuzz.replay.json"_s);
+        QCOMPARE(runHeadless(game).exitCode, 0);
+
+        HeadlessOptions check = options();
+        check.replay = game.record;
+        QCOMPARE(runHeadless(check).exitCode, 0);
     }
 
     void aRecordedGamePassesItsCheck()

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "automation/bot.h"
+#include "automation/invariants.h"
+
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
@@ -11,24 +14,21 @@ namespace qtd::automation {
 
 constexpr quint64 kDefaultSeed = 1;
 
-/// Who plays a game without a script. The command line names them, see parseHeadlessArguments.
-enum class HeadlessBot : quint8 {
-    Idle,
-};
-
 /// What a run of qtd_headless should do, see docs/Architektur.md.
 struct HeadlessOptions
 {
     QString map;
     std::optional<quint64> seed; // otherwise the seed of the script, or kDefaultSeed
     qint64 runs = 1;
-    HeadlessBot bot = HeadlessBot::Idle;
+    BotKind bot = BotKind::Idle;
     QString script;
     QString replay;
     QString record;
     QString output;
     qint64 maxTicks = 1'000'000;
     bool benchmark = false;
+    bool control = false;
+    StateCheck check = checkInvariants; // for bots and replays
 };
 
 /// Holds the options, or an error text.

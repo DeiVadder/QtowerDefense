@@ -49,13 +49,11 @@ bool isDecimalDigit(QChar c)
 
 quint64 readSeed(ObjectReader &root)
 {
-    const QString text = root.text("seed"_L1);
-    bool ok = std::ranges::all_of(text, isDecimalDigit);
-    const quint64 seed = ok ? text.toULongLong(&ok) : 0;
-    if (!ok) {
+    const std::optional<quint64> seed = seedFromText(root.text("seed"_L1));
+    if (!seed) {
         root.fail(u"seed"_s, u"must be a text of decimal digits that fits 64 bits"_s);
     }
-    return seed;
+    return seed.value_or(0);
 }
 
 quint64 readHash(ObjectReader &reader, QLatin1StringView key)
@@ -192,6 +190,26 @@ std::optional<quint64> hashFromText(QStringView text)
         return std::nullopt;
     }
     return text.toULongLong(nullptr, 16);
+}
+
+std::optional<quint64> seedFromText(const QString &text)
+{
+    bool ok = !text.isEmpty() && std::ranges::all_of(text, isDecimalDigit);
+    const quint64 seed = ok ? text.toULongLong(&ok) : 0;
+    return ok ? std::optional<quint64>(seed) : std::nullopt;
+}
+
+QString toString(GameStatus status)
+{
+    switch (status) {
+    case GameStatus::Won:
+        return u"won"_s;
+    case GameStatus::Lost:
+        return u"lost"_s;
+    case GameStatus::Running:
+        break;
+    }
+    return u"running"_s;
 }
 
 QString toString(CommandResult result)

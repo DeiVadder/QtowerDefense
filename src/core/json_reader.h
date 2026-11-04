@@ -41,6 +41,10 @@ public:
     {
         return !error_->isEmpty();
     }
+    const QString &error() const
+    {
+        return *error_;
+    }
 
     /// Whether an optional key is there. It counts as known either way.
     bool has(QLatin1StringView key);
