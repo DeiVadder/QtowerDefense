@@ -40,8 +40,8 @@ Reihenfolge in einem Tick: Gegner laufen (wer das Pfadende erreicht, kostet Lebe
 - `path`: mindestens zwei Ecken `{x, y}` auf dem Raster, je zwei nacheinander in einer Zeile oder Spalte
 - `gridWidth`, `gridHeight`: Größe des Rasters, je 1 bis 256 Felder. Der Mittelpunkt von Feld `(x, y)` ist der Kartenpunkt `(x, y)`
 - `obstacles`: Felder mit `terrain` (`rock`, `tree`, `water`), `x` und `y`, darf leer sein
-- `towers`: `id`, `cost`, `range`, `cooldownTicks`, `damageMin`, `damageMax`, `footprint` (Felder `{x, y}` relativ zum Standfeld, mit `0, 0`, je Richtung höchstens 8; beim Bauen drehbar, E-27)
-- `enemies`: `id`, `health`, `speedPerTick`, `bounty`, `lifeCost`
+- `towers`: `id`, `cost`, `range`, `cooldownTicks`, `damageMin`, `damageMax`, `damageType` (`physical`, `magic`, `fire`, `ice`), optional `effects` (je Art höchstens einmal: `kind` `slow` oder `poison`, `strength`, `durationTicks`), `footprint` (Felder `{x, y}` relativ zum Standfeld, mit `0, 0`, je Richtung höchstens 8; beim Bauen drehbar, E-27)
+- `enemies`: `id`, `health`, `speedPerTick`, `bounty`, `lifeCost`, optional `resistances` (`damageType`, `share` von -1 bis 1, E-28)
 - `wave`: Gruppen aus `enemy`, `count`, `delayTicks` (Wartezeit vor dem ersten Gegner), `intervalTicks`
 
 Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen (E-16). Befehle und der Zustand sprechen Typen über Indizes an, die IDs dienen nur den Verweisen in den Daten.
@@ -50,7 +50,7 @@ Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen 
 
 Eine Replay-Datei (`*.replay.json`) enthält `formatVersion` (1), `content` (Dateiname der Inhalte), `seed` (Dezimaltext, 64 Bit), `contentHash`, `commands` und `checkpoints`. Hashes sind 16 kleine Hex-Ziffern.
 
-- `commands`: `tick`, `type` (`buildTower`), `x`, `y`, `towerType`, `rotation` (0 bis 3, darf fehlen), `result` (`accepted`, `gameOver`, `unknownTowerType`, `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold`). Auch abgelehnte Befehle stehen darin.
+- `commands`: `tick`, `type`, `result` (`accepted`, `gameOver`, `unknownTowerType`, `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold`, `unknownTower`). Zu `buildTower` gehören `x`, `y`, `towerType`, `rotation` (0 bis 3, darf fehlen), zu `setTargetPriority` `tower` (ID) und `priority` (`first`, `last`, `strongest`, `nearest`). Auch abgelehnte Befehle stehen darin.
 - `checkpoints`: `tick`, `hash`: der Zustand nach allen Befehlen dieses Ticks. Einer je Sekunde Spielzeit ab Tick 0, der letzte ist das Ende der Aufzeichnung.
 
 Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` dürfen fehlen und bedeuten nichts. `seed` gilt, solange `--seed` ihn nicht ersetzt; `content` dient nur der Orientierung, gespielt wird `--map`. Jedes Replay ist auch ein Skript.

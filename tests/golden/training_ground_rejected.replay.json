@@ -1,60 +1,156 @@
 {
     "checkpoints": [
         {
-            "hash": "a6dae5f1918a3945",
+            "hash": "c4243d87cb02397a",
             "tick": 0
         },
         {
-            "hash": "03e625949b63ee94",
+            "hash": "2afa1c49263b509b",
             "tick": 30
         },
         {
-            "hash": "3630bf09d9dac3ac",
+            "hash": "2e37ccdf88c6ad33",
             "tick": 60
         },
         {
-            "hash": "cc37c29cc1158e01",
+            "hash": "b7df4a75df03718e",
             "tick": 90
         },
         {
-            "hash": "6b157d20a2f93fb2",
+            "hash": "7a9199012e932edd",
             "tick": 120
         },
         {
-            "hash": "51e6d3e7a3aa7805",
+            "hash": "2bd38d9470ea2d86",
             "tick": 150
         },
         {
-            "hash": "56c4b30552728d1a",
+            "hash": "3ba6d8ad65342479",
             "tick": 180
         },
         {
-            "hash": "f51fea4a184296b0",
+            "hash": "4b33050bc3e61acf",
             "tick": 210
         },
         {
-            "hash": "1d152d67ec0d83b0",
+            "hash": "9daf5b26d047ee0b",
             "tick": 240
         },
         {
-            "hash": "a3225258372def0d",
+            "hash": "352c43d1b71f6dc6",
             "tick": 270
         },
         {
-            "hash": "3eaa054cd1109ee4",
+            "hash": "b4d626f227d66c93",
             "tick": 300
         },
         {
-            "hash": "73ca099568ea4dce",
+            "hash": "7d89f7b5073d2fbb",
             "tick": 330
         },
         {
-            "hash": "a69323a00bf78dca",
+            "hash": "ffc46516a7fbdc11",
             "tick": 360
         },
         {
-            "hash": "26c140b2f35e313a",
-            "tick": 364
+            "hash": "9b6deea8f334eac8",
+            "tick": 390
+        },
+        {
+            "hash": "3d0eeb7db147ca27",
+            "tick": 420
+        },
+        {
+            "hash": "e58f336158f9be5a",
+            "tick": 450
+        },
+        {
+            "hash": "82a0f8ae0534b033",
+            "tick": 480
+        },
+        {
+            "hash": "9e305d7ee17b239d",
+            "tick": 510
+        },
+        {
+            "hash": "6376be3b1fa18a00",
+            "tick": 540
+        },
+        {
+            "hash": "cb6af53decbd06e6",
+            "tick": 570
+        },
+        {
+            "hash": "cda465ab6c8a46f2",
+            "tick": 600
+        },
+        {
+            "hash": "a560afbb305a1ea5",
+            "tick": 630
+        },
+        {
+            "hash": "f5ae6616a152d5c6",
+            "tick": 660
+        },
+        {
+            "hash": "fcd0d3e21f761bdb",
+            "tick": 690
+        },
+        {
+            "hash": "c3828211f934e7b5",
+            "tick": 720
+        },
+        {
+            "hash": "c9de8b41aa130066",
+            "tick": 750
+        },
+        {
+            "hash": "d1ee547276faf062",
+            "tick": 780
+        },
+        {
+            "hash": "4d94bcdf158e91ae",
+            "tick": 810
+        },
+        {
+            "hash": "c5bcb32d1193b879",
+            "tick": 840
+        },
+        {
+            "hash": "44fc9e44ff5ac2b0",
+            "tick": 870
+        },
+        {
+            "hash": "73903dc271af323e",
+            "tick": 900
+        },
+        {
+            "hash": "93097dcec95741f3",
+            "tick": 930
+        },
+        {
+            "hash": "abe4c45418554f76",
+            "tick": 960
+        },
+        {
+            "hash": "9298e9a75e23dfea",
+            "tick": 990
+        },
+        {
+            "hash": "1eeea32bdec38798",
+            "tick": 1020
+        },
+        {
+            "hash": "5507b13ebbeebde5",
+            "tick": 1050
+        },
+        {
+            "hash": "998f0077d5d855de",
+            "tick": 1080
+        },
+        {
+            "hash": "4f5f7bb541a21972",
+            "tick": 1096
         }
     ],
     "commands": [
@@ -133,7 +229,7 @@
         {
             "result": "gameOver",
             "rotation": 0,
-            "tick": 364,
+            "tick": 1096,
             "towerType": 0,
             "type": "buildTower",
             "x": 12,
@@ -141,7 +237,7 @@
         }
     ],
     "content": "training_ground.json",
-    "contentHash": "f9010ccb1b186ba4",
+    "contentHash": "a4ea64b005e5f85a",
     "formatVersion": 1,
     "seed": "18446744073709551615"
 }

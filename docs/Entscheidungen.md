@@ -198,3 +198,15 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Inhalt:** `horseshoe` in `training_ground` zeigt eine U-Form.
 - **Formatversion:** Bleibt 1, wie in E-25. Der Hash nimmt die Drehung auf, alte Replays mit Türmen passen also nicht mehr, ausgeliefert ist noch keins.
 - **Turmliste:** Sie scrollt einzeilig, statt umzubrechen, und deckt so nie mehr von der Karte zu. Damit das geht, darf der `DragHandler` der Karte Items die Geste nicht mehr wegnehmen: Handler sehen jeden Druck, auch auf dem HUD. Ein Ziehen, das auf dem HUD beginnt, verschiebt die Karte deshalb nicht mehr.
+
+## E-28 Kampfsystem
+
+- **Schaden:** Jeder Turm hat eine `DamageType`. Der gewürfelte Schaden zählt mit `1 - resistance`. Eine Resistenz liegt zwischen -1 (doppelter Schaden) und 1 (immun), fehlende Einträge sind 0. Der Würfel läuft immer, auch gegen Immune, sonst hinge der Zufallsstrom an der Resistenz.
+- **Status:** `slow` und `poison` hängen an Treffern. Der Hitanteil gilt auch für ihre Stärke, ein Immuner bekommt nichts. Jede Art hat am Gegner einen festen Platz (`ActiveStatus`), keine Liste, weil die Menge fest und klein ist. Das spart Speicher im heißesten Pfad.
+- **Kein Stapeln:** Der stärkere Effekt bleibt, von gleich starken der längere. Sonst wären zehn Frosttürme zehnmal so stark.
+- **Grenze der Verlangsamung:** 90 %, im Inhalt wie nach einer Schwäche. Dazu bewegt sich jeder Gegner mindestens um einen Rohwert je Tick. Ohne das könnte ein immuner oder sehr langsamer Gegner ein Spiel für immer aufhalten. Ein echtes Einfrieren kommt mit den Zaubern (Etappe 8), dort endet es von selbst.
+- **Reihenfolge im Tick:** Bewegen, Nachrücken, Gift, Schießen, Spielende. Gift wirkt erst ab dem Tick nach dem Treffer, genau `durationTicks` Mal. Tod durch Gift zahlt das Kopfgeld wie ein Schuss.
+- **Zielpriorität:** Sie gehört zum Turm und beginnt mit `First`, dem bisherigen Verhalten. `SetTargetPriorityCommand` nennt die ID des Turms, unbekannte IDs ergeben `UnknownTower`. Gleichstand geht an die niedrigste ID.
+- **Client:** Ein Tipp auf einen Turm wählt ihn, das HUD zeigt dann die vier Prioritäten. Der nächste Tipp daneben lässt ihn nur los und baut nichts. Türme tragen die Farbe ihrer Schadensart, Gegner die ihres Status.
+- **Inhalt:** `training_ground` bekommt `frost_spire`, `venom_spire`, `stone_troll` und Schadensarten für die bestehenden Türme. Der Rest kommt in Etappe 7. Die Golden Replays ändern sich damit auch im Spielverlauf, nicht nur im Hash, `training_ground_combat` ist neu. Die letzten Befehle von `defence` und `rejected` wandern ans neue Spielende, damit `gameOver` abgedeckt bleibt.
+- **Formatversion:** Bleibt 1, wie in E-25 und E-27.

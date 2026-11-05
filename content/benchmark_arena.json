@@ -54,6 +54,7 @@
             "cooldownTicks": 15,
             "damageMin": "1",
             "damageMax": "3",
+            "damageType": "physical",
             "footprint": [{ "x": 0, "y": 0 }]
         }
     ],

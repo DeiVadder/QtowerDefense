@@ -62,6 +62,9 @@ public:
 private:
     QByteArray startMap(core::ObjectReader &request);
     QByteArray buildTower(core::ObjectReader &request);
+    QByteArray setTargetPriority(core::ObjectReader &request);
+    /// Runs a command that passed its checks of form and reports what the game made of it.
+    QByteArray execute(const core::Command &command);
     QByteArray advance(core::ObjectReader &request);
     QByteArray saveReplay(core::ObjectReader &request);
     QByteArray saveScreenshot(core::ObjectReader &request);

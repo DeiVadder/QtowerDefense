@@ -13,6 +13,7 @@
 
 using qtd::automation::checkInvariants;
 using qtd::core::BuildTowerCommand;
+using qtd::core::CommandResult;
 using qtd::core::Content;
 using qtd::core::Fixed;
 using qtd::core::Simulation;
@@ -73,6 +74,41 @@ void addTowerRows()
 
 } // namespace
 
+namespace {
+
+/// What a fuzz bot has tried.
+struct FuzzRecord
+{
+    std::set<qtd::core::Rotation> rotations;
+    std::set<qtd::core::TargetPriority> priorities;
+    std::set<CommandResult> priorityResults;
+
+    void note(const qtd::core::Command &command, CommandResult result)
+    {
+        if (const auto *build = std::get_if<BuildTowerCommand>(&command)) {
+            rotations.insert(build->rotation);
+        } else {
+            priorities.insert(std::get<qtd::core::SetTargetPriorityCommand>(command).priority);
+            priorityResults.insert(result);
+        }
+    }
+};
+
+void playFuzzGame(quint64 seed, FuzzRecord *record)
+{
+    Simulation game(contentOf(scenarioJson()), seed);
+    const std::unique_ptr<qtd::automation::Bot> bot =
+        qtd::automation::makeBot(qtd::automation::BotKind::Fuzz, seed);
+    while (game.state().status == qtd::core::GameStatus::Running) {
+        while (const std::optional<qtd::core::Command> command = bot->nextCommand(game)) {
+            record->note(*command, game.execute(*command));
+        }
+        game.tick();
+    }
+}
+
+} // namespace
+
 class InvariantsTest : public QObject
 {
     Q_OBJECT
@@ -97,6 +133,22 @@ private slots:
             QTest::newRow(name) << damage << expected;
         };
         row("gold", [](SimulationState &s) { s.gold = -1; }, u"gold is negative: -1"_s);
+        row(
+            "status without strength",
+            [](SimulationState &s) { s.enemies.front().poison.ticks = 3; },
+            u"impossible status effect"_s);
+        row(
+            "strength without status",
+            [](SimulationState &s) { s.enemies.front().poison.strength = Fixed::fromInt(1); },
+            u"impossible status effect"_s);
+        row(
+            "negative ticks of a status",
+            [](SimulationState &s) { s.enemies.front().slow.ticks = -1; },
+            u"impossible status effect"_s);
+        row(
+            "slow beyond the limit",
+            [](SimulationState &s) { s.enemies.front().slow = {3, Fixed::fromInt(1)}; },
+            u"impossible status effect"_s);
         row("lives", [](SimulationState &s) { s.lives = -2; }, u"lives are negative: -2"_s);
         row(
             "enemy id order",
@@ -173,19 +225,17 @@ private slots:
         QVERIFY(checkInvariants(content, state).contains(u"outside the map"_s));
     }
 
-    static void theFuzzBotTriesEveryRotation()
+    // Over a few games, as a game draws how often its commands are well-formed.
+    static void theFuzzBotTriesEverything()
     {
-        Simulation game(contentOf(scenarioJson()), 1);
-        const std::unique_ptr<qtd::automation::Bot> bot =
-            qtd::automation::makeBot(qtd::automation::BotKind::Fuzz, 3);
-        std::set<qtd::core::Rotation> seen;
-        while (game.state().status == qtd::core::GameStatus::Running) {
-            while (const std::optional<qtd::core::Command> command = bot->nextCommand(game)) {
-                seen.insert(std::get<qtd::core::BuildTowerCommand>(*command).rotation);
-            }
-            game.tick();
+        FuzzRecord record;
+        for (quint64 seed = 1; seed <= 8; ++seed) {
+            playFuzzGame(seed, &record);
         }
-        QCOMPARE(seen.size(), std::size_t{qtd::core::kRotations});
+        QCOMPARE(record.rotations.size(), std::size_t{qtd::core::kRotations});
+        QCOMPARE(record.priorities.size(), std::size_t{qtd::core::kTargetPriorities});
+        QVERIFY(record.priorityResults.contains(CommandResult::Accepted));
+        QVERIFY(record.priorityResults.contains(CommandResult::UnknownTower));
     }
 
     void damageIsFound()

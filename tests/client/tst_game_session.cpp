@@ -78,7 +78,7 @@ private slots:
         QCOMPARE(game.gold(), 120);
         QCOMPARE(game.lives(), 5);
         QCOMPARE(game.gridSize(), QSize(17, 11));
-        QCOMPARE(game.towerTypes().size(), 4);
+        QCOMPARE(game.towerTypes().size(), 6);
         const QVariantMap first = game.towerTypes().at(0).toMap();
         QCOMPARE(first[u"name"_s].toString(), u"ballista"_s);
         QCOMPARE(first[u"cost"_s].toLongLong(), 50);
@@ -135,7 +135,7 @@ private slots:
         QCOMPARE(game.gold(), 30);
         QCOMPARE(game.towerCells(), (QVariantList{QPoint(10, 6), QPoint(11, 6)}));
         game.setSelectedTower(99);
-        QCOMPARE(game.selectedTower(), 3);
+        QCOMPARE(game.selectedTower(), 5);
         game.setSelectedTower(-1);
         QCOMPARE(game.selectedTower(), 0);
         game.setSelectedTower(2);
@@ -182,6 +182,36 @@ private slots:
         QCOMPARE(cell(0)[u"x"_s].toInt(), 1);
         QVERIFY(cell(0)[u"anchor"_s].toBool());
         QCOMPARE(cell(1)[u"x"_s].toInt(), 0);
+    }
+
+    void aChosenTowerTakesAPriority()
+    {
+        GameSession game;
+        QVERIFY(!game.chooseTowerAt(4, 4));
+        game.setChosenPriority(1); // no game, nothing happens
+        game.startGame(mapFile(), 7);
+        QCOMPARE(game.chosenPriority(), -1);
+        game.setSelectedTower(1);
+        QVERIFY(game.buildTower(4, 4));
+        QVERIFY(!game.chooseTowerAt(6, 4));
+        game.setChosenPriority(1);         // nothing chosen
+        QVERIFY(game.chooseTowerAt(5, 4)); // the second cell of the tower
+        QCOMPARE(game.chosenPriority(), 0);
+        const QSignalSpy towers(&game, &GameSession::towersChanged);
+        game.setChosenPriority(2);
+        QCOMPARE(towers.size(), 1);
+        QCOMPARE(game.chosenPriority(), 2);
+        QVERIFY(game.recorder()->simulation().state().towers.front().priority ==
+                qtd::core::TargetPriority::Strongest);
+        game.setChosenPriority(4);
+        game.setChosenPriority(-1);
+        QCOMPARE(game.chosenPriority(), 2);
+        QCOMPARE(game.recorder()->replay().commands.size(), 2U);
+        game.clearChosenTower();
+        QCOMPARE(game.chosenPriority(), -1);
+        QVERIFY(game.chooseTowerAt(4, 4));
+        game.restart();
+        QCOMPARE(game.chosenPriority(), -1);
     }
 
     void aRejectedCommandChangesNothing()

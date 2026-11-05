@@ -52,8 +52,18 @@ SimulationState handmadeState()
     state.spawnGroup = 1;
     state.spawnedInGroup = 2;
     state.spawnCountdownTicks = 4;
-    state.enemies.push_back({3, 0, Fixed::fromRaw(15000), Fixed::fromRaw(25000)});
-    state.towers.push_back({5, 1, {2, 3}, 6, qtd::core::Rotation::ThreeQuarters});
+    state.enemies.push_back({3,
+                             0,
+                             Fixed::fromRaw(15000),
+                             Fixed::fromRaw(25000),
+                             {4, Fixed::fromRaw(5000)},
+                             {6, Fixed::fromRaw(2500)}});
+    state.towers.push_back({5,
+                            1,
+                            {2, 3},
+                            6,
+                            qtd::core::Rotation::ThreeQuarters,
+                            qtd::core::TargetPriority::Strongest});
     return state;
 }
 
@@ -97,6 +107,10 @@ NamedChanges entityChanges()
         {"enemy type", [](auto &s) { ++s.enemies[0].type; }},
         {"enemy health", [](auto &s) { s.enemies[0].health = Fixed::fromRaw(1); }},
         {"enemy place", [](auto &s) { s.enemies[0].travelled = Fixed::fromRaw(1); }},
+        {"slow ticks", [](auto &s) { ++s.enemies[0].slow.ticks; }},
+        {"slow strength", [](auto &s) { s.enemies[0].slow.strength = Fixed::fromRaw(1); }},
+        {"poison ticks", [](auto &s) { ++s.enemies[0].poison.ticks; }},
+        {"poison strength", [](auto &s) { s.enemies[0].poison.strength = Fixed::fromRaw(1); }},
         {"tower added", [](auto &s) { s.towers.push_back(Tower{}); }},
         {"tower removed", [](auto &s) { s.towers.clear(); }},
         {"tower id", [](auto &s) { ++s.towers[0].id; }},
@@ -105,6 +119,8 @@ NamedChanges entityChanges()
         {"tower y", [](auto &s) { ++s.towers[0].cell.y; }},
         {"tower cooldown", [](auto &s) { ++s.towers[0].cooldownTicks; }},
         {"tower rotation", [](auto &s) { s.towers[0].rotation = qtd::core::Rotation::Half; }},
+        {"tower priority",
+         [](auto &s) { s.towers[0].priority = qtd::core::TargetPriority::Nearest; }},
     };
 }
 
@@ -119,12 +135,12 @@ private slots:
     /// the project. They hold on every compiler and in every process.
     void theStateHashIsPinned()
     {
-        QCOMPARE(stateHash(handmadeState()), 0xF858D0339832B5ADULL);
+        QCOMPARE(stateHash(handmadeState()), 0x084EDFD9F302B013ULL);
     }
 
     void theContentHashIsPinned()
     {
-        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x44CDE2B42100B02EULL);
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x1E6C0D89D8C8322EULL);
     }
 
     // The test vectors of the FNV authors.
@@ -199,6 +215,11 @@ private slots:
         row(R"("cost": 40)", R"("cost": 41)");
         row(R"("range": "3")", R"("range": "3.0001")");
         row(R"("cooldownTicks": 4)", R"("cooldownTicks": 5)");
+        row(R"("damageType": "physical")", R"("damageType": "fire")");
+        row(R"("damageType": "physical")", R"("damageType": "physical",
+            "effects": [{"kind": "slow", "strength": "0.5", "durationTicks": 3}])");
+        row(R"("lifeCost": 1)", R"("lifeCost": 1,
+            "resistances": [{"damageType": "ice", "share": "0.5"}])");
         row(R"("damageMin": "2")", R"("damageMin": "1")");
         row(R"("damageMax": "2")", R"("damageMax": "3")");
         row(R"("health": "4")", R"("health": "5")");

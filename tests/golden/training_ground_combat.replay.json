@@ -1,0 +1,189 @@
+{
+    "checkpoints": [
+        {
+            "hash": "c2b6dc9f24cd69bc",
+            "tick": 0
+        },
+        {
+            "hash": "122b529e35fb2218",
+            "tick": 30
+        },
+        {
+            "hash": "5083056107cc9144",
+            "tick": 60
+        },
+        {
+            "hash": "c6847698d36bcfc0",
+            "tick": 90
+        },
+        {
+            "hash": "5f05966b5b365cf8",
+            "tick": 120
+        },
+        {
+            "hash": "b66c789f5237bc8f",
+            "tick": 150
+        },
+        {
+            "hash": "8e75b3854575582c",
+            "tick": 180
+        },
+        {
+            "hash": "65c788849fc611d9",
+            "tick": 210
+        },
+        {
+            "hash": "0158752fb415c071",
+            "tick": 240
+        },
+        {
+            "hash": "b40dd4f701d82b73",
+            "tick": 270
+        },
+        {
+            "hash": "26f416124aa28c9d",
+            "tick": 300
+        },
+        {
+            "hash": "dc2ab6ad653719d8",
+            "tick": 330
+        },
+        {
+            "hash": "a25c5b6523bab186",
+            "tick": 360
+        },
+        {
+            "hash": "9a2b501e382818ae",
+            "tick": 390
+        },
+        {
+            "hash": "448c1f3cf09b3621",
+            "tick": 420
+        },
+        {
+            "hash": "eec5db2c92011e4f",
+            "tick": 450
+        },
+        {
+            "hash": "5fb303fddbb7c0e1",
+            "tick": 480
+        },
+        {
+            "hash": "95bfc6b0d41c59aa",
+            "tick": 510
+        },
+        {
+            "hash": "275d92c3523c0ed2",
+            "tick": 540
+        },
+        {
+            "hash": "a910cadd9a1584ac",
+            "tick": 570
+        },
+        {
+            "hash": "78589c2ef3186ad9",
+            "tick": 600
+        },
+        {
+            "hash": "53304cbe2a36883c",
+            "tick": 630
+        },
+        {
+            "hash": "8def98fe27a39084",
+            "tick": 660
+        },
+        {
+            "hash": "f31d912b344ba9c0",
+            "tick": 690
+        },
+        {
+            "hash": "48e703e40f20cf42",
+            "tick": 720
+        },
+        {
+            "hash": "04d493edb0629655",
+            "tick": 750
+        },
+        {
+            "hash": "543c147ed3cf0731",
+            "tick": 780
+        },
+        {
+            "hash": "4246ec89f5c4ceb7",
+            "tick": 810
+        },
+        {
+            "hash": "54920f590687e75d",
+            "tick": 840
+        },
+        {
+            "hash": "3c7ace31db9bd7db",
+            "tick": 870
+        },
+        {
+            "hash": "6174d76754d4f986",
+            "tick": 900
+        },
+        {
+            "hash": "935d2d3e10173637",
+            "tick": 930
+        },
+        {
+            "hash": "dcafd41b894cf826",
+            "tick": 960
+        },
+        {
+            "hash": "42f83ff7c4ca8a4a",
+            "tick": 990
+        },
+        {
+            "hash": "b64f8629ccb9bdbe",
+            "tick": 1006
+        }
+    ],
+    "commands": [
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 0,
+            "towerType": 4,
+            "type": "buildTower",
+            "x": 6,
+            "y": 3
+        },
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 0,
+            "towerType": 5,
+            "type": "buildTower",
+            "x": 7,
+            "y": 3
+        },
+        {
+            "priority": "strongest",
+            "result": "accepted",
+            "tick": 0,
+            "tower": 1,
+            "type": "setTargetPriority"
+        },
+        {
+            "priority": "last",
+            "result": "unknownTower",
+            "tick": 0,
+            "tower": 99,
+            "type": "setTargetPriority"
+        },
+        {
+            "priority": "nearest",
+            "result": "accepted",
+            "tick": 320,
+            "tower": 2,
+            "type": "setTargetPriority"
+        }
+    ],
+    "content": "training_ground.json",
+    "contentHash": "a4ea64b005e5f85a",
+    "formatVersion": 1,
+    "seed": "11"
+}

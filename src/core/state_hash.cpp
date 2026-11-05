@@ -70,7 +70,12 @@ quint64 contentHash(const Content &content)
                    tower.cooldownTicks,
                    tower.range.raw(),
                    tower.damageMin.raw(),
-                   tower.damageMax.raw());
+                   tower.damageMax.raw(),
+                   tower.damageType);
+        fields.add(tower.effects.size());
+        for (const StatusEffect &effect : tower.effects) {
+            fields.add(effect.kind, effect.strength.raw(), effect.durationTicks);
+        }
         fields.add(tower.footprint.size());
         for (const Cell cell : tower.footprint) {
             fields.add(cell.x, cell.y);
@@ -79,6 +84,9 @@ quint64 contentHash(const Content &content)
     fields.add(content.enemies.size());
     for (const EnemyType &enemy : content.enemies) {
         fields.add(enemy.health.raw(), enemy.speedPerTick.raw(), enemy.bounty, enemy.lifeCost);
+        for (const Fixed resistance : enemy.resistances) {
+            fields.add(resistance.raw());
+        }
     }
     fields.add(content.wave.size());
     for (const SpawnGroup &group : content.wave) {
@@ -97,11 +105,14 @@ quint64 stateHash(const SimulationState &state)
     fields.add(state.enemies.size());
     for (const Enemy &enemy : state.enemies) {
         fields.add(enemy.id, enemy.type, enemy.health.raw(), enemy.travelled.raw());
+        fields.add(enemy.slow.ticks, enemy.slow.strength.raw());
+        fields.add(enemy.poison.ticks, enemy.poison.strength.raw());
     }
     fields.add(state.towers.size());
     for (const Tower &tower : state.towers) {
         fields.add(
             tower.id, tower.type, tower.cell.x, tower.cell.y, tower.cooldownTicks, tower.rotation);
+        fields.add(tower.priority);
     }
     return fields.value();
 }

@@ -53,6 +53,56 @@ Item {
             stage.height = 360;
         }
 
+        // A tap on a tower chooses it, the next tap elsewhere only lets go of it.
+        function test_aTowerIsChosenAndToldWhereToAim() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            const buttons = findChild(game.hud, "priorityButtons");
+            verify(!buttons.visible);
+            let place = game.scene.cellOnScreen(4, 4);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.towerCount, 1);
+            waitForRendering(game.scene);
+            place = game.scene.blockTopOnScreen(4, 4, 0.7);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.towerCount, 1);
+            compare(session.chosenPriority, 0);
+            verify(buttons.visible);
+            tryVerify(() => buttons.children.length > 3);
+            mouseClick(buttons.children[3]);
+            compare(session.chosenPriority, 3);
+            verify(buttons.children[3].highlighted);
+            place = game.scene.cellOnScreen(10, 6);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.chosenPriority, -1);
+            compare(session.towerCount, 1);
+            verify(!buttons.visible);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.towerCount, 2);
+        }
+
+        // The tap names the tower by the instance it hits, so each tower needs its own answer.
+        function test_aTapChoosesTheTowerItHits() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            verify(session.buildTower(4, 4));
+            verify(session.buildTower(10, 6));
+            waitForRendering(game.scene);
+            let place = game.scene.blockTopOnScreen(4, 4, 0.7);
+            mouseClick(game.scene, place.x, place.y);
+            session.setChosenPriority(3);
+            session.clearChosenTower();
+            place = game.scene.blockTopOnScreen(10, 6, 0.7);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.chosenPriority, 0);
+            session.clearChosenTower();
+            place = game.scene.blockTopOnScreen(4, 4, 0.7);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.chosenPriority, 3);
+        }
+
         // A quarter turn clockwise: the wide tower now reaches down on the map.
         function test_theRotateButtonTurnsWhatATapBuilds() {
             const game = createTemporaryObject(gameComponent, stage);

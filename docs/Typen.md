@@ -42,11 +42,15 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 |---|---|---|---|
 | `Cell` | struct | `content.h` | A field of the chessboard. |
 | `Content` | struct | `content.h` | Everything the data files decide. |
+| `DamageType` | enum class | `content.h` |  |
 | `EnemyType` | struct | `content.h` |  |
 | `Grid` | class | `content.h` | The chessboard of a map, row by row. |
 | `Path` | class | `content.h` | A fixed route for enemies: straight segments through at least two different points. |
 | `Rotation` | enum class | `content.h` | How far a tower is turned clockwise, around the cell it stands on. |
 | `SpawnGroup` | struct | `content.h` | Enemies of one type that enter the path one after the other. |
+| `StatusEffect` | struct | `content.h` | What a hit leaves behind, on top of its damage. |
+| `StatusKind` | enum class | `content.h` |  |
+| `TargetPriority` | enum class | `content.h` | Which enemy in range a tower fires at. |
 | `Terrain` | enum class | `content.h` | What lies on a cell. |
 | `TowerType` | struct | `content.h` |  |
 | `ContentLoadResult` | struct | `content_loader.h` | Holds the content, or an error text that names the place of the problem. |
@@ -64,11 +68,13 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `ReplayLoadResult` | struct | `replay.h` | Holds the replay, or an error text that names the place of the problem. |
 | `ReplayPlayer` | class | `replay.h` | Repeats a replay in steps of any size and compares results and checkpoints on the way. |
 | `ReplayRecorder` | class | `replay.h` | Plays a game and writes down all that is needed to repeat it, rejected commands too. |
+| `ActiveStatus` | struct | `simulation.h` | A status effect on an enemy, for the ticks that are left. |
 | `BuildTowerCommand` | struct | `simulation.h` |  |
 | `Command` | using | `simulation.h` | What a player, human or bot, can ask for. |
 | `CommandResult` | enum class | `simulation.h` |  |
 | `Enemy` | struct | `simulation.h` |  |
 | `GameStatus` | enum class | `simulation.h` |  |
+| `SetTargetPriorityCommand` | struct | `simulation.h` |  |
 | `Simulation` | class | `simulation.h` | One game. |
 | `SimulationState` | struct | `simulation.h` | All that changes during a game. |
 | `Tower` | struct | `simulation.h` |  |

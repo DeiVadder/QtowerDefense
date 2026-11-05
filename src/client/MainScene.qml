@@ -47,6 +47,16 @@ View3D {
 
     function tapAt(x: real, y: real): bool {
         const hit = pick(x, y);
+        if (hit.objectHit === towers) {
+            const cell = game.towerCells[hit.instanceIndex];
+            // Right after a restart, the picture may still show towers of the last game.
+            return cell !== undefined && game.chooseTowerAt(cell.x, cell.y);
+        }
+        // With a tower chosen, a tap elsewhere only lets go of it: nothing gets built by accident.
+        if (game.chosenPriority >= 0) {
+            game.clearChosenTower();
+            return false;
+        }
         if (hit.objectHit !== board) {
             return false;
         }
@@ -173,7 +183,7 @@ View3D {
                 enemyScale: root.fieldSize / 120
             }
             materials: PrincipledMaterial {
-                baseColor: "#b5372e"
+                baseColor: "white" // the instances bring their colour, it shows status effects
             }
         }
     }

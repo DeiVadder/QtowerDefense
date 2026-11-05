@@ -9,6 +9,13 @@ namespace qtd::automation {
 
 namespace {
 
+/// Running effects have a strength, others have none.
+bool isSound(const core::ActiveStatus &status)
+{
+    return status.ticks > 0 ? status.strength > core::Fixed()
+                            : status.ticks == 0 && status.strength == core::Fixed();
+}
+
 QString checkEnemies(const core::Content &content, const core::SimulationState &state)
 {
     qint64 lastId = 0;
@@ -25,6 +32,10 @@ QString checkEnemies(const core::Content &content, const core::SimulationState &
         }
         if (enemy.health <= core::Fixed()) {
             return u"enemy %1: dead but still in the game"_s.arg(enemy.id);
+        }
+        if (!isSound(enemy.slow) || !isSound(enemy.poison) ||
+            enemy.slow.strength > core::maxSlow()) {
+            return u"enemy %1: impossible status effect"_s.arg(enemy.id);
         }
     }
     return {};

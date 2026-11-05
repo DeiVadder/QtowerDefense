@@ -130,6 +130,58 @@ private slots:
         QCOMPARE(tower["rotation"_L1].toInteger(), 3);
     }
 
+    void aTowerTakesAPriority()
+    {
+        ControlSession session;
+        start(session);
+        const qint64 id =
+            build(session, 6, 0)["towers"_L1].toArray().first().toObject()["id"_L1].toInteger();
+        const QJsonObject answer = ask(session,
+                                       {{"action"_L1, "setTargetPriority"_L1},
+                                        {"tower"_L1, id},
+                                        {"priority"_L1, "strongest"_L1}});
+        QCOMPARE(answer["result"_L1].toString(), u"accepted"_s);
+        const QJsonObject tower = answer["towers"_L1].toArray().first().toObject();
+        QCOMPARE(tower["priority"_L1].toString(), u"strongest"_s);
+        const QJsonObject missing = ask(session,
+                                        {{"action"_L1, "setTargetPriority"_L1},
+                                         {"tower"_L1, id + 100},
+                                         {"priority"_L1, "last"_L1}});
+        QVERIFY(missing["ok"_L1].toBool());
+        QCOMPARE(missing["result"_L1].toString(), u"unknownTower"_s);
+    }
+
+    // Slow 0.4 against a resistance of 0.25, poison 0.05 without one.
+    void statusEffectsShow()
+    {
+        ControlSession session;
+        start(session);
+        const auto buildAt = [&session](int x, int type) {
+            return ask(session,
+                       {{"action"_L1, "buildTower"_L1},
+                        {"x"_L1, x},
+                        {"y"_L1, 3},
+                        {"towerType"_L1, type}})["result"_L1]
+                .toString();
+        };
+        QCOMPARE(buildAt(6, 4), u"accepted"_s);
+        QCOMPARE(buildAt(7, 5), u"accepted"_s);
+        QJsonObject enemy;
+        for (int tick = 0; tick < 500 && enemy["poison"_L1].toObject().isEmpty(); ++tick) {
+            const QJsonObject first =
+                advance(session, 1)["enemies"_L1].toArray().first().toObject();
+            if (first["poison"_L1].toObject()["ticks"_L1].toInteger() > 0) {
+                enemy = first;
+            }
+        }
+        const QJsonObject slow = enemy["slow"_L1].toObject();
+        const QJsonObject poison = enemy["poison"_L1].toObject();
+        QCOMPARE(slow["strength"_L1].toString(), u"0.3"_s);
+        QVERIFY(slow["ticks"_L1].toInteger() > 0);
+        QCOMPARE(poison["strength"_L1].toString(), u"0.05"_s);
+        QCOMPARE(poison["ticks"_L1].toInteger(), 90);
+    }
+
     void aRequestWithAWrongKeyDoesNothing_data()
     {
         QTest::addColumn<QByteArray>("request");
@@ -276,6 +328,12 @@ private slots:
         QTest::newRow("negative rotation")
             << QByteArray(R"({"action":"buildTower","x":1,"y":1,"towerType":0,"rotation":-1})")
             << u"rotation"_s;
+        QTest::newRow("unknown priority")
+            << QByteArray(R"({"action":"setTargetPriority","tower":1,"priority":"weakest"})")
+            << u"unknown target priority \"weakest\""_s;
+        QTest::newRow("no tower") << QByteArray(
+                                         R"({"action":"setTargetPriority","priority":"last"})")
+                                  << u"tower"_s;
         QTest::newRow("no file") << QByteArray(R"({"action":"saveReplay"})") << u"file"_s;
         QTest::newRow("unknown key")
             << QByteArray(R"({"action":"observe","extra":1})") << u"extra"_s;

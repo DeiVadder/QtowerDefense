@@ -23,6 +23,7 @@ constexpr qint64 kMaxTicksPerRequest = 1'000'000;
 enum class Action : quint8 {
     StartMap,
     BuildTower,
+    SetTargetPriority,
     Advance,
     Observe,
     SaveReplay,
@@ -39,6 +40,9 @@ std::optional<Action> actionFromName(const QString &name)
     }
     if (name == "buildTower"_L1) {
         return Action::BuildTower;
+    }
+    if (name == "setTargetPriority"_L1) {
+        return Action::SetTargetPriority;
     }
     if (name == "advance"_L1) {
         return Action::Advance;
@@ -69,6 +73,11 @@ QByteArray failure(const QString &message)
     return compact({{"ok"_L1, false}, {"error"_L1, message}});
 }
 
+QJsonObject statusReport(const core::ActiveStatus &status)
+{
+    return {{"ticks"_L1, status.ticks}, {"strength"_L1, core::toString(status.strength)}};
+}
+
 QJsonObject observationOf(const core::Simulation &game)
 {
     const core::SimulationState &state = game.state();
@@ -79,7 +88,8 @@ QJsonObject observationOf(const core::Simulation &game)
                                   {"x"_L1, tower.cell.x},
                                   {"y"_L1, tower.cell.y},
                                   {"cooldownTicks"_L1, tower.cooldownTicks},
-                                  {"rotation"_L1, static_cast<qint64>(tower.rotation)}});
+                                  {"rotation"_L1, static_cast<qint64>(tower.rotation)},
+                                  {"priority"_L1, core::toString(tower.priority)}});
     }
     QJsonArray enemies;
     for (const core::Enemy &enemy : state.enemies) {
@@ -89,7 +99,9 @@ QJsonObject observationOf(const core::Simulation &game)
                                    {"health"_L1, core::toString(enemy.health)},
                                    {"travelled"_L1, core::toString(enemy.travelled)},
                                    {"x"_L1, core::toString(place.x)},
-                                   {"y"_L1, core::toString(place.y)}});
+                                   {"y"_L1, core::toString(place.y)},
+                                   {"slow"_L1, statusReport(enemy.slow)},
+                                   {"poison"_L1, statusReport(enemy.poison)}});
     }
     QJsonObject answer = stateReport(game);
     answer.insert("ok"_L1, true);
@@ -184,6 +196,8 @@ QByteArray ControlSession::handle(QByteArrayView request)
         return startMap(reader);
     case Action::BuildTower:
         return buildTower(reader);
+    case Action::SetTargetPriority:
+        return setTargetPriority(reader);
     case Action::Advance:
         return advance(reader);
     case Action::SaveReplay:
@@ -254,8 +268,28 @@ QByteArray ControlSession::buildTower(core::ObjectReader &request)
     if (request.failed()) {
         return failure(request.error());
     }
-    const core::CommandResult result =
-        game_->recorder()->execute(core::BuildTowerCommand{{x, y}, tower, rotation});
+    return execute(core::BuildTowerCommand{{x, y}, tower, rotation});
+}
+
+QByteArray ControlSession::setTargetPriority(core::ObjectReader &request)
+{
+    const qint64 tower =
+        request.integer("tower"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const QString name = request.text("priority"_L1);
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    const std::optional<core::TargetPriority> priority = core::targetPriorityNamed(name);
+    if (!priority) {
+        return failure(u"unknown target priority \"%1\""_s.arg(name));
+    }
+    return execute(core::SetTargetPriorityCommand{tower, *priority});
+}
+
+QByteArray ControlSession::execute(const core::Command &command)
+{
+    const core::CommandResult result = game_->recorder()->execute(command);
     game_->changed();
     QJsonObject answer = observation();
     answer.insert("result"_L1, core::toString(result));

@@ -68,8 +68,34 @@ Item {
         }
     }
 
+    // What the chosen tower aims at, the order is that of core::TargetPriority.
+    Row {
+        objectName: "priorityButtons"
+        anchors.left: parent.left
+        anchors.bottom: towerList.top
+        anchors.margins: root.unit / 4
+        spacing: root.unit / 4
+        visible: root.game.chosenPriority >= 0
+
+        Repeater {
+            model: [qsTr("First"), qsTr("Last"), qsTr("Strongest"), qsTr("Nearest")]
+
+            delegate: HudButton {
+                required property int index
+                required property string modelData
+
+                unit: root.unit
+                text: modelData
+                highlighted: root.game.chosenPriority === index
+                onClicked: root.game.setChosenPriority(index)
+            }
+        }
+    }
+
     // What a tap on the map builds. The row scrolls, so that the list never covers more of the map.
     Flickable {
+        id: towerList
+
         objectName: "towerList"
         anchors.left: parent.left
         anchors.bottom: parent.bottom

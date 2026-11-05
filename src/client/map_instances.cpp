@@ -27,6 +27,7 @@ constexpr float kFlatHeight = 0.04F;
 constexpr float kRockHeight = 0.5F;
 constexpr float kTreeHeight = 0.9F;
 constexpr float kTowerHeight = 0.7F;
+constexpr int kChosenLight = 150; // percent, how much brighter the chosen tower is
 
 struct Piece
 {
@@ -91,26 +92,76 @@ std::vector<Piece> boardPieces(const GameSession &game, float fieldSize)
     return pieces;
 }
 
+QColor colorOf(core::DamageType damage)
+{
+    switch (damage) {
+    case core::DamageType::Physical:
+        break;
+    case core::DamageType::Magic:
+        return QColor(0x8e5bd0);
+    case core::DamageType::Fire:
+        return QColor(0xd9622b);
+    case core::DamageType::Ice:
+        return QColor(0x6fc3e8);
+    }
+    return QColor(0xc9a227);
+}
+
+QColor colorOf(const core::Enemy &enemy)
+{
+    const bool slowed = enemy.slow.ticks > 0;
+    const bool poisoned = enemy.poison.ticks > 0;
+    if (slowed && poisoned) {
+        return QColor(0x3fa7a0);
+    }
+    if (slowed) {
+        return QColor(0x5b8fd9);
+    }
+    return poisoned ? QColor(0x4fa84a) : QColor(0xb5372e);
+}
+
+/// In the order of GameSession::towerCells(), a tap on a piece names the cell that way.
 std::vector<Piece> towerPieces(const GameSession &game, float fieldSize)
 {
     std::vector<Piece> pieces;
-    const QVariantList cells = game.towerCells();
-    std::ranges::transform(cells, std::back_inserter(pieces), [fieldSize](const QVariant &cell) {
-        return blockOn(cell.toPoint(), fieldSize, kTowerShare, QColor(0xc9a227), kTowerHeight);
-    });
+    const core::Simulation *simulation = game.simulation();
+    if (simulation == nullptr) {
+        return pieces;
+    }
+    for (const core::Tower &tower : simulation->state().towers) {
+        const core::TowerType &type = simulation->content().towers[tower.type];
+        const QColor color = colorOf(type.damageType);
+        const QColor shown = tower.id == game.chosenTower() ? color.lighter(kChosenLight) : color;
+        std::ranges::transform(core::footprintAt(type, tower.cell, tower.rotation),
+                               std::back_inserter(pieces),
+                               [&](core::Cell cell) {
+                                   return blockOn(
+                                       QPoint(static_cast<int>(cell.x), static_cast<int>(cell.y)),
+                                       fieldSize,
+                                       kTowerShare,
+                                       shown,
+                                       kTowerHeight);
+                               });
+    }
     return pieces;
 }
 
 std::vector<Piece> enemyPieces(const GameSession &game, float fieldSize, float enemyScale)
 {
     std::vector<Piece> pieces;
+    const std::vector<QPointF> places = game.enemyPlaces();
+    if (places.empty()) {
+        return pieces;
+    }
+    const std::vector<core::Enemy> &enemies = game.simulation()->state().enemies;
+    pieces.reserve(places.size());
     std::ranges::transform(
-        game.enemyPlaces(), std::back_inserter(pieces), [=](const QPointF &place) {
+        places, enemies, std::back_inserter(pieces), [=](QPointF place, const core::Enemy &enemy) {
             return Piece{QVector3D(static_cast<float>(place.x()) * fieldSize,
                                    0,
                                    static_cast<float>(place.y()) * fieldSize),
                          QVector3D(1, 1, 1) * enemyScale,
-                         QColor(Qt::white)};
+                         colorOf(enemy)};
         });
     return pieces;
 }

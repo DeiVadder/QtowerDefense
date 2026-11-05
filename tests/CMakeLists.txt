@@ -23,6 +23,11 @@ qtd_add_test(tst_core_content
 target_compile_definitions(tst_core_content PRIVATE
     QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
+qtd_add_test(tst_core_combat
+    SOURCES core/scenario.h core/tst_combat.cpp
+    LIBS qtd_core
+    LABELS core)
+
 qtd_add_test(tst_core_state_hash
     SOURCES core/scenario.h core/tst_state_hash.cpp
     LIBS qtd_core
@@ -99,7 +104,7 @@ add_test(NAME headless_golden_defence COMMAND qtd_headless
     --replay "${QTD_GOLDEN_DIR}/training_ground_defence.replay.json")
 set_tests_properties(headless_golden_defence PROPERTIES
     LABELS golden
-    PASS_REGULAR_EXPRESSION "\"hash\":\"e3cdb35e8056035c\".*\"matches\":true")
+    PASS_REGULAR_EXPRESSION "\"hash\":\"353ffc8e53a01e80\".*\"matches\":true")
 
 if(NOT QTD_ENABLE_UBSAN)
     # Needs the GPU: renders the real main window once, without real-time waits of its own.

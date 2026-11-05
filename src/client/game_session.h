@@ -29,6 +29,7 @@ class GameSession : public QObject
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
+    Q_PROPERTY(int chosenPriority READ chosenPriority NOTIFY towersChanged)
     Q_PROPERTY(int towerCount READ towerCount NOTIFY towersChanged)
     Q_PROPERTY(QVariantList towerCells READ towerCells NOTIFY towersChanged)
     Q_PROPERTY(qint64 gold READ gold NOTIFY stateChanged)
@@ -52,6 +53,11 @@ public:
     Q_INVOKABLE void restart();
     /// Puts a tower of the selected type on a cell, true if the game took the command.
     Q_INVOKABLE bool buildTower(int x, int y);
+    /// Chooses the tower that takes this cell, true if there is one.
+    Q_INVOKABLE bool chooseTowerAt(int x, int y);
+    Q_INVOKABLE void clearChosenTower();
+    /// Tells the chosen tower what to aim at, as an index into core::TargetPriority.
+    Q_INVOKABLE void setChosenPriority(int priority);
     /// Turns what a tap on the map builds by a quarter, clockwise.
     Q_INVOKABLE void rotateSelection();
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
@@ -67,9 +73,15 @@ public:
     /// The cells of what a tap builds, turned as it would stand, as maps with x and y from 0 and
     /// anchor for the cell that the tap names.
     [[nodiscard]] QVariantList selectedShape() const;
+    /// What the chosen tower aims at, as an index into core::TargetPriority, -1 if none is chosen.
+    [[nodiscard]] int chosenPriority() const;
+    /// The id of the chosen tower, 0 if none is chosen.
+    [[nodiscard]] qint64 chosenTower() const;
     [[nodiscard]] int towerCount() const;
     /// The chessboard of the map, nothing without a game.
     [[nodiscard]] const core::Grid *grid() const;
+    /// The game to look at, nothing without a game.
+    [[nodiscard]] const core::Simulation *simulation() const;
     /// All cells that towers take, as QPoint.
     [[nodiscard]] QVariantList towerCells() const;
     [[nodiscard]] qint64 gold() const;
@@ -112,6 +124,7 @@ private:
     std::map<qint64, core::Point> lastPlaces_; // of the enemies, by id, one tick ago
     QString fileName_;
     QString error_;
+    qint64 chosenTower_ = 0;
     int selectedTower_ = 0;
     core::Rotation selectedRotation_ = core::Rotation::None;
     bool paused_ = false;

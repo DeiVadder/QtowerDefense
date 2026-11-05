@@ -1,12 +1,40 @@
 #include "core/content.h"
 
+#include <QLatin1StringView>
+
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <utility>
+
+using namespace Qt::StringLiterals;
 
 namespace qtd::core {
 
 namespace {
+
+constexpr qint64 kMaxSlowPercent = 90;
+
+constexpr std::array<QLatin1StringView, kDamageTypes> kDamageTypeNames{
+    "physical"_L1, "magic"_L1, "fire"_L1, "ice"_L1};
+constexpr std::array<QLatin1StringView, 2> kStatusKindNames{"slow"_L1, "poison"_L1};
+constexpr std::array<QLatin1StringView, kTargetPriorities> kTargetPriorityNames{
+    "first"_L1, "last"_L1, "strongest"_L1, "nearest"_L1};
+
+static_assert(kDamageTypeNames.size() == static_cast<std::size_t>(DamageType::Ice) + 1);
+static_assert(kStatusKindNames.size() == static_cast<std::size_t>(StatusKind::Poison) + 1);
+static_assert(kTargetPriorityNames.size() == static_cast<std::size_t>(TargetPriority::Nearest) + 1);
+
+template <typename Value, std::size_t Size>
+std::optional<Value> valueNamed(const std::array<QLatin1StringView, Size> &names, QStringView name)
+{
+    for (std::size_t index = 0; index < Size; ++index) {
+        if (name == names[index]) {
+            return static_cast<Value>(index);
+        }
+    }
+    return std::nullopt;
+}
 
 /// Turns a cell around 0, 0. On the map, y grows towards the viewer, so x turns into y.
 Cell turned(Cell offset, Rotation rotation)
@@ -25,6 +53,36 @@ Cell turned(Cell offset, Rotation rotation)
 }
 
 } // namespace
+
+Fixed maxSlow()
+{
+    return Fixed::fromInt(kMaxSlowPercent) / Fixed::fromInt(100);
+}
+
+std::optional<DamageType> damageTypeNamed(QStringView name)
+{
+    return valueNamed<DamageType>(kDamageTypeNames, name);
+}
+
+std::optional<StatusKind> statusKindNamed(QStringView name)
+{
+    return valueNamed<StatusKind>(kStatusKindNames, name);
+}
+
+std::optional<TargetPriority> targetPriorityNamed(QStringView name)
+{
+    return valueNamed<TargetPriority>(kTargetPriorityNames, name);
+}
+
+QString toString(TargetPriority priority)
+{
+    return kTargetPriorityNames[static_cast<std::size_t>(priority)];
+}
+
+Fixed hitShare(const EnemyType &enemy, DamageType damage)
+{
+    return Fixed::fromInt(1) - enemy.resistances[static_cast<std::size_t>(damage)];
+}
 
 Rotation nextRotation(Rotation rotation)
 {

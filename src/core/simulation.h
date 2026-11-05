@@ -20,12 +20,21 @@ enum class GameStatus : quint8 {
     Lost,
 };
 
+/// A status effect on an enemy, for the ticks that are left. Without ticks its strength is 0.
+struct ActiveStatus
+{
+    qint64 ticks = 0;
+    Fixed strength;
+};
+
 struct Enemy
 {
     qint64 id = 0;
     std::size_t type = 0;
     Fixed health;
     Fixed travelled; // distance along the path
+    ActiveStatus slow;
+    ActiveStatus poison;
 };
 
 struct Tower
@@ -35,6 +44,7 @@ struct Tower
     Cell cell;                // the cell it stands on, see TowerType::footprint
     qint64 cooldownTicks = 0; // ticks until the tower can fire
     Rotation rotation = Rotation::None;
+    TargetPriority priority = TargetPriority::First;
 };
 
 /// All that changes during a game. stateHash() must cover every field. Enemies and towers stay in
@@ -62,8 +72,14 @@ struct BuildTowerCommand
     Rotation rotation = Rotation::None;
 };
 
+struct SetTargetPriorityCommand
+{
+    qint64 tower = 0; // the id of a tower in the game
+    TargetPriority priority = TargetPriority::First;
+};
+
 /// What a player, human or bot, can ask for. New commands join this list.
-using Command = std::variant<BuildTowerCommand>;
+using Command = std::variant<BuildTowerCommand, SetTargetPriorityCommand>;
 
 enum class CommandResult : quint8 {
     Accepted,
@@ -73,6 +89,7 @@ enum class CommandResult : quint8 {
     CellBlocked,
     CellOccupied,
     NotEnoughGold,
+    UnknownTower,
 };
 
 /// One game. Same content, seed and commands at the same ticks give the same states, bit by bit.
@@ -93,12 +110,13 @@ public:
 
     /// What execute() would answer for this command right now.
     CommandResult check(const BuildTowerCommand &command) const;
+    CommandResult check(const SetTargetPriorityCommand &command) const;
 
     /// Applies a command between two ticks. Anything but Accepted leaves the state untouched.
     CommandResult execute(const Command &command);
 
-    /// Runs one tick: enemies move, new ones spawn, towers fire, then the game may end. Does
-    /// nothing once the game is over.
+    /// Runs one tick: enemies move, new ones spawn, poison works, towers fire, then the game may
+    /// end. Does nothing once the game is over.
     void tick();
 
     /// Runs up to the given number of ticks, fewer if the game ends.
@@ -111,12 +129,17 @@ public:
     quint64 hash() const;
 
 private:
-    CommandResult build(const BuildTowerCommand &command);
+    CommandResult run(const BuildTowerCommand &command);
+    CommandResult run(const SetTargetPriorityCommand &command);
     bool hasTowerAt(Cell cell) const;
     void moveEnemies();
     void spawnEnemies();
+    void poisonEnemies();
     void fireTowers();
     void updateStatus();
+    void hit(Enemy *enemy, const TowerType &tower);
+    void hurt(Enemy *enemy, Fixed damage);
+    void removeDeadEnemies();
     Enemy *findTarget(const Tower &tower, const std::vector<Point> &positions);
     Fixed rollDamage(const TowerType &type);
 

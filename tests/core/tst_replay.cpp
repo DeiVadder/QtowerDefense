@@ -115,6 +115,10 @@ void addBrokenListRows()
                  "\"type\": \"buildTower\", \"x\": 5",
                  "\"type\": \"sellTower\", \"x\": 5",
                  u"commands[0].type: unknown command \"sellTower\""_s);
+    addBrokenRow("target priority",
+                 "\"type\": \"buildTower\", \"x\": 5, \"y\": 1, \"towerType\": 0",
+                 "\"type\": \"setTargetPriority\", \"tower\": 1, \"priority\": \"weakest\"",
+                 u"commands[0].priority: unknown target priority \"weakest\""_s);
     addBrokenRow("rotation",
                  "\"type\": \"buildTower\", \"x\": 5",
                  "\"type\": \"buildTower\", \"rotation\": 4, \"x\": 5",
@@ -360,6 +364,27 @@ private slots:
         const Replay read = required(result.replay);
         const auto &build = std::get<BuildTowerCommand>(read.commands.front().command);
         QVERIFY(build.rotation == qtd::core::Rotation::ThreeQuarters);
+    }
+
+    void aTargetPriorityComesBackFromAFile()
+    {
+        Replay replay;
+        replay.content = u"map.json"_s;
+        replay.seed = 7;
+        replay.contentHash = 255;
+        replay.commands.push_back(
+            {3,
+             qtd::core::SetTargetPriorityCommand{9, qtd::core::TargetPriority::Strongest},
+             CommandResult::UnknownTower});
+        replay.checkpoints.push_back({3, 16});
+        const ReplayLoadResult result = parseReplay(toJson(replay));
+        QCOMPARE(result.error, QString());
+        const Replay read = required(result.replay);
+        const auto &command =
+            std::get<qtd::core::SetTargetPriorityCommand>(read.commands.front().command);
+        QCOMPARE(command.tower, 9);
+        QVERIFY(command.priority == qtd::core::TargetPriority::Strongest);
+        QVERIFY(read.commands.front().result == CommandResult::UnknownTower);
     }
 
     void aCommandWithoutRotationStandsUnturned()

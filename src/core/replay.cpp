@@ -23,15 +23,16 @@ namespace {
 constexpr qint64 kFormatVersion = 1;
 constexpr qsizetype kHashDigits = 16;
 
-using ResultNames = std::array<QLatin1StringView, 7>;
+using ResultNames = std::array<QLatin1StringView, 8>;
 constexpr ResultNames kResultNames{"accepted"_L1,
                                    "gameOver"_L1,
                                    "unknownTowerType"_L1,
                                    "outsideMap"_L1,
                                    "cellBlocked"_L1,
                                    "cellOccupied"_L1,
-                                   "notEnoughGold"_L1};
-static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::NotEnoughGold) + 1);
+                                   "notEnoughGold"_L1,
+                                   "unknownTower"_L1};
+static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::UnknownTower) + 1);
 
 enum class Kind : quint8 {
     Replay,
@@ -77,9 +78,23 @@ CommandResult readResult(ObjectReader &item)
     return static_cast<CommandResult>(found - kResultNames.begin());
 }
 
+Command readTargetPriority(ObjectReader &item)
+{
+    const qint64 tower = item.integer("tower"_L1, -kMaxExactInteger, kMaxExactInteger);
+    const QString name = item.text("priority"_L1);
+    const std::optional<TargetPriority> priority = targetPriorityNamed(name);
+    if (!priority) {
+        item.fail(u"priority"_s, u"unknown target priority \"%1\""_s.arg(name));
+    }
+    return SetTargetPriorityCommand{tower, priority.value_or(TargetPriority::First)};
+}
+
 Command readCommand(ObjectReader &item)
 {
     const QString type = item.text("type"_L1);
+    if (type == "setTargetPriority"_L1) {
+        return readTargetPriority(item);
+    }
     if (type != "buildTower"_L1) {
         item.fail(u"type"_s, u"unknown command \"%1\""_s.arg(type));
         return BuildTowerCommand{};
@@ -169,17 +184,29 @@ ReplayLoadResult loadFile(const QString &fileName, Kind kind)
     return result;
 }
 
+QJsonObject fieldsOf(const BuildTowerCommand &command)
+{
+    return {{"type"_L1, "buildTower"_L1},
+            {"x"_L1, command.cell.x},
+            {"y"_L1, command.cell.y},
+            {"towerType"_L1, command.towerType},
+            {"rotation"_L1, static_cast<qint64>(command.rotation)}};
+}
+
+QJsonObject fieldsOf(const SetTargetPriorityCommand &command)
+{
+    return {{"type"_L1, "setTargetPriority"_L1},
+            {"tower"_L1, command.tower},
+            {"priority"_L1, toString(command.priority)}};
+}
+
 QJsonObject commandToJson(const RecordedCommand &recorded)
 {
-    const auto &build = std::get<BuildTowerCommand>(recorded.command);
-    const auto rotation = static_cast<qint64>(build.rotation);
-    return {{"tick"_L1, recorded.tick},
-            {"type"_L1, "buildTower"_L1},
-            {"x"_L1, build.cell.x},
-            {"y"_L1, build.cell.y},
-            {"towerType"_L1, build.towerType},
-            {"rotation"_L1, rotation},
-            {"result"_L1, toString(recorded.result)}};
+    QJsonObject object =
+        std::visit([](const auto &command) { return fieldsOf(command); }, recorded.command);
+    object.insert("tick"_L1, recorded.tick);
+    object.insert("result"_L1, toString(recorded.result));
+    return object;
 }
 
 } // namespace

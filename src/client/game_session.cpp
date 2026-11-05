@@ -71,6 +71,7 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
     clock_ = core::TickClock();
     clock_.setSpeed(speed_);
     paused_ = false;
+    chosenTower_ = 0;
     selectedTower_ = 0;
     selectedRotation_ = core::Rotation::None;
     emit mapChanged();
@@ -90,6 +91,43 @@ bool GameSession::buildTower(int x, int y)
     emit towersChanged();
     emit stateChanged();
     return true;
+}
+
+bool GameSession::chooseTowerAt(int x, int y)
+{
+    if (!game_) {
+        return false;
+    }
+    const core::Simulation &game = game_->simulation();
+    const core::Cell cell{x, y};
+    const std::vector<core::Tower>::const_iterator found =
+        std::ranges::find_if(game.state().towers, [&](const core::Tower &tower) {
+            return std::ranges::contains(
+                core::footprintAt(game.content().towers[tower.type], tower.cell, tower.rotation),
+                cell);
+        });
+    if (found == game.state().towers.end()) {
+        return false;
+    }
+    chosenTower_ = found->id;
+    emit towersChanged();
+    return true;
+}
+
+void GameSession::clearChosenTower()
+{
+    chosenTower_ = 0;
+    emit towersChanged();
+}
+
+void GameSession::setChosenPriority(int priority)
+{
+    if (game_ && chosenTower_ != 0 && priority >= 0 &&
+        std::cmp_less(priority, core::kTargetPriorities)) {
+        game_->execute(core::SetTargetPriorityCommand{chosenTower_,
+                                                      static_cast<core::TargetPriority>(priority)});
+        emit towersChanged();
+    }
 }
 
 void GameSession::rotateSelection()
@@ -179,6 +217,22 @@ QVariantList GameSession::selectedShape() const
     return shape;
 }
 
+int GameSession::chosenPriority() const
+{
+    if (!game_ || chosenTower_ == 0) {
+        return -1;
+    }
+    const std::vector<core::Tower> &towers = game_->simulation().state().towers;
+    const std::vector<core::Tower>::const_iterator tower =
+        std::ranges::find(towers, chosenTower_, &core::Tower::id);
+    return tower != towers.end() ? static_cast<int>(tower->priority) : -1;
+}
+
+qint64 GameSession::chosenTower() const
+{
+    return chosenTower_;
+}
+
 int GameSession::towerCount() const
 {
     return game_ ? static_cast<int>(game_->simulation().state().towers.size()) : 0;
@@ -187,6 +241,11 @@ int GameSession::towerCount() const
 const core::Grid *GameSession::grid() const
 {
     return game_ ? &game_->simulation().content().grid : nullptr;
+}
+
+const core::Simulation *GameSession::simulation() const
+{
+    return game_ ? &game_->simulation() : nullptr;
 }
 
 QVariantList GameSession::towerCells() const

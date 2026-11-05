@@ -138,6 +138,56 @@ void readFootprint(ObjectReader &tower, TowerType *type)
     }
 }
 
+DamageType readDamageType(ObjectReader &item)
+{
+    const QString name = item.text("damageType"_L1);
+    const std::optional<DamageType> type = damageTypeNamed(name);
+    if (!type) {
+        item.fail(u"damageType"_s, u"unknown damage type \"%1\""_s.arg(name));
+    }
+    return type.value_or(DamageType::Physical);
+}
+
+void readEffects(ObjectReader &tower, TowerType *type)
+{
+    if (!tower.has("effects"_L1)) {
+        return;
+    }
+    const auto read = [type](ObjectReader &item) {
+        const QString name = item.text("kind"_L1);
+        const std::optional<StatusKind> kind = statusKindNamed(name);
+        if (!kind) {
+            item.fail(u"kind"_s, u"unknown status effect \"%1\""_s.arg(name));
+            return;
+        }
+        if (std::ranges::contains(type->effects, *kind, &StatusEffect::kind)) {
+            item.fail(u"kind"_s, u"repeats a status effect of this tower"_s);
+        }
+        const Fixed strongest = *kind == StatusKind::Slow ? maxSlow() : Fixed::fromInt(kMaxDamage);
+        const Fixed strength = item.fixed("strength"_L1, Fixed::fromRaw(1), strongest);
+        type->effects.push_back(
+            {*kind, strength, item.integer("durationTicks"_L1, 1, kMaxInteger)});
+    };
+    tower.forEach("effects"_L1, read, ObjectReader::Items::MayBeEmpty);
+}
+
+void readResistances(ObjectReader &enemy, EnemyType *type)
+{
+    if (!enemy.has("resistances"_L1)) {
+        return;
+    }
+    std::set<DamageType> seen;
+    const auto read = [&](ObjectReader &item) {
+        const DamageType damage = readDamageType(item);
+        if (!seen.insert(damage).second) {
+            item.fail(u"damageType"_s, u"repeats a resistance of this enemy"_s);
+        }
+        type->resistances[static_cast<std::size_t>(damage)] =
+            item.fixed("share"_L1, Fixed::fromInt(-1), Fixed::fromInt(1));
+    };
+    enemy.forEach("resistances"_L1, read, ObjectReader::Items::MayBeEmpty);
+}
+
 void readTowers(ObjectReader &root, Content *content)
 {
     const Fixed smallest = Fixed::fromRaw(1);
@@ -154,6 +204,8 @@ void readTowers(ObjectReader &root, Content *content)
         if (tower.damageMin > tower.damageMax) {
             item.fail(u"damageMax"_s, u"must not be below damageMin"_s);
         }
+        tower.damageType = readDamageType(item);
+        readEffects(item, &tower);
         readFootprint(item, &tower);
         content->towers.push_back(std::move(tower));
     });
@@ -172,6 +224,7 @@ void readEnemies(ObjectReader &root, Content *content)
         enemy.speedPerTick = item.fixed("speedPerTick"_L1, smallest, maxSpeed);
         enemy.bounty = item.integer("bounty"_L1, 0, kMaxInteger);
         enemy.lifeCost = item.integer("lifeCost"_L1, 1, kMaxInteger);
+        readResistances(item, &enemy);
         content->enemies.push_back(std::move(enemy));
     });
     rejectDuplicateIds(root, u"enemies"_s, content->enemies);

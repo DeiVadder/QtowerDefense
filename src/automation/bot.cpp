@@ -14,6 +14,7 @@ namespace {
 constexpr quint64 kFuzzStream = 99; // apart from the stream of the game
 constexpr quint32 kMaxFuzzCommandsPerTick = 3;
 constexpr quint32 kCommandValues = 3; // x, y and the tower type
+constexpr quint32 kPriorityCommandOneIn = 4;
 
 /// A game draws how often a command is well-formed, one in so many. 0 means never: such a game
 /// builds nothing and gets lost. A well-formed command can still meet a blocked cell.
@@ -84,8 +85,11 @@ public:
             return std::nullopt;
         }
         --commandsLeft_;
-        const core::Content &content = game.content();
         const bool wellFormed = validOneIn_ != 0 && random_.nextBelow(validOneIn_) == 0;
+        if (random_.nextBelow(kPriorityCommandOneIn) == 0) {
+            return targetPriority(game.state(), wellFormed);
+        }
+        const core::Content &content = game.content();
         // A broken command breaks one value, so that each of them reaches its check.
         const quint32 broken = wellFormed ? kCommandValues : random_.nextBelow(kCommandValues);
         const qint64 x = pick(content.grid.width(), broken != 0);
@@ -96,6 +100,19 @@ public:
     }
 
 private:
+    /// Without towers, no command can be well-formed.
+    core::SetTargetPriorityCommand targetPriority(const core::SimulationState &state, bool valid)
+    {
+        const auto priority =
+            static_cast<core::TargetPriority>(random_.nextBelow(core::kTargetPriorities));
+        const auto towers = static_cast<qint64>(state.towers.size());
+        if (valid && towers > 0) {
+            const auto index = static_cast<std::size_t>(pick(towers, true));
+            return {state.towers[index].id, priority};
+        }
+        return {pick(state.nextEntityId, false), priority};
+    }
+
     /// A valid index, or a value next to or far off the range.
     qint64 pick(qint64 size, bool valid)
     {

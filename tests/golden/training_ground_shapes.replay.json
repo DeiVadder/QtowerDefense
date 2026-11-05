@@ -1,64 +1,96 @@
 {
     "checkpoints": [
         {
-            "hash": "b6355da9a4bf361c",
+            "hash": "89691a735bfc8983",
             "tick": 0
         },
         {
-            "hash": "048577bd08cc6e60",
+            "hash": "93a64f3e72371b7f",
             "tick": 30
         },
         {
-            "hash": "23ed3b987e85e4ac",
+            "hash": "e6a7968042ee7823",
             "tick": 60
         },
         {
-            "hash": "197b05bc40b25ee5",
+            "hash": "3feff81208cce1d6",
             "tick": 90
         },
         {
-            "hash": "be3219431e02ff23",
+            "hash": "35d8b4737ac46860",
             "tick": 120
         },
         {
-            "hash": "c965271ba941a64e",
+            "hash": "901f60ad68bd8475",
             "tick": 150
         },
         {
-            "hash": "0a3872b4dc0a78ae",
+            "hash": "fa7e9b7e954f8789",
             "tick": 180
         },
         {
-            "hash": "d39582d888e4dd4d",
+            "hash": "1d9a09bef94ac466",
             "tick": 210
         },
         {
-            "hash": "0649060562da57c2",
+            "hash": "8800ecb7a91c2af1",
             "tick": 240
         },
         {
-            "hash": "7c7188a43fbb8242",
+            "hash": "91c969a1431814a9",
             "tick": 270
         },
         {
-            "hash": "03dd16e1942d7e39",
+            "hash": "f8649341f5798d82",
             "tick": 300
         },
         {
-            "hash": "0d94b6feaac07874",
+            "hash": "707b400d20e4037d",
             "tick": 330
         },
         {
-            "hash": "ba93aff140323fa5",
+            "hash": "25789cfd0e3c86ba",
             "tick": 360
         },
         {
-            "hash": "7a321403b4e98b43",
+            "hash": "dbbb5b5312837019",
             "tick": 390
         },
         {
-            "hash": "23bfbbd0861a61a9",
-            "tick": 404
+            "hash": "fda4de7993612f2f",
+            "tick": 420
+        },
+        {
+            "hash": "344aea2532db9ca3",
+            "tick": 450
+        },
+        {
+            "hash": "86956ea69c284310",
+            "tick": 480
+        },
+        {
+            "hash": "8722ca8fcc4a1bd8",
+            "tick": 510
+        },
+        {
+            "hash": "3a5bc7202905bc38",
+            "tick": 540
+        },
+        {
+            "hash": "b01ebfb641b101c4",
+            "tick": 570
+        },
+        {
+            "hash": "13918df831ef019f",
+            "tick": 600
+        },
+        {
+            "hash": "f8fa5e573da1236e",
+            "tick": 630
+        },
+        {
+            "hash": "a2aa683e804fd63d",
+            "tick": 644
         }
     ],
     "commands": [
@@ -136,7 +168,7 @@
         }
     ],
     "content": "training_ground.json",
-    "contentHash": "f9010ccb1b186ba4",
+    "contentHash": "a4ea64b005e5f85a",
     "formatVersion": 1,
     "seed": "5"
 }

@@ -3,8 +3,11 @@
 #include "core/fixed.h"
 
 #include <QString>
+#include <QStringView>
 
+#include <array>
 #include <cstddef>
+#include <optional>
 #include <vector>
 
 namespace qtd::core {
@@ -98,6 +101,45 @@ constexpr quint32 kRotations = 4;
 /// The next quarter turn, after the last one comes None.
 Rotation nextRotation(Rotation rotation);
 
+enum class DamageType : quint8 {
+    Physical,
+    Magic,
+    Fire,
+    Ice,
+};
+constexpr std::size_t kDamageTypes = 4;
+
+enum class StatusKind : quint8 {
+    Slow,   // strength: the share of the speed that is lost
+    Poison, // strength: the damage per tick
+};
+
+/// The strongest slow there is: an enemy always keeps moving, so that every game ends.
+Fixed maxSlow();
+
+/// What a hit leaves behind, on top of its damage.
+struct StatusEffect
+{
+    StatusKind kind = StatusKind::Slow;
+    Fixed strength;
+    qint64 durationTicks = 1;
+};
+
+/// Which enemy in range a tower fires at. Ties go to the lowest id.
+enum class TargetPriority : quint8 {
+    First,     // the furthest along the path
+    Last,      // the least far along the path
+    Strongest, // the most health left
+    Nearest,   // the closest to the tower
+};
+constexpr quint32 kTargetPriorities = 4;
+
+/// The names of these values in files and requests.
+std::optional<DamageType> damageTypeNamed(QStringView name);
+std::optional<StatusKind> statusKindNamed(QStringView name);
+std::optional<TargetPriority> targetPriorityNamed(QStringView name);
+QString toString(TargetPriority priority);
+
 struct TowerType
 {
     QString id;
@@ -106,7 +148,9 @@ struct TowerType
     qint64 cooldownTicks = 1;
     Fixed damageMin; // every shot rolls a raw value in [damageMin, damageMax]
     Fixed damageMax;
-    std::vector<Cell> footprint; // the cells it takes, relative to the cell it stands on
+    DamageType damageType = DamageType::Physical;
+    std::vector<StatusEffect> effects; // at most one of each kind
+    std::vector<Cell> footprint;       // the cells it takes, relative to the cell it stands on
 };
 
 /// The cells a tower of this type takes when it stands on the given cell, turned as given.
@@ -119,7 +163,13 @@ struct EnemyType
     Fixed speedPerTick;
     qint64 bounty = 0;
     qint64 lifeCost = 1;
+    // By damage type, the share of a hit that does not count: 1 is immune, -1 takes double. It
+    // applies to the damage and to the strength of status effects alike.
+    std::array<Fixed, kDamageTypes> resistances{};
 };
+
+/// What is left of a hit of this damage type on this enemy, from 0 to 2.
+Fixed hitShare(const EnemyType &enemy, DamageType damage);
 
 /// Enemies of one type that enter the path one after the other.
 struct SpawnGroup

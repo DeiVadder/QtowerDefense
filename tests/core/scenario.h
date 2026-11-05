@@ -29,6 +29,7 @@ inline QByteArray scenarioJson()
         "cooldownTicks": 4,
         "damageMin": "2",
         "damageMax": "2",
+        "damageType": "physical",
         "footprint": [{"x": 0, "y": 0}]
     }],
     "enemies": [{

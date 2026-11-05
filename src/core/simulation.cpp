@@ -13,6 +13,42 @@ namespace {
 /// All games share one stream of the generator, the seed alone tells them apart.
 constexpr quint64 kRandomStream = 54;
 
+/// One tick less of an effect.
+void countDown(ActiveStatus *status)
+{
+    --status->ticks;
+    if (status->ticks == 0) {
+        status->strength = Fixed();
+    }
+}
+
+/// The same effect does not add up: the stronger one stays, and of equal ones the longer. Nothing
+/// is left of a hit that an enemy is immune to.
+void afflict(ActiveStatus *status, Fixed strength, qint64 ticks)
+{
+    if (strength > status->strength) {
+        *status = {ticks, strength};
+    } else if (strength == status->strength && strength > Fixed()) {
+        status->ticks = std::max(status->ticks, ticks);
+    }
+}
+
+/// Higher is better. The distance may be squared, that keeps the order.
+Fixed targetScore(TargetPriority priority, const Enemy &enemy, Fixed distance)
+{
+    switch (priority) {
+    case TargetPriority::First:
+        break;
+    case TargetPriority::Last:
+        return -enemy.travelled;
+    case TargetPriority::Strongest:
+        return enemy.health;
+    case TargetPriority::Nearest:
+        return -distance;
+    }
+    return enemy.travelled;
+}
+
 } // namespace
 
 Simulation::Simulation(Content content, quint64 seed) : content_(std::move(content))
@@ -26,7 +62,7 @@ Simulation::Simulation(Content content, quint64 seed) : content_(std::move(conte
 
 CommandResult Simulation::execute(const Command &command)
 {
-    return std::visit([this](const auto &concrete) { return build(concrete); }, command);
+    return std::visit([this](const auto &concrete) { return run(concrete); }, command);
 }
 
 CommandResult Simulation::check(const BuildTowerCommand &command) const
@@ -53,7 +89,26 @@ CommandResult Simulation::check(const BuildTowerCommand &command) const
     return state_.gold < type.cost ? CommandResult::NotEnoughGold : CommandResult::Accepted;
 }
 
-CommandResult Simulation::build(const BuildTowerCommand &command)
+CommandResult Simulation::check(const SetTargetPriorityCommand &command) const
+{
+    if (state_.status != GameStatus::Running) {
+        return CommandResult::GameOver;
+    }
+    return std::ranges::contains(state_.towers, command.tower, &Tower::id)
+               ? CommandResult::Accepted
+               : CommandResult::UnknownTower;
+}
+
+CommandResult Simulation::run(const SetTargetPriorityCommand &command)
+{
+    const CommandResult result = check(command);
+    if (result == CommandResult::Accepted) {
+        std::ranges::find(state_.towers, command.tower, &Tower::id)->priority = command.priority;
+    }
+    return result;
+}
+
+CommandResult Simulation::run(const BuildTowerCommand &command)
 {
     const CommandResult result = check(command);
     if (result == CommandResult::Accepted) {
@@ -80,6 +135,7 @@ void Simulation::tick()
     ++state_.tick;
     moveEnemies();
     spawnEnemies();
+    poisonEnemies();
     fireTowers();
     updateStatus();
 }
@@ -106,7 +162,12 @@ void Simulation::moveEnemies()
     const Fixed end = content_.path.length();
     for (Enemy &enemy : state_.enemies) {
         const EnemyType &type = content_.enemies[enemy.type];
-        enemy.travelled = enemy.travelled + type.speedPerTick;
+        Fixed speed = type.speedPerTick;
+        if (enemy.slow.ticks > 0) {
+            speed = std::max(speed * (Fixed::fromInt(1) - enemy.slow.strength), Fixed::fromRaw(1));
+            countDown(&enemy.slow);
+        }
+        enemy.travelled = enemy.travelled + speed;
         if (enemy.travelled >= end) {
             state_.lives -= type.lifeCost;
         }
@@ -127,7 +188,9 @@ void Simulation::spawnEnemies()
     state_.enemies.push_back({state_.nextEntityId++,
                               group.enemyType,
                               content_.enemies[group.enemyType].health,
-                              Fixed()});
+                              Fixed(),
+                              {},
+                              {}});
     ++state_.spawnedInGroup;
     if (state_.spawnedInGroup < group.count) {
         state_.spawnCountdownTicks = group.intervalTicks - 1;
@@ -140,18 +203,35 @@ void Simulation::spawnEnemies()
     }
 }
 
+void Simulation::poisonEnemies()
+{
+    for (Enemy &enemy : state_.enemies) {
+        if (enemy.poison.ticks > 0) {
+            hurt(&enemy, enemy.poison.strength);
+            countDown(&enemy.poison);
+        }
+    }
+    removeDeadEnemies();
+}
+
 Enemy *Simulation::findTarget(const Tower &tower, const std::vector<Point> &positions)
 {
     const Fixed range = content_.towers[tower.type].range;
     const Fixed reach = range * range;
     const Point place = centreOf(tower.cell);
     Enemy *target = nullptr;
+    Fixed bestScore;
     for (std::size_t index = 0; index < state_.enemies.size(); ++index) {
         Enemy &enemy = state_.enemies[index];
-        // The strict comparison keeps the lowest id among enemies at the same place.
-        if (enemy.health > Fixed() && distanceSquared(place, positions[index]) <= reach &&
-            (target == nullptr || enemy.travelled > target->travelled)) {
+        const Fixed away = distanceSquared(place, positions[index]);
+        if (enemy.health <= Fixed() || away > reach) {
+            continue;
+        }
+        // The strict comparison keeps the lowest id among equal enemies.
+        const Fixed score = targetScore(tower.priority, enemy, away);
+        if (target == nullptr || score > bestScore) {
             target = &enemy;
+            bestScore = score;
         }
     }
     return target;
@@ -180,12 +260,36 @@ void Simulation::fireTowers()
             continue;
         }
         const TowerType &type = content_.towers[tower.type];
-        target->health = target->health - rollDamage(type);
+        hit(target, type);
         tower.cooldownTicks = type.cooldownTicks;
-        if (target->health <= Fixed()) {
-            state_.gold += content_.enemies[target->type].bounty;
+    }
+    removeDeadEnemies();
+}
+
+void Simulation::hit(Enemy *enemy, const TowerType &tower)
+{
+    const Fixed share = hitShare(content_.enemies[enemy->type], tower.damageType);
+    hurt(enemy, rollDamage(tower) * share);
+    for (const StatusEffect &effect : tower.effects) {
+        const Fixed strength = effect.strength * share;
+        if (effect.kind == StatusKind::Slow) {
+            afflict(&enemy->slow, std::min(strength, maxSlow()), effect.durationTicks);
+        } else {
+            afflict(&enemy->poison, strength, effect.durationTicks);
         }
     }
+}
+
+void Simulation::hurt(Enemy *enemy, Fixed damage)
+{
+    enemy->health = enemy->health - damage;
+    if (enemy->health <= Fixed()) {
+        state_.gold += content_.enemies[enemy->type].bounty;
+    }
+}
+
+void Simulation::removeDeadEnemies()
+{
     std::erase_if(state_.enemies, [](const Enemy &enemy) { return enemy.health <= Fixed(); });
 }
 

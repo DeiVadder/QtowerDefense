@@ -2,8 +2,9 @@
 
 ## Stand
 
-- **Etappe:** 0 bis 5 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **Etappe:** 0 bis 6 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Fünf Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus Etappe 6:** Schadensarten, Resistenzen, Verlangsamung und Gift, Zielprioritäten je Turm, im Client wählbar (E-28).
 - **Dazu aus `feature/turm-drehen`:** Türme lassen sich beim Bauen in Vierteln drehen, das HUD zeigt die Form (E-27).
 - **Dazu aus Etappe 5:** `QtowerDefense --control` spielt das echte Spiel, Smoke-Test als Stufe der Vollprüfung, Bildrate als Baseline (E-26).
 - **Dazu aus `feature/raster`:** Schachbrett-Raster statt Bauplätze, Türme mit Formen, Hindernisse, Pfad auf dem Raster, Turmauswahl im HUD (E-25).
@@ -17,14 +18,15 @@
 
 ## Nächster Schritt
 
-1. Etappe 6.
+1. Etappe 7.
 
 ## Bekannte Mängel und offene Punkte
 
 - **Stufen ohne Inhalt (MISSING in `verify`):** Balancing (12).
-- **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
+- **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Schadensarten, Effekte und Resistenzen stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
 - **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `MapInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende.
 - **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Die Form ist nur im HUD zu sehen, nicht auf der Karte, ein abgelehnter Tipp bleibt stumm, das HUD nennt die rohe ID statt eines übersetzbaren Namens, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
+- **Aus dem Review von Etappe 6, nicht behoben:** Die Farben von Schadensart, Status und gewähltem Turm prüft kein Test, nur der Blick auf die Screenshots.
 - **Client:** Die Verbindung von `GameSession` zu `applicationStateChanged` läuft in keinem Test mit echtem Signal, Windows sendet es nicht. Die Reaktion darauf ist getestet.
 - **Fuzz-Prüfung:** Die Zeilen für „abgelehnter Befehl änderte den Zustand" und „Befehl lief nach Spielende" in `headless_runner.cpp` laufen in keinem Test, weil dafür die Simulation fehlerhaft sein müsste. Das Review hat die erste mit einem Mutanten geprüft.
 - **Simulation, bewusst offen:** Doppelte Schlüssel im Inhalts-JSON bleiben unerkannt (E-16). `distance()` rundet schon das Quadrat auf vier Stellen, sehr kurze Pfadstücke unter etwa 0,01 Felder werden dadurch ungenau; abstürzen kann das nicht. Lesbare Texte der Ladefehler sind Englisch und noch nicht übersetzbar, sie richten sich an Autoren der Daten.
@@ -59,7 +61,7 @@
 | 3 | Steuerschnittstelle und Bots | fertig, in `dev` |
 | 4 | Dünne 3D-Version | fertig, in `dev` |
 | 5 | Smoke-Test | fertig, in `dev` |
-| 6 | Kampfsystem | offen |
+| 6 | Kampfsystem | fertig, in `dev` |
 | 7 | Inhalte Türme und Gegner | offen |
 | 8 | Zauber und Helden | offen |
 | 9 | Spielfluss | offen |

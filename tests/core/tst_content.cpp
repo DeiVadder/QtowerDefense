@@ -152,6 +152,51 @@ void addBrokenMapRows()
         "towers[0].footprint[1].x: must be an integer from -8 to 8");
 }
 
+void addBrokenCombatRows()
+{
+    const auto row = [](const char *name, const char *from, const char *to, const char *error) {
+        QTest::newRow(name) << QByteArray(from) << QByteArray(to) << QString::fromUtf8(error);
+    };
+    row("unknown damage type",
+        R"("damageType": "physical")",
+        R"("damageType": "holy")",
+        "towers[0].damageType: unknown damage type \"holy\"");
+    row("no damage type", R"("damageType": "physical",)", "", "towers[0].damageType: is missing");
+    row("unknown effect",
+        R"("damageType": "physical")",
+        R"("damageType": "physical", "effects": [{"kind": "curse"}])",
+        "towers[0].effects[0].kind: unknown status effect \"curse\"");
+    row("effect twice",
+        R"("damageType": "physical")",
+        R"("damageType": "physical", "effects": [
+            {"kind": "poison", "strength": "1", "durationTicks": 1},
+            {"kind": "poison", "strength": "1", "durationTicks": 1}])",
+        "towers[0].effects[1].kind: repeats a status effect of this tower");
+    row("slow too strong",
+        R"("damageType": "physical")",
+        R"("damageType": "physical", "effects": [
+            {"kind": "slow", "strength": "0.9001", "durationTicks": 1}])",
+        "towers[0].effects[0].strength: must be");
+    row("effect without time",
+        R"("damageType": "physical")",
+        R"("damageType": "physical", "effects": [
+            {"kind": "slow", "strength": "0.5", "durationTicks": 0}])",
+        "towers[0].effects[0].durationTicks: must be");
+    row("resistance too high",
+        R"("lifeCost": 1)",
+        R"("lifeCost": 1, "resistances": [{"damageType": "ice", "share": "1.0001"}])",
+        "enemies[0].resistances[0].share: must be");
+    row("resistance too low",
+        R"("lifeCost": 1)",
+        R"("lifeCost": 1, "resistances": [{"damageType": "ice", "share": "-1.0001"}])",
+        "enemies[0].resistances[0].share: must be");
+    row("resistance twice",
+        R"("lifeCost": 1)",
+        R"("lifeCost": 1, "resistances": [{"damageType": "ice", "share": "1"},
+                                          {"damageType": "ice", "share": "1"}])",
+        "enemies[0].resistances[1].damageType: repeats a resistance of this enemy");
+}
+
 void addBrokenStructureRows()
 {
     QTest::addColumn<QByteArray>("from");
@@ -176,7 +221,7 @@ void addBrokenStructureRows()
     row("tower twice",
         R"("towers": [{)",
         R"("towers": [{"id": "arrow", "cost": 1, "range": 1, "cooldownTicks": 1,
-            "damageMin": 1, "damageMax": 1,
+            "damageMin": 1, "damageMax": 1, "damageType": "ice",
             "footprint": [{"x": 0, "y": 0}]}, {)",
         "towers: id \"arrow\" is used twice");
     row("enemy twice",
@@ -299,6 +344,7 @@ private slots:
     static void rejectsBrokenStructure_data()
     {
         addBrokenStructureRows();
+        addBrokenCombatRows();
         addBrokenMapRows();
     }
 
@@ -401,6 +447,46 @@ private slots:
         const qtd::core::ContentLoadResult result = loadContentFile(name);
         QVERIFY(!result.content.has_value());
         QVERIFY2(result.error.startsWith(name + QStringLiteral(": ")), qPrintable(result.error));
+    }
+
+    static void readsDamageEffectsAndResistances()
+    {
+        const qtd::core::Content content =
+            required(parseContent(editedJson(R"("damageType": "physical")",
+                                             R"("damageType": "fire", "effects": [
+                {"kind": "poison", "strength": "0.5", "durationTicks": 9},
+                {"kind": "slow", "strength": "0.9", "durationTicks": 3}])"))
+                         .content);
+        const qtd::core::TowerType &tower = content.towers.at(0);
+        QVERIFY(tower.damageType == qtd::core::DamageType::Fire);
+        QCOMPARE(tower.effects.size(), 2U);
+        QVERIFY(tower.effects[0].kind == qtd::core::StatusKind::Poison);
+        QCOMPARE(tower.effects[0].strength.raw(), 5000);
+        QCOMPARE(tower.effects[0].durationTicks, 9);
+        QVERIFY(tower.effects[1].kind == qtd::core::StatusKind::Slow);
+        QCOMPARE(tower.effects[1].strength.raw(), 9000);
+        const qtd::core::Content resistant =
+            required(parseContent(editedJson(R"("lifeCost": 1)",
+                                             R"("lifeCost": 1, "resistances": [
+                {"damageType": "magic", "share": "-1"}, {"damageType": "ice", "share": "1"}])"))
+                         .content);
+        const qtd::core::EnemyType &enemy = resistant.enemies.at(0);
+        QCOMPARE(qtd::core::hitShare(enemy, qtd::core::DamageType::Physical).raw(), 10000);
+        QCOMPARE(qtd::core::hitShare(enemy, qtd::core::DamageType::Magic).raw(), 20000);
+        QCOMPARE(qtd::core::hitShare(enemy, qtd::core::DamageType::Fire).raw(), 10000);
+        QCOMPARE(qtd::core::hitShare(enemy, qtd::core::DamageType::Ice).raw(), 0);
+    }
+
+    static void namesOfPrioritiesGoBothWays()
+    {
+        using qtd::core::TargetPriority;
+        for (const TargetPriority priority : {TargetPriority::First,
+                                              TargetPriority::Last,
+                                              TargetPriority::Strongest,
+                                              TargetPriority::Nearest}) {
+            QVERIFY(qtd::core::targetPriorityNamed(qtd::core::toString(priority)) == priority);
+        }
+        QVERIFY(!qtd::core::targetPriorityNamed(u"weakest").has_value());
     }
 
     static void aTurnedFootprintGoesRoundItsCell_data()
