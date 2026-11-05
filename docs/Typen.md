@@ -25,6 +25,8 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | Typ | Art | Datei | Zweck |
 |---|---|---|---|
 | `AppInfo` | class | `app_info.h` | Build information for the QML side. |
+| `EnemyInstances` | class | `enemy_instances.h` | Draws all enemies of a game with one model: their number changes with every wave, and creating a QML object for each of them would not hold up with hundreds. |
+| `GameSession` | class | `game_session.h` | The running game for the QML side. |
 
 ## core
 

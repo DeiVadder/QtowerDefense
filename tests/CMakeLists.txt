@@ -108,6 +108,13 @@ if(NOT QTD_ENABLE_UBSAN)
         LIBS qtd_client qtd_clientplugin
         LABELS client)
 
+    qtd_add_test(tst_client_game_session
+        SOURCES client/tst_game_session.cpp
+        LIBS qtd_client
+        LABELS client)
+    target_compile_definitions(tst_client_game_session PRIVATE
+        QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
     qt_add_executable(tst_qml qml/tst_qml.cpp)
     set_target_properties(tst_qml PROPERTIES WIN32_EXECUTABLE OFF)
     target_compile_definitions(tst_qml PRIVATE

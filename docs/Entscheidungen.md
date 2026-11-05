@@ -154,3 +154,16 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Absturz im Fuzz-Lauf:** Ein Replay lässt sich dann nicht mehr schreiben. Der Lauf nennt deshalb jeden Seed vorab auf der Fehlerausgabe, `--seed` wiederholt das Spiel. Das Spiel ist deterministisch, der Seed reicht also.
 - **Fuzz in `verify`:** 40 Läufe je Karte unter ASan und UBSan, knapp zwei Minuten. 200 Läufe kosteten 272 s und damit mehr als alle anderen Stufen zusammen. Die Seeds bleiben fest, damit `verify` wiederholbar ist; wechselnde Seeds können eine Prüfung ohne Codeänderung rot werden lassen.
 - **Verworfen:** Eigenes Befehlsformat für Bots: Dann könnte ein Bot Dinge, die ein Mensch nicht kann. Fuzz nur über das JSON-Protokoll: Langsamer und ohne Gewinn, der Parser hat eigene Tests.
+
+## E-24 Dünne 3D-Version
+- **Was:** `GameSession` im Client hält die Simulation, zeigt den Zustand als Eigenschaften und nimmt Befehle an. `FrameAnimation` gibt die Zeit eines Frames an `TickClock`. `EnemyInstances` zeichnet alle Gegner mit einem Modell. Karten liegen als Qt-Ressource im Programm. Eingabe: Tippen baut, Ziehen verschiebt, Pinch und Mausrad zoomen.
+- **Warum Instancing schon jetzt:** Gegner wechseln mit jedem Tick. Ein `Repeater3D` über eine Liste würde alle Objekte je Tick neu bauen, und der Auftrag verlangt Instancing für gleichartige Objekte. Türme ändern sich selten und bleiben QML-Objekte.
+- **`instanceRoot`:** Ohne ihn gelten Instanzen global, der Versatz der Karte fehlt. Mit ihm darf das Modell nicht über `visible` ein- und ausgeschaltet werden, sonst bleibt der Ursprung stehen und die Gegner laufen neben dem Pfad; Qt zeichnet bei null Instanzen ohnehin nichts. Das fiel erst auf dem Bild des echten Fensters auf. `test_anEnemyIsDrawnOnThePath` prüft jetzt die Pixel, nachdem Frames ohne Gegner liefen.
+- **Interpolation:** `GameSession::enemyPlaces` zeichnet Gegner zwischen ihren letzten beiden Ticks, den Anteil liefert `TickClock::pendingMillionths`. Das Bild läuft dadurch bis zu einen Tick hinter dem Spiel her. Türme stehen, dort gibt es nichts zu interpolieren.
+- **Hintergrund:** Windows meldet keine Anwendungszustände (`ApplicationHidden`, `ApplicationSuspended` kommen dort nie). Deshalb pausiert `Main.qml` auch beim Minimieren und Verstecken des Fensters, die Anwendungszustände gelten für Mobile. Nach einer Pause geht es erst weiter, wenn der Spieler es will.
+- **HUD:** Knöpfe nehmen `MouseArea`, weil ein `TapHandler` nur passiv mithört und die Karte darunter denselben Klick bekäme. Die Größe folgt der Pixeldichte und schrumpft, wenn die Breite nicht reicht.
+- **Lange Frames:** Mehr als 250 ms zählen als 250 ms. Sonst springt das Spiel nach einem Hänger oder aus dem Hintergrund, statt langsamer zu werden.
+- **Eigene Knöpfe:** `HudButton` aus Quick, weil Controls nicht zu den Modulen des Auftrags gehört.
+- **Ein Turmtyp:** Der Client baut immer den ersten Typ, mehr gibt es erst mit Etappe 7. Die Auswahl kommt dann mit.
+- **Seed:** Jede Partie im Client bekommt einen Seed aus `QRandomGenerator`. Das ist außerhalb von Core erlaubt, und die Simulation bleibt davon unberührt.
+- **Verworfen:** `ControlSession` als Grundlage des Clients: Der Weg über JSON brächte nichts, die Befehle sind dieselben. Der Client zeichnet noch kein Replay auf; das kommt mit dem Smoke-Test, wenn die Steuerschnittstelle ins echte Spiel einzieht.

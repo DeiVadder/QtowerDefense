@@ -35,6 +35,16 @@ private slots:
         QCOMPARE(ticks, 30);
     }
 
+    void thePartOfATickIsKnown()
+    {
+        qtd::core::TickClock clock;
+        QCOMPARE(clock.pendingMillionths(), 0);
+        QCOMPARE(clock.ticksFor(10'000), 0);
+        QCOMPARE(clock.pendingMillionths(), 300'000);
+        QCOMPARE(clock.ticksFor(30'000), 1);
+        QCOMPARE(clock.pendingMillionths(), 200'000);
+    }
+
     void speedMultipliesTheTicks()
     {
         TickClock clock;

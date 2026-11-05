@@ -2,22 +2,27 @@
 
 ## Stand
 
-- **Etappe:** 0, 1, 2 und 3 sind geprüft und in `dev` (Etappe 2: `37fe03f`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **Etappe:** 0 bis 4 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Vier Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus Etappe 4:** Eine spielbare Karte im 3D-Client mit Platzhaltern: Kamera, Bauen per Maus und Touch, HUD, Pause, Tempo, Interpolation (E-24).
 - **Dazu aus Etappe 3:** `naive` und `fuzz` als Bots, Invarianten, JSON-Steuerschnittstelle über `qtd_headless --control`, Fuzz-Stufe in `verify` (E-23).
 - **Letzter voller `verify`:** grün, 13 bestanden, 2 MISSING (Balancing, Smoke). Coverage Core 99,2 %, Automation 97,3 %. Benchmark rund 4.800-fache Echtzeit (`docs/Performance-Verlauf.md`).
 - **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
 - **Review von Etappe 3:** Zwei Runden nicht bestanden: `saveReplay` hing bei NUL und bei rund 32.760 Zeichen im Dateinamen, Ctrl-Z beendete die Sitzung, Invarianten liefen zu selten, der Fehlerpfad hatte keinen Test, dazu doppelte Logik. Alles behoben oder in E-23 und unten begründet, die dritte Runde bestand mit Mutanten (`285e8a2`). Die Coverage von Core maß das Review im frischen Klon mit 882/888 statt 881/888; ungeklärt, ohne Folgen für die Schwelle.
+- **Review von Etappe 4:** Erst nicht bestanden: Klicks gingen durch das HUD auf die Karte, im Hintergrund lief das Spiel auf dem Desktop weiter, das HUD überlappte in kleinen Fenstern, die Interpolation fehlte. Alles behoben, Nachprüfung mit Mutanten bestanden (`68a99ac`).
 - **cppcheck** analysiert wirklich alle Dateien, siehe E-19.
 
 ## Nächster Schritt
 
-1. Etappe 4.
+1. Feature `feature/raster`: Wunsch des Menschen vom 2026-11-05. Statt fester Bauplätze ein Schachbrett-Raster; Türme belegen ein oder mehrere Felder in einer Form; Hindernisse wie Felsen, Bäume und Wasser belegen Felder; auch der Pfad folgt dem Raster. Das ändert Regeln, Inhaltsformat, Client und Golden Replays. Annahme, bis der Mensch anders entscheidet: Gegner bleiben auf festen Pfaden, Pfadfelder sind nicht bebaubar.
+2. Etappe 5 (Smoke-Test).
 
 ## Bekannte Mängel und offene Punkte
 
 - **Stufen ohne Inhalt (MISSING in `verify`):** Smoke-Test mit Screenshot (5), Balancing (12).
 - **Steuerschnittstelle:** Bisher nur `qtd_headless --control` auf Standard-Ein- und -Ausgabe. Die Aktionen zu Regeln, die es noch nicht gibt, fehlen, der localhost-Transport für das echte Spiel auch (E-23, `docs/Steuerschnittstelle.md`). Für den localhost-Transport muss `startMap` und `saveReplay` auf erlaubte Pfade beschränkt werden, heute lesen und überschreiben sie jeden Pfad. Bauplätze und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
+- **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `EnemyInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende. Ein Ziehen, das auf einem HUD-Knopf beginnt, verschiebt die Karte.
+- **Client:** Die Verbindung von `GameSession` zu `applicationStateChanged` läuft in keinem Test mit echtem Signal, Windows sendet es nicht. Die Reaktion darauf ist getestet.
 - **Fuzz-Prüfung:** Die Zeilen für „abgelehnter Befehl änderte den Zustand" und „Befehl lief nach Spielende" in `headless_runner.cpp` laufen in keinem Test, weil dafür die Simulation fehlerhaft sein müsste. Das Review hat die erste mit einem Mutanten geprüft.
 - **Simulation, bewusst offen:** Doppelte Schlüssel im Inhalts-JSON bleiben unerkannt (E-16). `distance()` rundet schon das Quadrat auf vier Stellen, sehr kurze Pfadstücke unter etwa 0,01 Felder werden dadurch ungenau; abstürzen kann das nicht. Lesbare Texte der Ladefehler sind Englisch und noch nicht übersetzbar, sie richten sich an Autoren der Daten.
 - **Aus dem Review von Etappe 2, nicht behoben:** `--replay --runs 1` und `--control --runs 1` werden angenommen, obwohl die Doku `--runs` ausschließt; wirkungslos, weil genau ein Lauf gemeint ist. `count_if` in `headless_runner.cpp` ist für Linux und Android gecastet, dort aber nicht kompiliert.

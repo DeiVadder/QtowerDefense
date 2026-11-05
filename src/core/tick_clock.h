@@ -20,6 +20,13 @@ public:
     /// The ticks that are due after the given time.
     qint64 ticksFor(qint64 elapsedMicroseconds);
 
+    /// How far the time is on its way to the next tick, in millionths of a tick. For the display,
+    /// which interpolates between ticks.
+    qint64 pendingMillionths() const
+    {
+        return pending_;
+    }
+
 private:
     qint64 speed_ = 1;
     qint64 pending_ = 0; // the part of a tick left over, in millionths
