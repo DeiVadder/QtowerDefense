@@ -1,6 +1,6 @@
 # Control interface
 
-A local, machine-readable way to play. It is off by default. `qtd_headless --control` turns it on: one JSON request per line on standard input, one JSON answer per line on standard output, until the input ends. The real game will offer the same protocol on localhost.
+A local, machine-readable way to play. It is off by default. `qtd_headless --control` and `QtowerDefense --control` turn it on: one JSON request per line on standard input, one JSON answer per line on standard output, until the input ends.
 
 Every request is an object with an `action`. Every answer has `ok`. With `"ok": false` it also has `error`, a text for people, and nothing has changed. A wrong line never ends the session.
 
@@ -15,8 +15,11 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | `advance` | `ticks` (0 to 1000000) | Runs that many ticks, it stops at the end of the game |
 | `observe` | none | Reports the state, changes nothing |
 | `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay |
+| `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points |
+| `pause`, `resume` | none | Real game only. Stops or starts real time |
+| `quit` | none | Real game only. Ends the program after the answer |
 
-Everything but `startMap` needs a game, which may have ended.
+Everything but `startMap` and `quit` needs a game, which may have ended.
 
 A rejected command is not an error: the answer has `"ok": true`, a `result` such as `outsideMap`, `cellBlocked`, `cellOccupied` or `notEnoughGold`, and the state stays as it was.
 
@@ -33,6 +36,10 @@ All answers with `"ok": true` report the state:
 
 `status` is `running`, `won` or `lost`.
 
+## In the real game
+
+The requests play the game on the screen. The game starts with time standing still, and `startMap` stops it again: only `advance` moves the game until `resume` lets it run. The observation adds `paused` and `frames`, the number of frames shown so far. As without a window, everything but `startMap` and `quit` needs a game from `startMap`: the game that the window opened with has a seed of its own. The end of the input ends the program. Qt writes its messages to the debugger unless `QT_FORCE_STDERR_LOGGING=1` is set.
+
 ## Example
 
 ```
@@ -44,4 +51,4 @@ All answers with `"ok": true` report the state:
 
 ## Not yet there
 
-These arrive with their rules and return `unknown action` until then: upgrade, sell, target priority, spells, calling a wave early, saving and loading a game. The screenshot in the real game arrives with the transport on localhost.
+These arrive with their rules and return `unknown action` until then: upgrade, sell, target priority, spells, calling a wave early, saving and loading a game.

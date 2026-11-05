@@ -10,6 +10,9 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <memory>
+#include <utility>
+
 using qtd::automation::ControlSession;
 using qtd::tests::required;
 
@@ -46,6 +49,41 @@ QJsonObject advance(ControlSession &session, qint64 ticks)
 
 } // namespace
 
+/// Counts the requests that reach the game.
+class CountingGame : public qtd::automation::ControlledGame
+{
+public:
+    QString start(const QString &map, quint64 seed) override
+    {
+        qtd::core::ContentLoadResult loaded = qtd::core::loadContentFile(map);
+        if (!loaded.content) {
+            return loaded.error;
+        }
+        recorder_ =
+            std::make_unique<qtd::core::ReplayRecorder>(*std::move(loaded.content), map, seed);
+        return {};
+    }
+    qtd::core::ReplayRecorder *recorder() override
+    {
+        return recorder_.get();
+    }
+    QString setPaused(bool /*paused*/) override
+    {
+        ++calls;
+        return {};
+    }
+    QString quit() override
+    {
+        ++calls;
+        return {};
+    }
+
+    int calls = 0;
+
+private:
+    std::unique_ptr<qtd::core::ReplayRecorder> recorder_;
+};
+
 class ControlSessionTest : public QObject
 {
     Q_OBJECT
@@ -78,6 +116,43 @@ private slots:
         QCOMPARE(tower["x"_L1].toInteger(), 6);
         QCOMPARE(tower["y"_L1].toInteger(), 0);
         QCOMPARE(tower["type"_L1].toInteger(), 0);
+    }
+
+    void aRequestWithAWrongKeyDoesNothing_data()
+    {
+        QTest::addColumn<QByteArray>("request");
+        QTest::newRow("pause") << QByteArray(R"({"action":"pause","x":1})");
+        QTest::newRow("resume") << QByteArray(R"({"action":"resume","x":1})");
+        QTest::newRow("quit") << QByteArray(R"({"action":"quit","x":1})");
+    }
+
+    void aRequestWithAWrongKeyDoesNothing()
+    {
+        QFETCH(const QByteArray, request);
+        CountingGame game;
+        ControlSession session(&game);
+        start(session);
+        QVERIFY(!QJsonDocument::fromJson(session.handle(request)).object()["ok"_L1].toBool());
+        QCOMPARE(game.calls, 0);
+    }
+
+    void theRealGameHasActionsOfItsOwn_data()
+    {
+        QTest::addColumn<QByteArray>("request");
+        QTest::newRow("screenshot") << QByteArray(R"({"action":"screenshot","file":"a.png"})");
+        QTest::newRow("pause") << QByteArray(R"({"action":"pause"})");
+        QTest::newRow("resume") << QByteArray(R"({"action":"resume"})");
+        QTest::newRow("quit") << QByteArray(R"({"action":"quit"})");
+    }
+
+    void theRealGameHasActionsOfItsOwn()
+    {
+        QFETCH(const QByteArray, request);
+        ControlSession session;
+        start(session);
+        const QJsonObject answer = QJsonDocument::fromJson(session.handle(request)).object();
+        QVERIFY(!answer["ok"_L1].toBool());
+        QVERIFY(answer["error"_L1].toString().contains(u"real game"_s));
     }
 
     void aRejectedCommandIsAnAnswerAndChangesNothing()

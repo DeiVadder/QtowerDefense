@@ -26,6 +26,10 @@ enum class Action : quint8 {
     Advance,
     Observe,
     SaveReplay,
+    Screenshot,
+    Pause,
+    Resume,
+    Quit,
 };
 
 std::optional<Action> actionFromName(const QString &name)
@@ -45,6 +49,18 @@ std::optional<Action> actionFromName(const QString &name)
     if (name == "saveReplay"_L1) {
         return Action::SaveReplay;
     }
+    if (name == "screenshot"_L1) {
+        return Action::Screenshot;
+    }
+    if (name == "pause"_L1) {
+        return Action::Pause;
+    }
+    if (name == "resume"_L1) {
+        return Action::Resume;
+    }
+    if (name == "quit"_L1) {
+        return Action::Quit;
+    }
     return std::nullopt;
 }
 
@@ -53,7 +69,7 @@ QByteArray failure(const QString &message)
     return compact({{"ok"_L1, false}, {"error"_L1, message}});
 }
 
-QJsonObject observation(const core::Simulation &game)
+QJsonObject observationOf(const core::Simulation &game)
 {
     const core::SimulationState &state = game.state();
     QJsonArray towers;
@@ -85,9 +101,62 @@ QJsonObject observation(const core::Simulation &game)
     return answer;
 }
 
+/// A game without a window, for qtd_headless.
+class HeadlessGame : public ControlledGame
+{
+public:
+    QString start(const QString &map, quint64 seed) override
+    {
+        core::ContentLoadResult loaded = core::loadContentFile(map);
+        if (!loaded.content) {
+            return loaded.error;
+        }
+        recorder_ = std::make_unique<core::ReplayRecorder>(
+            *std::move(loaded.content), QFileInfo(map).fileName(), seed);
+        return {};
+    }
+
+    core::ReplayRecorder *recorder() override
+    {
+        return recorder_.get();
+    }
+
+private:
+    std::unique_ptr<core::ReplayRecorder> recorder_;
+};
+
+QString onlyInTheRealGame()
+{
+    return u"this works only in the real game"_s;
+}
+
 } // namespace
 
-ControlSession::ControlSession() = default;
+void ControlledGame::changed() {}
+
+void ControlledGame::observe(QJsonObject * /*answer*/) const {}
+
+QString ControlledGame::saveScreenshot(const QString & /*file*/, QJsonObject * /*answer*/)
+{
+    return onlyInTheRealGame();
+}
+
+QString ControlledGame::setPaused(bool /*paused*/)
+{
+    return onlyInTheRealGame();
+}
+
+QString ControlledGame::quit()
+{
+    return onlyInTheRealGame();
+}
+
+ControlSession::ControlSession() : ownGame_(std::make_unique<HeadlessGame>()), game_(ownGame_.get())
+{
+}
+
+ControlSession::ControlSession(ControlledGame *game) : game_(game) {}
+
 ControlSession::~ControlSession() = default;
 
 QByteArray ControlSession::handle(QByteArrayView request)
@@ -106,7 +175,7 @@ QByteArray ControlSession::handle(QByteArrayView request)
     if (!action) {
         return failure(u"unknown action \"%1\""_s.arg(name));
     }
-    if (*action != Action::StartMap && !game_) {
+    if (*action != Action::StartMap && *action != Action::Quit && game_->recorder() == nullptr) {
         return failure(u"no game, use startMap first"_s);
     }
     switch (*action) {
@@ -118,11 +187,39 @@ QByteArray ControlSession::handle(QByteArrayView request)
         return advance(reader);
     case Action::SaveReplay:
         return saveReplay(reader);
+    case Action::Screenshot:
+        return saveScreenshot(reader);
+    case Action::Pause:
+        return finish(reader, [this] { return game_->setPaused(true); });
+    case Action::Resume:
+        return finish(reader, [this] { return game_->setPaused(false); });
+    case Action::Quit:
+        return finish(reader, [this] { return game_->quit(); });
     case Action::Observe:
         break;
     }
-    reader.rejectUnknownKeys();
-    return reader.failed() ? failure(error) : compact(observation(game_->simulation()));
+    return finish(reader, [] { return QString(); });
+}
+
+QByteArray ControlSession::finish(const core::ObjectReader &request,
+                                  const std::function<QString()> &act)
+{
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    const QString problem = act();
+    if (!problem.isEmpty()) {
+        return failure(problem);
+    }
+    return game_->recorder() != nullptr ? compact(observation()) : compact({{"ok"_L1, true}});
+}
+
+QJsonObject ControlSession::observation() const
+{
+    QJsonObject answer = observationOf(game_->recorder()->simulation());
+    game_->observe(&answer);
+    return answer;
 }
 
 QByteArray ControlSession::startMap(core::ObjectReader &request)
@@ -137,13 +234,12 @@ QByteArray ControlSession::startMap(core::ObjectReader &request)
     if (!seed) {
         return failure(u"seed must be a text of decimal digits that fits 64 bits"_s);
     }
-    core::ContentLoadResult loaded = core::loadContentFile(map);
-    if (!loaded.content) {
-        return failure(loaded.error);
+    const QString problem = game_->start(map, *seed);
+    if (!problem.isEmpty()) {
+        return failure(problem);
     }
-    game_ = std::make_unique<core::ReplayRecorder>(
-        *std::move(loaded.content), QFileInfo(map).fileName(), *seed);
-    return compact(observation(game_->simulation()));
+    game_->changed();
+    return compact(observation());
 }
 
 QByteArray ControlSession::buildTower(core::ObjectReader &request)
@@ -156,8 +252,10 @@ QByteArray ControlSession::buildTower(core::ObjectReader &request)
     if (request.failed()) {
         return failure(request.error());
     }
-    const core::CommandResult result = game_->execute(core::BuildTowerCommand{{x, y}, tower});
-    QJsonObject answer = observation(game_->simulation());
+    const core::CommandResult result =
+        game_->recorder()->execute(core::BuildTowerCommand{{x, y}, tower});
+    game_->changed();
+    QJsonObject answer = observation();
     answer.insert("result"_L1, core::toString(result));
     return compact(answer);
 }
@@ -169,8 +267,9 @@ QByteArray ControlSession::advance(core::ObjectReader &request)
     if (request.failed()) {
         return failure(request.error());
     }
-    game_->advance(ticks);
-    return compact(observation(game_->simulation()));
+    game_->recorder()->advance(ticks);
+    game_->changed();
+    return compact(observation());
 }
 
 QByteArray ControlSession::saveReplay(core::ObjectReader &request)
@@ -181,10 +280,27 @@ QByteArray ControlSession::saveReplay(core::ObjectReader &request)
         return failure(request.error());
     }
     QString error;
-    if (!writeFile(name, core::toJson(game_->replay()), &error)) {
+    if (!writeFile(name, core::toJson(game_->recorder()->replay()), &error)) {
         return failure(error);
     }
-    return compact(observation(game_->simulation()));
+    return compact(observation());
+}
+
+QByteArray ControlSession::saveScreenshot(core::ObjectReader &request)
+{
+    const QString name = request.text("file"_L1);
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    QJsonObject picture;
+    const QString problem = game_->saveScreenshot(name, &picture);
+    if (!problem.isEmpty()) {
+        return failure(problem);
+    }
+    QJsonObject answer = observation();
+    answer.insert("screenshot"_L1, picture);
+    return compact(answer);
 }
 
 } // namespace qtd::automation

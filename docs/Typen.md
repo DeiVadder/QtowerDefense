@@ -13,7 +13,9 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Bot` | class | `bot.h` | Decides what to do. |
 | `BotKind` | enum class | `bot.h` | The players that need no script. |
 | `Action` | enum class | `control_session.cpp` |  |
+| `HeadlessGame` | class | `control_session.cpp` | A game without a window, for qtd_headless. |
 | `ControlSession` | class | `control_session.h` | The control interface without its transport: one JSON request in, one JSON answer out. |
+| `ControlledGame` | class | `control_session.h` | Where a controlled game lives: on its own in qtd_headless, on the screen in the real game. |
 | `CommandLine` | struct | `headless_runner.cpp` | The options of the command line. |
 | `HeadlessArguments` | struct | `headless_runner.h` | Holds the options, or an error text. |
 | `HeadlessOptions` | struct | `headless_runner.h` | What a run of qtd_headless should do, see docs/Architektur.md. |
@@ -30,6 +32,9 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Piece` | struct | `map_instances.cpp` |  |
 | `MapInstances` | class | `map_instances.h` | Draws one layer of a game with a single model: a map has hundreds of cells, and the number of enemies changes with every wave. |
 | `MapInstances::Layer` | enum class | `map_instances.h` |  |
+| `ScreenControl::Mailbox` | struct | `screen_control.cpp` | The way from the thread that reads to the control. |
+| `ScreenControl::ScreenGame` | class | `screen_control.cpp` | The game on the screen, as the control interface sees it. |
+| `ScreenControl` | class | `screen_control.h` | The control interface in the real game: requests play the game on the screen. |
 
 ## core
 

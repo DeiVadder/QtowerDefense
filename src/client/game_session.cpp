@@ -3,6 +3,7 @@
 #include "core/content_loader.h"
 
 #include <QCoreApplication>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QRandomGenerator>
 #include <QVariantMap>
@@ -64,7 +65,8 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
     game_.reset();
     lastPlaces_.clear();
     if (loaded.content) {
-        game_ = std::make_unique<core::Simulation>(*std::move(loaded.content), seed);
+        game_ = std::make_unique<core::ReplayRecorder>(
+            *std::move(loaded.content), QFileInfo(fileName).fileName(), seed);
     }
     clock_ = core::TickClock();
     clock_.setSpeed(speed_);
@@ -88,23 +90,36 @@ bool GameSession::buildTower(int x, int y)
     return true;
 }
 
+core::ReplayRecorder *GameSession::recorder()
+{
+    return game_.get();
+}
+
+void GameSession::refresh()
+{
+    lastPlaces_.clear();
+    emit towersChanged();
+    emit stateChanged();
+    emit frameChanged();
+}
+
 void GameSession::advanceTime(qint64 microseconds)
 {
     if (!game_) {
         return;
     }
-    const qint64 before = game_->state().tick;
+    const qint64 before = game_->simulation().state().tick;
     const qint64 ticks =
         clock_.ticksFor(std::clamp<qint64>(microseconds, 0, kMaxFrameMicroseconds));
     if (ticks > 0) {
         game_->advance(ticks - 1);
         lastPlaces_.clear();
-        for (const core::Enemy &enemy : game_->state().enemies) {
-            lastPlaces_.emplace(enemy.id, game_->position(enemy));
+        for (const core::Enemy &enemy : game_->simulation().state().enemies) {
+            lastPlaces_.emplace(enemy.id, game_->simulation().position(enemy));
         }
         game_->advance(1);
     }
-    if (game_->state().tick != before) {
+    if (game_->simulation().state().tick != before) {
         emit stateChanged();
     }
     emit frameChanged();
@@ -117,8 +132,8 @@ const QString &GameSession::error() const
 
 QSize GameSession::gridSize() const
 {
-    return game_ ? QSize(static_cast<int>(game_->content().grid.width()),
-                         static_cast<int>(game_->content().grid.height()))
+    return game_ ? QSize(static_cast<int>(game_->simulation().content().grid.width()),
+                         static_cast<int>(game_->simulation().content().grid.height()))
                  : QSize();
 }
 
@@ -126,7 +141,7 @@ QVariantList GameSession::towerTypes() const
 {
     QVariantList types;
     if (game_) {
-        for (const core::TowerType &type : game_->content().towers) {
+        for (const core::TowerType &type : game_->simulation().content().towers) {
             types.append(QVariantMap{{u"name"_s, type.id}, {u"cost"_s, type.cost}});
         }
     }
@@ -140,21 +155,21 @@ int GameSession::selectedTower() const
 
 int GameSession::towerCount() const
 {
-    return game_ ? static_cast<int>(game_->state().towers.size()) : 0;
+    return game_ ? static_cast<int>(game_->simulation().state().towers.size()) : 0;
 }
 
 const core::Grid *GameSession::grid() const
 {
-    return game_ ? &game_->content().grid : nullptr;
+    return game_ ? &game_->simulation().content().grid : nullptr;
 }
 
 QVariantList GameSession::towerCells() const
 {
     QVariantList cells;
     if (game_) {
-        for (const core::Tower &tower : game_->state().towers) {
+        for (const core::Tower &tower : game_->simulation().state().towers) {
             std::ranges::transform(
-                core::footprintAt(game_->content().towers[tower.type], tower.cell),
+                core::footprintAt(game_->simulation().content().towers[tower.type], tower.cell),
                 std::back_inserter(cells),
                 [](core::Cell cell) {
                     return QPoint(static_cast<int>(cell.x), static_cast<int>(cell.y));
@@ -166,32 +181,32 @@ QVariantList GameSession::towerCells() const
 
 qint64 GameSession::gold() const
 {
-    return game_ ? game_->state().gold : 0;
+    return game_ ? game_->simulation().state().gold : 0;
 }
 
 qint64 GameSession::lives() const
 {
-    return game_ ? game_->state().lives : 0;
+    return game_ ? game_->simulation().state().lives : 0;
 }
 
 qint64 GameSession::tick() const
 {
-    return game_ ? game_->state().tick : 0;
+    return game_ ? game_->simulation().state().tick : 0;
 }
 
 int GameSession::enemyCount() const
 {
-    return game_ ? static_cast<int>(game_->state().enemies.size()) : 0;
+    return game_ ? static_cast<int>(game_->simulation().state().enemies.size()) : 0;
 }
 
 bool GameSession::won() const
 {
-    return game_ && game_->state().status == core::GameStatus::Won;
+    return game_ && game_->simulation().state().status == core::GameStatus::Won;
 }
 
 bool GameSession::lost() const
 {
-    return game_ && game_->state().status == core::GameStatus::Lost;
+    return game_ && game_->simulation().state().status == core::GameStatus::Lost;
 }
 
 bool GameSession::paused() const
@@ -215,19 +230,21 @@ std::vector<QPointF> GameSession::enemyPlaces() const
     if (!game_) {
         return places;
     }
-    const bool moving = game_->state().status == core::GameStatus::Running;
+    const bool moving = game_->simulation().state().status == core::GameStatus::Running;
     const double share = static_cast<double>(clock_.pendingMillionths()) / kMillionthsPerTick;
-    places.reserve(game_->state().enemies.size());
-    std::ranges::transform(
-        game_->state().enemies, std::back_inserter(places), [&](const core::Enemy &enemy) {
-            const QPointF place = mapPlace(game_->position(enemy));
-            const std::map<qint64, core::Point>::const_iterator last = lastPlaces_.find(enemy.id);
-            if (!moving || last == lastPlaces_.end()) {
-                return place;
-            }
-            const QPointF from = mapPlace(last->second);
-            return from + (place - from) * share;
-        });
+    places.reserve(game_->simulation().state().enemies.size());
+    std::ranges::transform(game_->simulation().state().enemies,
+                           std::back_inserter(places),
+                           [&](const core::Enemy &enemy) {
+                               const QPointF place = mapPlace(game_->simulation().position(enemy));
+                               const std::map<qint64, core::Point>::const_iterator last =
+                                   lastPlaces_.find(enemy.id);
+                               if (!moving || last == lastPlaces_.end()) {
+                                   return place;
+                               }
+                               const QPointF from = mapPlace(last->second);
+                               return from + (place - from) * share;
+                           });
     return places;
 }
 
@@ -240,7 +257,7 @@ void GameSession::applicationStateChanged(Qt::ApplicationState state)
 
 void GameSession::setSelectedTower(int index)
 {
-    const int last = game_ ? static_cast<int>(game_->content().towers.size()) - 1 : 0;
+    const int last = game_ ? static_cast<int>(game_->simulation().content().towers.size()) - 1 : 0;
     const int limited = std::clamp(index, 0, last);
     if (selectedTower_ != limited) {
         selectedTower_ = limited;

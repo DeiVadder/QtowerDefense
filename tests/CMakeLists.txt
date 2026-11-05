@@ -108,6 +108,14 @@ if(NOT QTD_ENABLE_UBSAN)
         LIBS qtd_client qtd_clientplugin
         LABELS client)
 
+    # Needs the GPU as well: requests play the real window.
+    qtd_add_test(tst_client_screen_control
+        SOURCES client/tst_screen_control.cpp
+        LIBS qtd_client qtd_clientplugin
+        LABELS client)
+    target_compile_definitions(tst_client_screen_control PRIVATE
+        QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
     qtd_add_test(tst_client_game_session
         SOURCES client/tst_game_session.cpp
         LIBS qtd_client

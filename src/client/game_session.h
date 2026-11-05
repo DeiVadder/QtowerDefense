@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/replay.h"
 #include "core/simulation.h"
 #include "core/tick_clock.h"
 
@@ -78,6 +79,11 @@ public:
     /// game. So the picture is up to a tick behind the game.
     [[nodiscard]] std::vector<QPointF> enemyPlaces() const;
 
+    /// The current game, for the control interface, nothing without a game.
+    [[nodiscard]] core::ReplayRecorder *recorder();
+    /// Shows a game that someone else has changed through recorder().
+    void refresh();
+
     /// A game in the background must not go on without its player.
     void applicationStateChanged(Qt::ApplicationState state);
 
@@ -95,7 +101,7 @@ signals:
     void frameChanged();
 
 private:
-    std::unique_ptr<core::Simulation> game_;
+    std::unique_ptr<core::ReplayRecorder> game_;
     core::TickClock clock_;
     std::map<qint64, core::Point> lastPlaces_; // of the enemies, by id, one tick ago
     QString fileName_;

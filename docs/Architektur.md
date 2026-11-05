@@ -1,6 +1,6 @@
 # Architektur
 
-Stand Etappe 4: Simulationskern, Replays, `qtd_headless`, Bots, Steuerschnittstelle und eine spielbare Karte im 3D-Client.
+Stand Etappe 5: Simulationskern, Replays, `qtd_headless`, Bots, Steuerschnittstelle, eine spielbare Karte im 3D-Client und ein Smoke-Test des echten Spiels.
 
 ## Module
 
@@ -59,9 +59,11 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 
 ## Client
 
-`qtd_client` ist eine statische Bibliothek mit QML-Modul über `qt_add_qml_module()`. Programme und Tests linken `qtd_clientplugin` und nennen `Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)`. Es gibt genau eine Engine, in `src/app/main.cpp`. `Main.qml` ist das Fenster und treibt die Zeit, `MainScene.qml` die 3D-Szene mit Kamera und Eingabe, `Hud.qml` die Anzeige. `GameSession` verbindet QML mit der Simulation, `MapInstances` zeichnet Brett, Türme und Gegner mit je einem Modell.
+`qtd_client` ist eine statische Bibliothek mit QML-Modul über `qt_add_qml_module()`. Programme und Tests linken `qtd_clientplugin` und nennen `Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)`. Es gibt genau eine Engine, in `src/app/main.cpp`. `Main.qml` ist das Fenster und treibt die Zeit, `MainScene.qml` die 3D-Szene mit Kamera und Eingabe, `Hud.qml` die Anzeige. `GameSession` verbindet QML mit der Simulation, `MapInstances` zeichnet Brett, Türme und Gegner mit je einem Modell. `ScreenControl` setzt die Steuerschnittstelle auf das Spiel im Fenster (E-26).
 
 ## Startoptionen
+
+`QtowerDefense --control` schaltet die Steuerschnittstelle ein (E-26), ohne Option ist sie aus.
 
 `qtd_headless` schreibt einen JSON-Bericht auf die Standardausgabe. Exit-Code 0 heißt Erfolg, 1 ein Problem im Lauf (Bericht `{"error": ...}` oder `"matches": false`), 2 eine falsche Kommandozeile.
 
@@ -87,5 +89,5 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | `core` | QtTest: `tst_core_version`, `_fixed`, `_random`, `_content`, `_state_hash`, `_simulation`, `_tick_clock`, `_replay`. Tests schalten Ticks von Hand weiter; `tests/core/scenario.h` ist die von Hand nachrechenbare Beispielpartie |
 | `automation` | QtTest: `tst_automation_headless_runner`, `_invariants`, `_control_session`, `_build_info`; dazu `qtd_headless --build-info` und `headless_control` (echter Prozess, beide Zeilenenden, Leerzeile, Ctrl-Z) |
 | `golden` | `tst_golden` (festgeschriebene Hashes, Tempo 1x bis 3x mit ungleichen Frames und Pause, Neuaufzeichnung Byte für Byte), `headless_golden_defence` (eigener Prozess, Hash zusätzlich in `tests/CMakeLists.txt`) |
-| `client` | `tst_client_window` (rendert das echte Fenster auf der GPU), `tst_client_game_session`, `tst_qml` (QuickTest: echte Taps auf Felder, Gegner als Pixel auf dem Pfad, HUD) |
+| `client` | `tst_client_window` (rendert das echte Fenster auf der GPU), `tst_client_screen_control` (Anfragen spielen das echte Fenster), `tst_client_game_session`, `tst_qml` (QuickTest: echte Taps auf Felder, Gegner als Pixel auf dem Pfad, HUD) |
 | `asan` | `asan_selfcheck`, nur im Preset `asan`: muss mit einem ASan-Bericht sterben |

@@ -1,5 +1,6 @@
 #include "automation/build_info.h"
 #include "automation/control_session.h"
+#include "automation/control_stdio.h"
 #include "automation/headless_runner.h"
 #include "core/version.h"
 
@@ -9,35 +10,17 @@
 
 #include <cstdio>
 #include <exception>
-#include <iostream>
-#include <string>
-
-#ifdef Q_OS_WIN
-#include <fcntl.h>
-#include <io.h>
-#endif
 
 namespace {
 
-/// One JSON request per line on stdin, one answer per line on stdout, until stdin ends. Binary, as
-/// the text mode of Windows ends the input at a Ctrl-Z. Not QFile: its readLine gave stray bytes
-/// after CRLF, and QTextStream reads in blocks while the other side waits for its answer.
+/// One JSON request per line on stdin, one answer per line on stdout, until stdin ends.
 int runControl()
 {
-#ifdef Q_OS_WIN
-    _setmode(_fileno(stdin), _O_BINARY);
-#endif
-    QTextStream output(stdout);
     qtd::automation::ControlSession session;
     try {
-        std::string text;
-        while (std::getline(std::cin, text)) {
-            const QByteArray line = QByteArray::fromStdString(text).trimmed();
-            if (!line.isEmpty()) {
-                output << session.handle(line) << '\n';
-                output.flush();
-            }
-        }
+        qtd::automation::readControlLines([&session](const QByteArray &line) {
+            qtd::automation::writeControlAnswer(session.handle(line));
+        });
     } catch (const std::exception &error) {
         std::fputs(error.what(), stderr);
         return 1;

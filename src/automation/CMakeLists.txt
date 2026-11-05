@@ -2,6 +2,7 @@ qt_add_library(qtd_automation STATIC
     bot.cpp bot.h
     build_info.cpp build_info.h
     control_session.cpp control_session.h
+    control_stdio.cpp control_stdio.h
     headless_runner.cpp headless_runner.h
     invariants.cpp invariants.h
     report.cpp report.h)

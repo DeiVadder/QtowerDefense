@@ -2,12 +2,13 @@
 
 ## Stand
 
-- **Etappe:** 0 bis 4 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
-- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Vier Golden Replays. Keine Anbindung an den Client.
+- **Etappe:** 0 bis 5 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Fünf Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus Etappe 5:** `QtowerDefense --control` spielt das echte Spiel, Smoke-Test als Stufe der Vollprüfung, Bildrate als Baseline (E-26).
 - **Dazu aus `feature/raster`:** Schachbrett-Raster statt Bauplätze, Türme mit Formen, Hindernisse, Pfad auf dem Raster, Turmauswahl im HUD (E-25).
 - **Dazu aus Etappe 4:** Eine spielbare Karte im 3D-Client mit Platzhaltern: Kamera, Bauen per Maus und Touch, HUD, Pause, Tempo, Interpolation (E-24).
 - **Dazu aus Etappe 3:** `naive` und `fuzz` als Bots, Invarianten, JSON-Steuerschnittstelle über `qtd_headless --control`, Fuzz-Stufe in `verify` (E-23).
-- **Letzter voller `verify`:** grün, 13 bestanden, 2 MISSING (Balancing, Smoke). Coverage Core 99,2 %, Automation 97,3 %. Benchmark rund 4.800-fache Echtzeit (`docs/Performance-Verlauf.md`).
+- **Letzter voller `verify`:** grün, 14 bestanden, 1 MISSING (Balancing). Coverage Core 99,4 %, Automation 94 %. Benchmark rund 4.800-fache Echtzeit (`docs/Performance-Verlauf.md`).
 - **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
 - **Review von Etappe 3:** Zwei Runden nicht bestanden: `saveReplay` hing bei NUL und bei rund 32.760 Zeichen im Dateinamen, Ctrl-Z beendete die Sitzung, Invarianten liefen zu selten, der Fehlerpfad hatte keinen Test, dazu doppelte Logik. Alles behoben oder in E-23 und unten begründet, die dritte Runde bestand mit Mutanten (`285e8a2`). Die Coverage von Core maß das Review im frischen Klon mit 882/888 statt 881/888; ungeklärt, ohne Folgen für die Schwelle.
 - **Review von Etappe 4:** Erst nicht bestanden: Klicks gingen durch das HUD auf die Karte, im Hintergrund lief das Spiel auf dem Desktop weiter, das HUD überlappte in kleinen Fenstern, die Interpolation fehlte. Alles behoben, Nachprüfung mit Mutanten bestanden (`68a99ac`).
@@ -15,12 +16,12 @@
 
 ## Nächster Schritt
 
-1. Etappe 5 (Smoke-Test).
+1. Etappe 6.
 
 ## Bekannte Mängel und offene Punkte
 
-- **Stufen ohne Inhalt (MISSING in `verify`):** Smoke-Test mit Screenshot (5), Balancing (12).
-- **Steuerschnittstelle:** Bisher nur `qtd_headless --control` auf Standard-Ein- und -Ausgabe. Die Aktionen zu Regeln, die es noch nicht gibt, fehlen, der localhost-Transport für das echte Spiel auch (E-23, `docs/Steuerschnittstelle.md`). Für den localhost-Transport muss `startMap` und `saveReplay` auf erlaubte Pfade beschränkt werden, heute lesen und überschreiben sie jeden Pfad. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
+- **Stufen ohne Inhalt (MISSING in `verify`):** Balancing (12).
+- **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
 - **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `MapInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende. Ein Ziehen, das auf einem HUD-Knopf beginnt, verschiebt die Karte.
 - **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Es gibt keine Vorschau der Form, ein abgelehnter Tipp bleibt stumm, das HUD zeigt die Form nicht und nennt die rohe ID statt eines übersetzbaren Namens, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
 - **Client:** Die Verbindung von `GameSession` zu `applicationStateChanged` läuft in keinem Test mit echtem Signal, Windows sendet es nicht. Die Reaktion darauf ist getestet.
@@ -54,9 +55,9 @@
 | 0 | Fundament | fertig, in `dev` |
 | 1 | Simulationskern | fertig, in `dev` |
 | 2 | Headless und Replays | fertig, in `dev` |
-| 3 | Steuerschnittstelle und Bots | offen |
-| 4 | Dünne 3D-Version | offen |
-| 5 | Smoke-Test | offen |
+| 3 | Steuerschnittstelle und Bots | fertig, in `dev` |
+| 4 | Dünne 3D-Version | fertig, in `dev` |
+| 5 | Smoke-Test | fertig, in `dev` |
 | 6 | Kampfsystem | offen |
 | 7 | Inhalte Türme und Gegner | offen |
 | 8 | Zauber und Helden | offen |

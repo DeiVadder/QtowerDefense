@@ -9,8 +9,9 @@ qt_add_qml_module(qtd_client
         game_session.cpp game_session.h
         graphics.cpp graphics.h
         map_instances.cpp map_instances.h
+        screen_control.cpp screen_control.h
     QML_FILES Hud.qml HudButton.qml Main.qml MainScene.qml)
-target_link_libraries(qtd_client PUBLIC qtd_core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D)
+target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D)
 qtd_set_strict_warnings(qtd_client)
 
 # In the program, not next to it: no platform promises a file system for its assets.

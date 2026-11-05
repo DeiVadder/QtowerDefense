@@ -187,7 +187,7 @@ FULL_STAGES = [
     ("coverage", stage_coverage),
     ("fuzz bot (ASan, UBSan)", stage_fuzz),
     ("balancing runs", missing("arrives with stage 12 (balancing)")),
-    ("smoke test with screenshot", missing("arrives with stage 5 (smoke test)")),
+    ("smoke test with screenshot", stage_script(SCRIPTS / "smoke_test.py")),
 ]
 
 
