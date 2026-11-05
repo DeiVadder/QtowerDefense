@@ -161,6 +161,15 @@ QString ObjectReader::text(QLatin1StringView key)
     return value.toString();
 }
 
+bool ObjectReader::flag(QLatin1StringView key)
+{
+    const QJsonValue value = take(key);
+    if (!value.isUndefined() && !value.isBool()) {
+        fail(key, u"must be true or false"_s);
+    }
+    return value.toBool();
+}
+
 void ObjectReader::forEach(QLatin1StringView key,
                            const std::function<void(ObjectReader &)> &read,
                            Items items)

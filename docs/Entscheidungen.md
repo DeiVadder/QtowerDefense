@@ -210,3 +210,15 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Client:** Ein Tipp auf einen Turm wählt ihn, das HUD zeigt dann die vier Prioritäten. Der nächste Tipp daneben lässt ihn nur los und baut nichts. Türme tragen die Farbe ihrer Schadensart, Gegner die ihres Status.
 - **Inhalt:** `training_ground` bekommt `frost_spire`, `venom_spire`, `stone_troll` und Schadensarten für die bestehenden Türme. Der Rest kommt in Etappe 7. Die Golden Replays ändern sich damit auch im Spielverlauf, nicht nur im Hash, `training_ground_combat` ist neu. Die letzten Befehle von `defence` und `rejected` wandern ans neue Spielende, damit `gameOver` abgedeckt bleibt.
 - **Formatversion:** Bleibt 1, wie in E-25 und E-27.
+
+## E-29 Inhalte: Stufen, Verkauf, Flächenschaden
+
+- **Stufen:** `TowerType::levels` hält alles, was sich beim Verbessern ändern kann, die erste Stufe ist der gebaute Turm. In der Datei stehen die Werte der ersten Stufe weiter direkt am Turm, `upgrades` nennt je Stufe die Kosten und nur das, was sich ändert. Effekte ersetzen die der Stufe davor. Form und Schadensart bleiben fest, sonst könnte ein Upgrade an einem belegten Feld scheitern.
+- **Verkauf:** Der Turm merkt sich in `spent`, was er gekostet hat. Heute ist das die Summe seiner Stufen, das prüfen die Invarianten. Das Feld bleibt, damit der Erlös nicht von den Inhalten abhängt, falls Helden aus Etappe 8 einmal Rabatte geben. `sellPercent` steht je Karte in der Datei, Standard 70, abgerundet. Der Verkauf gibt die Felder sofort frei und ist jederzeit möglich, auch während einer Welle.
+- **Flächenschaden:** `splashRadius` am Turm, um das Ziel gemessen, ohne Abfall zum Rand. Ein Schuss würfelt einmal, jeder Gegner im Radius nimmt den Wurf mit seiner Resistenz und bekommt auch die Effekte. Tote zahlen nur einmal. Die erste Quelle ist `catapult`, Zauber nutzen später dieselbe Regel.
+- **Regeneration:** Je Tick bis zum Startwert, nicht unter Gift. Damit hat Gift gegen Heiler eine zweite Wirkung.
+- **Bosse:** `boss` ändert nur das Aussehen, die Regeln kennen keine Bosse. Was einen Boss ausmacht, steht in seinen Werten. Eigene Fähigkeiten kommen erst, wenn ein Inhalt sie braucht.
+- **Zwei Karten:** `training_ground` behält die kurze Welle, weil Tests und Replays von ihr leben und der naive Bot sie gewinnt. `mire_siege` hat alle Gegner und Bosse, das Spiel startet dort, bis die Menüs aus Etappe 11 eine Wahl bieten. Beide Dateien nennen ihre Türme selbst. Ein gemeinsamer Katalog lohnt sich erst mit weiteren Karten.
+- **HUD:** Verkaufen steht links, Upgrade rechts daneben. Fällt Upgrade auf der höchsten Stufe weg, geht ein Tipp zu viel an die Karte und lässt den Turm höchstens los, statt ihn zu verkaufen.
+- **Balancing:** Die Zahlen sind Startwerte. Der naive Bot gewinnt `mire_siege` mit allen 15 Leben, mit jedem geprüften Seed und ohne Upgrades, die Karte ist also zu leicht. Das klärt Etappe 12.
+- **Formatversion:** Bleibt 1, alle neuen Schlüssel sind optional.

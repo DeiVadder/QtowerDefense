@@ -63,13 +63,23 @@ void addTowerRows()
     row(
         "shared cell",
         [](SimulationState &s) {
-            s.towers.push_back({s.nextEntityId++, 0, s.towers.front().cell, 0});
+            s.towers.push_back(
+                {.id = s.nextEntityId++, .cell = s.towers.front().cell, .spent = 40});
         },
         u"its cell is taken"_s);
     row(
         "cooldown",
         [](SimulationState &s) { s.towers.front().cooldownTicks = -1; },
         u"negative cooldown"_s);
+    row(
+        "enemy above its health",
+        [](SimulationState &s) { s.enemies.front().health = Fixed::fromInt(5); },
+        u"healed beyond its health"_s);
+    row("level", [](SimulationState &s) { s.towers.front().level = 1; }, u"unknown level"_s);
+    row(
+        "gold of a tower",
+        [](SimulationState &s) { ++s.towers.front().spent; },
+        u"its gold does not add up"_s);
 }
 
 } // namespace
@@ -82,14 +92,20 @@ struct FuzzRecord
     std::set<qtd::core::Rotation> rotations;
     std::set<qtd::core::TargetPriority> priorities;
     std::set<CommandResult> priorityResults;
+    std::set<CommandResult> upgradeResults;
+    std::set<CommandResult> sellResults;
 
     void note(const qtd::core::Command &command, CommandResult result)
     {
         if (const auto *build = std::get_if<BuildTowerCommand>(&command)) {
             rotations.insert(build->rotation);
-        } else {
-            priorities.insert(std::get<qtd::core::SetTargetPriorityCommand>(command).priority);
+        } else if (const auto *aim = std::get_if<qtd::core::SetTargetPriorityCommand>(&command)) {
+            priorities.insert(aim->priority);
             priorityResults.insert(result);
+        } else if (std::holds_alternative<qtd::core::UpgradeTowerCommand>(command)) {
+            upgradeResults.insert(result);
+        } else {
+            sellResults.insert(result);
         }
     }
 };
@@ -206,7 +222,7 @@ private slots:
                                                      R"("footprint": [{"x": 0, "y": 0},
                                                                       {"x": -1, "y": 0}])"));
         SimulationState state = healthyState(content);
-        state.towers.push_back({state.nextEntityId++, 0, {x, y}, 0});
+        state.towers.push_back({.id = state.nextEntityId++, .cell = {x, y}, .spent = 40});
         const QString problem = qtd::automation::checkInvariants(content, state);
         QVERIFY2(expected.isEmpty() ? problem.isEmpty() : problem.contains(expected),
                  qPrintable(problem));
@@ -219,7 +235,10 @@ private slots:
                                                      R"("footprint": [{"x": 0, "y": 0},
                                                                       {"x": -1, "y": 0}])"));
         SimulationState state = healthyState(content);
-        state.towers.push_back({state.nextEntityId++, 0, {0, 5}, 0, qtd::core::Rotation::Half});
+        state.towers.push_back({.id = state.nextEntityId++,
+                                .cell = {0, 5},
+                                .rotation = qtd::core::Rotation::Half,
+                                .spent = 40});
         QCOMPARE(checkInvariants(content, state), QString());
         state.towers.back().rotation = qtd::core::Rotation::None;
         QVERIFY(checkInvariants(content, state).contains(u"outside the map"_s));
@@ -236,6 +255,10 @@ private slots:
         QCOMPARE(record.priorities.size(), std::size_t{qtd::core::kTargetPriorities});
         QVERIFY(record.priorityResults.contains(CommandResult::Accepted));
         QVERIFY(record.priorityResults.contains(CommandResult::UnknownTower));
+        QVERIFY(record.upgradeResults.contains(CommandResult::HighestLevel));
+        QVERIFY(record.upgradeResults.contains(CommandResult::UnknownTower));
+        QVERIFY(record.sellResults.contains(CommandResult::Accepted));
+        QVERIFY(record.sellResults.contains(CommandResult::UnknownTower));
     }
 
     void damageIsFound()

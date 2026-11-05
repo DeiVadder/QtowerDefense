@@ -130,6 +130,30 @@ void GameSession::setChosenPriority(int priority)
     }
 }
 
+bool GameSession::upgradeChosenTower()
+{
+    return chosen() != nullptr && executeOnChosen(core::UpgradeTowerCommand{chosenTower_});
+}
+
+bool GameSession::sellChosenTower()
+{
+    if (chosen() == nullptr || !executeOnChosen(core::SellTowerCommand{chosenTower_})) {
+        return false;
+    }
+    clearChosenTower();
+    return true;
+}
+
+bool GameSession::executeOnChosen(const core::Command &command)
+{
+    if (game_->execute(command) != core::CommandResult::Accepted) {
+        return false;
+    }
+    emit towersChanged();
+    emit stateChanged();
+    return true;
+}
+
 void GameSession::rotateSelection()
 {
     selectedRotation_ = core::nextRotation(selectedRotation_);
@@ -188,7 +212,7 @@ QVariantList GameSession::towerTypes() const
     QVariantList types;
     if (game_) {
         for (const core::TowerType &type : game_->simulation().content().towers) {
-            types.append(QVariantMap{{u"name"_s, type.id}, {u"cost"_s, type.cost}});
+            types.append(QVariantMap{{u"name"_s, type.id}, {u"cost"_s, type.levels.front().cost}});
         }
     }
     return types;
@@ -219,13 +243,27 @@ QVariantList GameSession::selectedShape() const
 
 int GameSession::chosenPriority() const
 {
-    if (!game_ || chosenTower_ == 0) {
-        return -1;
-    }
-    const std::vector<core::Tower> &towers = game_->simulation().state().towers;
-    const std::vector<core::Tower>::const_iterator tower =
-        std::ranges::find(towers, chosenTower_, &core::Tower::id);
-    return tower != towers.end() ? static_cast<int>(tower->priority) : -1;
+    const core::Tower *tower = chosen();
+    return tower != nullptr ? static_cast<int>(tower->priority) : -1;
+}
+
+const core::Tower *GameSession::chosen() const
+{
+    return game_ ? game_->simulation().towerWithId(chosenTower_) : nullptr;
+}
+
+qint64 GameSession::chosenUpgradeCost() const
+{
+    const core::Tower *tower = chosen();
+    const core::TowerLevel *next =
+        tower != nullptr ? game_->simulation().nextLevelOf(*tower) : nullptr;
+    return next != nullptr ? next->cost : -1;
+}
+
+qint64 GameSession::chosenSellValue() const
+{
+    const core::Tower *tower = chosen();
+    return tower != nullptr ? game_->simulation().sellValue(*tower) : -1;
 }
 
 qint64 GameSession::chosenTower() const

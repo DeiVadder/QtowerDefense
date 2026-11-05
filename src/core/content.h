@@ -140,17 +140,24 @@ std::optional<StatusKind> statusKindNamed(QStringView name);
 std::optional<TargetPriority> targetPriorityNamed(QStringView name);
 QString toString(TargetPriority priority);
 
-struct TowerType
+/// What a tower does at one level.
+struct TowerLevel
 {
-    QString id;
-    qint64 cost = 0;
+    qint64 cost = 0; // to build the tower, or to reach this level from the one before
     Fixed range;
     qint64 cooldownTicks = 1;
     Fixed damageMin; // every shot rolls a raw value in [damageMin, damageMax]
     Fixed damageMax;
-    DamageType damageType = DamageType::Physical;
+    Fixed splashRadius;                // around the target, 0 hits the target alone
     std::vector<StatusEffect> effects; // at most one of each kind
-    std::vector<Cell> footprint;       // the cells it takes, relative to the cell it stands on
+};
+
+struct TowerType
+{
+    QString id;
+    DamageType damageType = DamageType::Physical;
+    std::vector<Cell> footprint;    // the cells it takes, relative to the cell it stands on
+    std::vector<TowerLevel> levels; // at least one: what gets built, then the upgrades
 };
 
 /// The cells a tower of this type takes when it stands on the given cell, turned as given.
@@ -163,6 +170,8 @@ struct EnemyType
     Fixed speedPerTick;
     qint64 bounty = 0;
     qint64 lifeCost = 1;
+    Fixed regeneration; // health per tick, up to its start value, not while poisoned
+    bool boss = false;  // only the look: the rules treat a boss like any other enemy
     // By damage type, the share of a hit that does not count: 1 is immune, -1 takes double. It
     // applies to the damage and to the strength of status effects alike.
     std::array<Fixed, kDamageTypes> resistances{};
@@ -186,6 +195,7 @@ struct Content
 {
     qint64 startGold = 0;
     qint64 startLives = 1;
+    qint64 sellPercent = 70; // of all the gold a tower cost, rounded down
     Grid grid;
     Path path;
     std::vector<TowerType> towers;

@@ -1,0 +1,320 @@
+{
+    "checkpoints": [
+        {
+            "hash": "818be76fd10cbd9f",
+            "tick": 0
+        },
+        {
+            "hash": "70f764914de517ff",
+            "tick": 30
+        },
+        {
+            "hash": "ebd7f45b17a9687f",
+            "tick": 60
+        },
+        {
+            "hash": "db08b54112023f10",
+            "tick": 90
+        },
+        {
+            "hash": "797c29956147384c",
+            "tick": 120
+        },
+        {
+            "hash": "afee19565641ad13",
+            "tick": 150
+        },
+        {
+            "hash": "bdc47aad911f73d5",
+            "tick": 180
+        },
+        {
+            "hash": "98576a811b345de7",
+            "tick": 210
+        },
+        {
+            "hash": "10828765ad4f7006",
+            "tick": 240
+        },
+        {
+            "hash": "6b42181dd16d9673",
+            "tick": 270
+        },
+        {
+            "hash": "9e5bdfa3db72fd53",
+            "tick": 300
+        },
+        {
+            "hash": "a50b8a278078dd30",
+            "tick": 330
+        },
+        {
+            "hash": "091350e6a516c5be",
+            "tick": 360
+        },
+        {
+            "hash": "afef21ca068a6f73",
+            "tick": 390
+        },
+        {
+            "hash": "74a9e752669d330c",
+            "tick": 420
+        },
+        {
+            "hash": "eccc22a00707921e",
+            "tick": 450
+        },
+        {
+            "hash": "1496efc05c0c6e27",
+            "tick": 480
+        },
+        {
+            "hash": "5c3dec8d87d9c9c0",
+            "tick": 510
+        },
+        {
+            "hash": "ccf8725c9acd121a",
+            "tick": 540
+        },
+        {
+            "hash": "0343cd99344eb70d",
+            "tick": 570
+        },
+        {
+            "hash": "ab0dcfb4e11e0859",
+            "tick": 600
+        },
+        {
+            "hash": "70afa5733ea87e33",
+            "tick": 630
+        },
+        {
+            "hash": "d977b0bf15792fd0",
+            "tick": 660
+        },
+        {
+            "hash": "55f29d1fae9c0d6b",
+            "tick": 690
+        },
+        {
+            "hash": "91a355cf3b598477",
+            "tick": 720
+        },
+        {
+            "hash": "78bc272cc2ec4f55",
+            "tick": 750
+        },
+        {
+            "hash": "707ebcfb6e5d9ede",
+            "tick": 780
+        },
+        {
+            "hash": "44aa785cdc3ef21f",
+            "tick": 810
+        },
+        {
+            "hash": "559a852857304a4c",
+            "tick": 840
+        },
+        {
+            "hash": "cb63eca374064217",
+            "tick": 870
+        },
+        {
+            "hash": "707e7c5d7086d24a",
+            "tick": 900
+        },
+        {
+            "hash": "094afcf7f3d3d9b2",
+            "tick": 930
+        },
+        {
+            "hash": "ecc9e5363c0eb4b8",
+            "tick": 960
+        },
+        {
+            "hash": "a92e1e8d34cbe77b",
+            "tick": 990
+        },
+        {
+            "hash": "3a9bee8470b6b29d",
+            "tick": 1020
+        },
+        {
+            "hash": "33610728508b65fe",
+            "tick": 1050
+        },
+        {
+            "hash": "99205617945ee93e",
+            "tick": 1080
+        },
+        {
+            "hash": "ee5e54fca79e8047",
+            "tick": 1110
+        },
+        {
+            "hash": "3f9a5f1c5cb707bc",
+            "tick": 1140
+        },
+        {
+            "hash": "9c7ef7d02a6c07e4",
+            "tick": 1170
+        },
+        {
+            "hash": "a72962767917d266",
+            "tick": 1200
+        },
+        {
+            "hash": "fecbd1f8bf75f7ac",
+            "tick": 1230
+        },
+        {
+            "hash": "4011c29b9ff3a2bd",
+            "tick": 1260
+        },
+        {
+            "hash": "cf6e0906c765647f",
+            "tick": 1290
+        },
+        {
+            "hash": "c869e73ebb74d641",
+            "tick": 1320
+        },
+        {
+            "hash": "a5e8821fb1d4f96e",
+            "tick": 1350
+        },
+        {
+            "hash": "d0e854fd80f9f1ee",
+            "tick": 1380
+        },
+        {
+            "hash": "505bdf2228534799",
+            "tick": 1410
+        },
+        {
+            "hash": "66c00474632109b9",
+            "tick": 1440
+        },
+        {
+            "hash": "6aef97d115394dcb",
+            "tick": 1470
+        },
+        {
+            "hash": "c584f6786e83a8a6",
+            "tick": 1500
+        },
+        {
+            "hash": "cd10bba80f9e0a91",
+            "tick": 1530
+        },
+        {
+            "hash": "4bf85514269b5f91",
+            "tick": 1560
+        },
+        {
+            "hash": "2c4012bb64603646",
+            "tick": 1590
+        },
+        {
+            "hash": "294aa53ae9f74b29",
+            "tick": 1620
+        },
+        {
+            "hash": "fe34b5541c9c58aa",
+            "tick": 1650
+        },
+        {
+            "hash": "896221dbfa7e1ab2",
+            "tick": 1680
+        },
+        {
+            "hash": "68838cdc3567222d",
+            "tick": 1707
+        }
+    ],
+    "commands": [
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 0,
+            "towerType": 6,
+            "type": "buildTower",
+            "x": 6,
+            "y": 3
+        },
+        {
+            "result": "accepted",
+            "tick": 200,
+            "tower": 1,
+            "type": "upgradeTower"
+        },
+        {
+            "result": "notEnoughGold",
+            "tick": 500,
+            "tower": 1,
+            "type": "upgradeTower"
+        },
+        {
+            "result": "notEnoughGold",
+            "tick": 700,
+            "tower": 1,
+            "type": "upgradeTower"
+        },
+        {
+            "result": "notEnoughGold",
+            "tick": 900,
+            "tower": 1,
+            "type": "upgradeTower"
+        },
+        {
+            "result": "unknownTower",
+            "tick": 900,
+            "tower": 99,
+            "type": "upgradeTower"
+        },
+        {
+            "result": "unknownTower",
+            "tick": 900,
+            "tower": 99,
+            "type": "sellTower"
+        },
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 1000,
+            "towerType": 4,
+            "type": "buildTower",
+            "x": 7,
+            "y": 3
+        },
+        {
+            "result": "notEnoughGold",
+            "rotation": 0,
+            "tick": 1100,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 9,
+            "y": 7
+        },
+        {
+            "result": "accepted",
+            "tick": 1200,
+            "tower": 1,
+            "type": "sellTower"
+        },
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 1201,
+            "towerType": 5,
+            "type": "buildTower",
+            "x": 6,
+            "y": 3
+        }
+    ],
+    "content": "mire_siege.json",
+    "contentHash": "1fb0bcd4e8564364",
+    "formatVersion": 1,
+    "seed": "23"
+}

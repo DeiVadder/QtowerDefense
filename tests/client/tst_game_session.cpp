@@ -6,9 +6,12 @@
 #include <QPointF>
 #include <QSignalSpy>
 #include <QSizeF>
+#include <QTemporaryDir>
 #include <QTest>
 
+#include <cstddef>
 #include <cstring>
+#include <vector>
 
 using qtd::client::GameSession;
 using qtd::client::MapInstances;
@@ -63,6 +66,18 @@ public:
     }
 };
 
+/// Where the first boss walks among the enemies, -1 if none does.
+int indexOfBoss(const qtd::core::Simulation &game)
+{
+    const std::vector<qtd::core::Enemy> &enemies = game.state().enemies;
+    for (std::size_t index = 0; index < enemies.size(); ++index) {
+        if (game.content().enemies[enemies[index].type].boss) {
+            return static_cast<int>(index);
+        }
+    }
+    return -1;
+}
+
 } // namespace
 
 class GameSessionTest : public QObject
@@ -78,7 +93,7 @@ private slots:
         QCOMPARE(game.gold(), 120);
         QCOMPARE(game.lives(), 5);
         QCOMPARE(game.gridSize(), QSize(17, 11));
-        QCOMPARE(game.towerTypes().size(), 6);
+        QCOMPARE(game.towerTypes().size(), 7);
         const QVariantMap first = game.towerTypes().at(0).toMap();
         QCOMPARE(first[u"name"_s].toString(), u"ballista"_s);
         QCOMPARE(first[u"cost"_s].toLongLong(), 50);
@@ -89,6 +104,7 @@ private slots:
     void theMapIsPartOfTheProgram()
     {
         QVERIFY(QFile::exists(u":/content/training_ground.json"_s));
+        QVERIFY(QFile::exists(u":/content/mire_siege.json"_s));
         GameSession game;
         game.startNewGame(u":/content/training_ground.json"_s);
         QCOMPARE(game.error(), QString());
@@ -135,7 +151,7 @@ private slots:
         QCOMPARE(game.gold(), 30);
         QCOMPARE(game.towerCells(), (QVariantList{QPoint(10, 6), QPoint(11, 6)}));
         game.setSelectedTower(99);
-        QCOMPARE(game.selectedTower(), 5);
+        QCOMPARE(game.selectedTower(), 6);
         game.setSelectedTower(-1);
         QCOMPARE(game.selectedTower(), 0);
         game.setSelectedTower(2);
@@ -212,6 +228,37 @@ private slots:
         QVERIFY(game.chooseTowerAt(4, 4));
         game.restart();
         QCOMPARE(game.chosenPriority(), -1);
+    }
+
+    void aChosenTowerIsUpgradedAndSold()
+    {
+        GameSession game;
+        QVERIFY(!game.upgradeChosenTower()); // no game
+        QVERIFY(!game.sellChosenTower());
+        QCOMPARE(game.chosenUpgradeCost(), -1);
+        QCOMPARE(game.chosenSellValue(), -1);
+        game.startGame(mapFile(), 7);
+        QVERIFY(game.buildTower(4, 4));
+        QVERIFY(!game.upgradeChosenTower()); // nothing chosen
+        QVERIFY(game.chooseTowerAt(4, 4));
+        QCOMPARE(game.chosenUpgradeCost(), 40);
+        QCOMPARE(game.chosenSellValue(), 35);
+        const QSignalSpy towers(&game, &GameSession::towersChanged);
+        const QSignalSpy state(&game, &GameSession::stateChanged);
+        QVERIFY(game.upgradeChosenTower());
+        QCOMPARE(towers.size(), 1);
+        QCOMPARE(state.size(), 1);
+        QCOMPARE(game.gold(), 120 - 50 - 40);
+        QCOMPARE(game.chosenUpgradeCost(), 70);
+        QCOMPARE(game.chosenSellValue(), 63);
+        QVERIFY(!game.upgradeChosenTower()); // 30 gold are not enough
+        QCOMPARE(game.gold(), 30);
+        QVERIFY(game.sellChosenTower());
+        QCOMPARE(game.gold(), 30 + 63);
+        QCOMPARE(game.towerCount(), 0);
+        QCOMPARE(game.chosenTower(), 0);
+        QCOMPARE(game.chosenSellValue(), -1);
+        QVERIFY(!game.sellChosenTower());
     }
 
     void aRejectedCommandChangesNothing()
@@ -403,6 +450,56 @@ private slots:
         QVERIFY(at(2, 9).getColor() != open);                                               // water
         QVERIFY(at(2, 5).getScale().y() > at(5, 5).getScale().y());                         // rock
         QVERIFY(at(13, 2).getScale().y() > at(2, 5).getScale().y());                        // tree
+    }
+
+    void aHigherLevelStandsTaller()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        OpenInstances towers;
+        towers.setLayer(MapInstances::Layer::Towers);
+        towers.setFieldSize(50);
+        towers.setGame(&game);
+        QVERIFY(game.buildTower(10, 6));
+        QCOMPARE(towers.count(), 1);
+        const float before = towers.entry(0).getScale().y();
+        QVERIFY(game.chooseTowerAt(10, 6));
+        QVERIFY(game.upgradeChosenTower());
+        QCOMPARE(towers.count(), 1);
+        QVERIFY(towers.entry(0).getScale().y() > before);
+    }
+
+    // Nobody defends the map: the wave walks on until the first boss shows.
+    void aBossIsLargerThanTheRest()
+    {
+        GameSession game;
+        QFile map(QDir(QStringLiteral(QTD_CONTENT_DIR)).filePath(u"mire_siege.json"_s));
+        QVERIFY(map.open(QIODevice::ReadOnly));
+        const QTemporaryDir folder;
+        const QString longGame = folder.filePath(u"long_game.json"_s);
+        QFile copy(longGame);
+        QVERIFY(copy.open(QIODevice::WriteOnly));
+        copy.write(map.readAll().replace(R"("startLives": 15)", R"("startLives": 1000)"));
+        copy.close();
+        game.startGame(longGame, 7);
+        qtd::core::ReplayRecorder *recorder = game.recorder();
+        OpenInstances enemies;
+        enemies.setLayer(MapInstances::Layer::Enemies);
+        enemies.setFieldSize(50);
+        enemies.setEnemyScale(1);
+        enemies.setGame(&game);
+        const qtd::core::Simulation &simulation = recorder->simulation();
+        int boss = -1;
+        while (boss < 0 && simulation.state().status == qtd::core::GameStatus::Running) {
+            recorder->advance(1);
+            boss = indexOfBoss(simulation);
+        }
+        QVERIFY(boss >= 0);
+        game.refresh();
+        QCOMPARE(enemies.count(), static_cast<int>(simulation.state().enemies.size()));
+        QVERIFY(enemies.entry(boss).getScale().y() > 1.0F);
+        QVERIFY(boss > 0); // the wave leaves others before it on the path
+        QCOMPARE(enemies.entry(0).getScale().y(), 1.0F);
     }
 
     void towersShowWithAllTheirCells()

@@ -14,7 +14,8 @@ namespace {
 constexpr quint64 kFuzzStream = 99; // apart from the stream of the game
 constexpr quint32 kMaxFuzzCommandsPerTick = 3;
 constexpr quint32 kCommandValues = 3; // x, y and the tower type
-constexpr quint32 kPriorityCommandOneIn = 4;
+constexpr quint32 kTowerCommandOneIn = 10;
+constexpr quint32 kTowerCommands = 3; // upgrade, sell, target priority
 
 /// A game draws how often a command is well-formed, one in so many. 0 means never: such a game
 /// builds nothing and gets lost. A well-formed command can still meet a blocked cell.
@@ -36,7 +37,8 @@ public:
     {
         const core::SimulationState &state = game.state();
         const core::Content &content = game.content();
-        if (state.status != core::GameStatus::Running || state.gold < content.towers[0].cost) {
+        if (state.status != core::GameStatus::Running ||
+            state.gold < content.towers[0].levels.front().cost) {
             return std::nullopt;
         }
         for (qint64 y = 0; y < content.grid.height(); ++y) {
@@ -86,8 +88,8 @@ public:
         }
         --commandsLeft_;
         const bool wellFormed = validOneIn_ != 0 && random_.nextBelow(validOneIn_) == 0;
-        if (random_.nextBelow(kPriorityCommandOneIn) == 0) {
-            return targetPriority(game.state(), wellFormed);
+        if (random_.nextBelow(kTowerCommandOneIn) == 0) {
+            return towerCommand(game.state(), wellFormed);
         }
         const core::Content &content = game.content();
         // A broken command breaks one value, so that each of them reaches its check.
@@ -100,17 +102,30 @@ public:
     }
 
 private:
-    /// Without towers, no command can be well-formed.
-    core::SetTargetPriorityCommand targetPriority(const core::SimulationState &state, bool valid)
+    /// One of the commands on a tower that stands.
+    core::Command towerCommand(const core::SimulationState &state, bool valid)
     {
-        const auto priority =
-            static_cast<core::TargetPriority>(random_.nextBelow(core::kTargetPriorities));
+        const qint64 tower = towerId(state, valid);
+        switch (random_.nextBelow(kTowerCommands)) {
+        case 0:
+            return core::UpgradeTowerCommand{tower};
+        case 1:
+            return core::SellTowerCommand{tower};
+        default:
+            break;
+        }
+        return core::SetTargetPriorityCommand{
+            tower, static_cast<core::TargetPriority>(random_.nextBelow(core::kTargetPriorities))};
+    }
+
+    /// Without towers, no command can be well-formed.
+    qint64 towerId(const core::SimulationState &state, bool valid)
+    {
         const auto towers = static_cast<qint64>(state.towers.size());
         if (valid && towers > 0) {
-            const auto index = static_cast<std::size_t>(pick(towers, true));
-            return {state.towers[index].id, priority};
+            return state.towers[static_cast<std::size_t>(pick(towers, true))].id;
         }
-        return {pick(state.nextEntityId, false), priority};
+        return pick(state.nextEntityId, false);
     }
 
     /// A valid index, or a value next to or far off the range.

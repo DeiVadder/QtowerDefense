@@ -5,6 +5,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <algorithm>
+#include <set>
 #include <vector>
 
 using qtd::core::Fixed;
@@ -265,11 +267,11 @@ private slots:
         QCOMPARE(content.towers.at(0).footprint.size(), 1U);
         const qtd::core::TowerType &tower = content.towers.at(0);
         QCOMPARE(tower.id, QStringLiteral("arrow"));
-        QCOMPARE(tower.cost, 40);
-        QCOMPARE(tower.range.raw(), 30'000);
-        QCOMPARE(tower.cooldownTicks, 4);
-        QCOMPARE(tower.damageMin.raw(), 20'000);
-        QCOMPARE(tower.damageMax.raw(), 20'000);
+        QCOMPARE(tower.levels.at(0).cost, 40);
+        QCOMPARE(tower.levels.at(0).range.raw(), 30'000);
+        QCOMPARE(tower.levels.at(0).cooldownTicks, 4);
+        QCOMPARE(tower.levels.at(0).damageMin.raw(), 20'000);
+        QCOMPARE(tower.levels.at(0).damageMax.raw(), 20'000);
         const qtd::core::EnemyType &enemy = content.enemies.at(0);
         QCOMPARE(enemy.id, QStringLiteral("grunt"));
         QCOMPARE(enemy.health.raw(), 40'000);
@@ -287,7 +289,7 @@ private slots:
     {
         const qtd::core::ContentLoadResult result =
             parseContent(editedJson(R"("range": "3")", R"("range": "0.1")"));
-        QCOMPARE(required(result.content).towers.at(0).range.raw(), 1'000);
+        QCOMPARE(required(result.content).towers.at(0).levels.at(0).range.raw(), 1'000);
     }
 
     static void acceptsValuesAtTheLimits_data()
@@ -421,6 +423,29 @@ private slots:
         QVERIFY(parseContent(json).error.startsWith(QStringLiteral("towers[0].cost")));
     }
 
+    // Every enemy of the map walks, and each tower has somewhere to grow.
+    static void theSiegeHasTheWholeRoster()
+    {
+        const qtd::core::Content content =
+            required(loadContentFile(QStringLiteral(QTD_CONTENT_DIR "/mire_siege.json")).content);
+        QVERIFY(content.towers.size() >= 6);
+        QVERIFY(std::ranges::all_of(content.towers, [](const qtd::core::TowerType &tower) {
+            return tower.levels.size() >= 3;
+        }));
+        QVERIFY(std::ranges::any_of(content.towers, [](const qtd::core::TowerType &tower) {
+            return tower.levels.front().splashRadius > qtd::core::Fixed();
+        }));
+        const std::ptrdiff_t bosses =
+            std::ranges::count_if(content.enemies, &qtd::core::EnemyType::boss);
+        QVERIFY(bosses >= 1);
+        QVERIFY(std::ssize(content.enemies) - bosses >= 8);
+        std::set<std::size_t> walking;
+        for (const qtd::core::SpawnGroup &group : content.wave) {
+            walking.insert(group.enemyType);
+        }
+        QCOMPARE(walking.size(), content.enemies.size());
+    }
+
     static void loadsTheShippedContent()
     {
         const qtd::core::ContentLoadResult result =
@@ -459,12 +484,12 @@ private slots:
                          .content);
         const qtd::core::TowerType &tower = content.towers.at(0);
         QVERIFY(tower.damageType == qtd::core::DamageType::Fire);
-        QCOMPARE(tower.effects.size(), 2U);
-        QVERIFY(tower.effects[0].kind == qtd::core::StatusKind::Poison);
-        QCOMPARE(tower.effects[0].strength.raw(), 5000);
-        QCOMPARE(tower.effects[0].durationTicks, 9);
-        QVERIFY(tower.effects[1].kind == qtd::core::StatusKind::Slow);
-        QCOMPARE(tower.effects[1].strength.raw(), 9000);
+        QCOMPARE(tower.levels.at(0).effects.size(), 2U);
+        QVERIFY(tower.levels.at(0).effects[0].kind == qtd::core::StatusKind::Poison);
+        QCOMPARE(tower.levels.at(0).effects[0].strength.raw(), 5000);
+        QCOMPARE(tower.levels.at(0).effects[0].durationTicks, 9);
+        QVERIFY(tower.levels.at(0).effects[1].kind == qtd::core::StatusKind::Slow);
+        QCOMPARE(tower.levels.at(0).effects[1].strength.raw(), 9000);
         const qtd::core::Content resistant =
             required(parseContent(editedJson(R"("lifeCost": 1)",
                                              R"("lifeCost": 1, "resistances": [

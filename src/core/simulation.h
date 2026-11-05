@@ -6,6 +6,7 @@
 #include <QtTypes>
 
 #include <cstddef>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -45,6 +46,8 @@ struct Tower
     qint64 cooldownTicks = 0; // ticks until the tower can fire
     Rotation rotation = Rotation::None;
     TargetPriority priority = TargetPriority::First;
+    std::size_t level = 0; // an index into TowerType::levels
+    qint64 spent = 0;      // all the gold it cost so far
 };
 
 /// All that changes during a game. stateHash() must cover every field. Enemies and towers stay in
@@ -78,8 +81,19 @@ struct SetTargetPriorityCommand
     TargetPriority priority = TargetPriority::First;
 };
 
+struct UpgradeTowerCommand
+{
+    qint64 tower = 0; // the id of a tower in the game
+};
+
+struct SellTowerCommand
+{
+    qint64 tower = 0; // the id of a tower in the game
+};
+
 /// What a player, human or bot, can ask for. New commands join this list.
-using Command = std::variant<BuildTowerCommand, SetTargetPriorityCommand>;
+using Command = std::
+    variant<BuildTowerCommand, SetTargetPriorityCommand, UpgradeTowerCommand, SellTowerCommand>;
 
 enum class CommandResult : quint8 {
     Accepted,
@@ -90,6 +104,7 @@ enum class CommandResult : quint8 {
     CellOccupied,
     NotEnoughGold,
     UnknownTower,
+    HighestLevel,
 };
 
 /// One game. Same content, seed and commands at the same ticks give the same states, bit by bit.
@@ -111,12 +126,14 @@ public:
     /// What execute() would answer for this command right now.
     CommandResult check(const BuildTowerCommand &command) const;
     CommandResult check(const SetTargetPriorityCommand &command) const;
+    CommandResult check(const UpgradeTowerCommand &command) const;
+    CommandResult check(const SellTowerCommand &command) const;
 
     /// Applies a command between two ticks. Anything but Accepted leaves the state untouched.
     CommandResult execute(const Command &command);
 
-    /// Runs one tick: enemies move, new ones spawn, poison works, towers fire, then the game may
-    /// end. Does nothing once the game is over.
+    /// Runs one tick: enemies move, new ones spawn, poison and regeneration work, towers fire, then
+    /// the game may end. Does nothing once the game is over.
     void tick();
 
     /// Runs up to the given number of ticks, fewer if the game ends.
@@ -125,23 +142,42 @@ public:
     /// The position of an enemy on the map.
     Point position(const Enemy &enemy) const;
 
+    /// The tower with this id, nothing if there is none.
+    const Tower *towerWithId(qint64 id) const;
+
+    /// What a tower does right now.
+    const TowerLevel &levelOf(const Tower &tower) const;
+
+    /// What an upgrade would make of a tower, nothing at the highest level.
+    const TowerLevel *nextLevelOf(const Tower &tower) const;
+
+    /// The gold that selling a tower brings.
+    qint64 sellValue(const Tower &tower) const;
+
     /// The hash of the current state, see stateHash().
     quint64 hash() const;
 
 private:
     CommandResult run(const BuildTowerCommand &command);
     CommandResult run(const SetTargetPriorityCommand &command);
+    CommandResult run(const UpgradeTowerCommand &command);
+    CommandResult run(const SellTowerCommand &command);
+    /// GameOver, UnknownTower or Accepted, what all commands on a tower check first.
+    CommandResult checkTowerCommand(qint64 id) const;
     bool hasTowerAt(Cell cell) const;
     void moveEnemies();
     void spawnEnemies();
-    void poisonEnemies();
+    void updateHealth();
     void fireTowers();
     void updateStatus();
-    void hit(Enemy *enemy, const TowerType &tower);
+    void strike(const Tower &tower, const std::vector<Point> &positions, std::size_t target);
+    void hit(Enemy *enemy, const Tower &tower, Fixed damage);
     void hurt(Enemy *enemy, Fixed damage);
     void removeDeadEnemies();
-    Enemy *findTarget(const Tower &tower, const std::vector<Point> &positions);
-    Fixed rollDamage(const TowerType &type);
+    /// The index of the enemy that a tower fires at.
+    std::optional<std::size_t> findTarget(const Tower &tower,
+                                          const std::vector<Point> &positions) const;
+    Fixed rollDamage(const TowerLevel &level);
 
     Content content_;
     SimulationState state_;

@@ -151,6 +151,27 @@ private slots:
         QCOMPARE(missing["result"_L1].toString(), u"unknownTower"_s);
     }
 
+    void towersAreUpgradedAndSold()
+    {
+        ControlSession session;
+        start(session);
+        ask(session,
+            {{"action"_L1, "buildTower"_L1}, {"x"_L1, 6}, {"y"_L1, 3}, {"towerType"_L1, 0}});
+        const QJsonObject upgraded =
+            ask(session, {{"action"_L1, "upgradeTower"_L1}, {"tower"_L1, 1}});
+        QCOMPARE(upgraded["result"_L1].toString(), u"accepted"_s);
+        const QJsonObject tower = upgraded["towers"_L1].toArray().first().toObject();
+        QCOMPARE(tower["level"_L1].toInteger(), 1);
+        QCOMPARE(tower["sellValue"_L1].toInteger(), 63);
+        const QJsonObject sold = ask(session, {{"action"_L1, "sellTower"_L1}, {"tower"_L1, 1}});
+        QCOMPARE(sold["result"_L1].toString(), u"accepted"_s);
+        QCOMPARE(sold["gold"_L1].toInteger(), 120 - 50 - 40 + 63);
+        QVERIFY(sold["towers"_L1].toArray().isEmpty());
+        const QJsonObject unknown =
+            ask(session, {{"action"_L1, "upgradeTower"_L1}, {"tower"_L1, 1}});
+        QCOMPARE(unknown["result"_L1].toString(), u"unknownTower"_s);
+    }
+
     // Slow 0.4 against a resistance of 0.25, poison 0.05 without one.
     void statusEffectsShow()
     {
@@ -322,6 +343,10 @@ private slots:
         QTest::newRow("no ticks") << QByteArray(R"({"action":"advance"})") << u"ticks"_s;
         QTest::newRow("text as cell")
             << QByteArray(R"({"action":"buildTower","x":"1","y":0,"towerType":0})") << u"x"_s;
+        QTest::newRow("upgrade without a tower")
+            << QByteArray(R"({"action":"upgradeTower"})") << u"tower"_s;
+        QTest::newRow("sale with a wrong key")
+            << QByteArray(R"({"action":"sellTower","tower":1,"x":1})") << u"x"_s;
         QTest::newRow("rotation too far")
             << QByteArray(R"({"action":"buildTower","x":1,"y":1,"towerType":0,"rotation":4})")
             << u"rotation"_s;

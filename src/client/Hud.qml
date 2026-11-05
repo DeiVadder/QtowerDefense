@@ -68,8 +68,37 @@ Item {
         }
     }
 
+    // What can be done with the chosen tower.
+    Row {
+        objectName: "towerActions"
+        anchors.left: parent.left
+        anchors.bottom: priorityButtons.top
+        anchors.margins: root.unit / 4
+        spacing: root.unit / 4
+        visible: root.game.chosenSellValue >= 0
+
+        // First in the row: at the highest level the upgrade goes away, and one tap too many on it
+        // must not hit this button.
+        HudButton {
+            objectName: "sellButton"
+            unit: root.unit
+            text: qsTr("Sell: %1 gold").arg(root.game.chosenSellValue)
+            onClicked: root.game.sellChosenTower()
+        }
+
+        HudButton {
+            objectName: "upgradeButton"
+            unit: root.unit
+            visible: root.game.chosenUpgradeCost >= 0
+            text: qsTr("Upgrade: %1 gold").arg(root.game.chosenUpgradeCost)
+            onClicked: root.game.upgradeChosenTower()
+        }
+    }
+
     // What the chosen tower aims at, the order is that of core::TargetPriority.
     Row {
+        id: priorityButtons
+
         objectName: "priorityButtons"
         anchors.left: parent.left
         anchors.bottom: towerList.top

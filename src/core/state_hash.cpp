@@ -58,7 +58,7 @@ void Fnv1a64::addNumber(quint64 number)
 quint64 contentHash(const Content &content)
 {
     Fields fields;
-    fields.add(content.startGold, content.startLives);
+    fields.add(content.startGold, content.startLives, content.sellPercent);
     fields.addPoints(content.path.points());
     fields.add(content.grid.width(), content.grid.height());
     for (const Terrain terrain : content.grid.cells()) {
@@ -66,24 +66,29 @@ quint64 contentHash(const Content &content)
     }
     fields.add(content.towers.size());
     for (const TowerType &tower : content.towers) {
-        fields.add(tower.cost,
-                   tower.cooldownTicks,
-                   tower.range.raw(),
-                   tower.damageMin.raw(),
-                   tower.damageMax.raw(),
-                   tower.damageType);
-        fields.add(tower.effects.size());
-        for (const StatusEffect &effect : tower.effects) {
-            fields.add(effect.kind, effect.strength.raw(), effect.durationTicks);
-        }
+        fields.add(tower.damageType);
         fields.add(tower.footprint.size());
         for (const Cell cell : tower.footprint) {
             fields.add(cell.x, cell.y);
+        }
+        fields.add(tower.levels.size());
+        for (const TowerLevel &level : tower.levels) {
+            fields.add(level.cost,
+                       level.cooldownTicks,
+                       level.range.raw(),
+                       level.damageMin.raw(),
+                       level.damageMax.raw(),
+                       level.splashRadius.raw());
+            fields.add(level.effects.size());
+            for (const StatusEffect &effect : level.effects) {
+                fields.add(effect.kind, effect.strength.raw(), effect.durationTicks);
+            }
         }
     }
     fields.add(content.enemies.size());
     for (const EnemyType &enemy : content.enemies) {
         fields.add(enemy.health.raw(), enemy.speedPerTick.raw(), enemy.bounty, enemy.lifeCost);
+        fields.add(enemy.regeneration.raw(), static_cast<qint64>(enemy.boss));
         for (const Fixed resistance : enemy.resistances) {
             fields.add(resistance.raw());
         }
@@ -112,7 +117,7 @@ quint64 stateHash(const SimulationState &state)
     for (const Tower &tower : state.towers) {
         fields.add(
             tower.id, tower.type, tower.cell.x, tower.cell.y, tower.cooldownTicks, tower.rotation);
-        fields.add(tower.priority);
+        fields.add(tower.priority, tower.level, tower.spent);
     }
     return fields.value();
 }

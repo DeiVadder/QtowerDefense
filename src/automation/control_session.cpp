@@ -24,6 +24,8 @@ enum class Action : quint8 {
     StartMap,
     BuildTower,
     SetTargetPriority,
+    UpgradeTower,
+    SellTower,
     Advance,
     Observe,
     SaveReplay,
@@ -43,6 +45,12 @@ std::optional<Action> actionFromName(const QString &name)
     }
     if (name == "setTargetPriority"_L1) {
         return Action::SetTargetPriority;
+    }
+    if (name == "upgradeTower"_L1) {
+        return Action::UpgradeTower;
+    }
+    if (name == "sellTower"_L1) {
+        return Action::SellTower;
     }
     if (name == "advance"_L1) {
         return Action::Advance;
@@ -89,7 +97,9 @@ QJsonObject observationOf(const core::Simulation &game)
                                   {"y"_L1, tower.cell.y},
                                   {"cooldownTicks"_L1, tower.cooldownTicks},
                                   {"rotation"_L1, static_cast<qint64>(tower.rotation)},
-                                  {"priority"_L1, core::toString(tower.priority)}});
+                                  {"priority"_L1, core::toString(tower.priority)},
+                                  {"level"_L1, static_cast<qint64>(tower.level)},
+                                  {"sellValue"_L1, game.sellValue(tower)}});
     }
     QJsonArray enemies;
     for (const core::Enemy &enemy : state.enemies) {
@@ -198,6 +208,10 @@ QByteArray ControlSession::handle(QByteArrayView request)
         return buildTower(reader);
     case Action::SetTargetPriority:
         return setTargetPriority(reader);
+    case Action::UpgradeTower:
+        return commandOnTower<core::UpgradeTowerCommand>(reader);
+    case Action::SellTower:
+        return commandOnTower<core::SellTowerCommand>(reader);
     case Action::Advance:
         return advance(reader);
     case Action::SaveReplay:
@@ -285,6 +299,18 @@ QByteArray ControlSession::setTargetPriority(core::ObjectReader &request)
         return failure(u"unknown target priority \"%1\""_s.arg(name));
     }
     return execute(core::SetTargetPriorityCommand{tower, *priority});
+}
+
+template <typename TowerCommand>
+QByteArray ControlSession::commandOnTower(core::ObjectReader &request)
+{
+    const qint64 tower =
+        request.integer("tower"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    return execute(TowerCommand{tower});
 }
 
 QByteArray ControlSession::execute(const core::Command &command)

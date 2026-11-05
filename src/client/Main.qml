@@ -37,6 +37,6 @@ Window {
     GameSession {
         id: session
 
-        Component.onCompleted: startNewGame(":/content/training_ground.json")
+        Component.onCompleted: startNewGame(":/content/mire_siege.json")
     }
 }

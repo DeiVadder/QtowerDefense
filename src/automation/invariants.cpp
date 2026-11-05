@@ -1,7 +1,9 @@
 #include "automation/invariants.h"
 
 #include <cstddef>
+#include <numeric>
 #include <set>
+#include <vector>
 
 using namespace Qt::StringLiterals;
 
@@ -33,12 +35,29 @@ QString checkEnemies(const core::Content &content, const core::SimulationState &
         if (enemy.health <= core::Fixed()) {
             return u"enemy %1: dead but still in the game"_s.arg(enemy.id);
         }
+        if (enemy.health > content.enemies[enemy.type].health) {
+            return u"enemy %1: healed beyond its health"_s.arg(enemy.id);
+        }
         if (!isSound(enemy.slow) || !isSound(enemy.poison) ||
             enemy.slow.strength > core::maxSlow()) {
             return u"enemy %1: impossible status effect"_s.arg(enemy.id);
         }
     }
     return {};
+}
+
+QString checkLevel(const core::Content &content, const core::Tower &tower)
+{
+    const std::vector<core::TowerLevel> &levels = content.towers[tower.type].levels;
+    if (tower.level >= levels.size()) {
+        return u"tower %1: unknown level"_s.arg(tower.id);
+    }
+    const qint64 paid =
+        std::accumulate(levels.begin(),
+                        levels.begin() + static_cast<std::ptrdiff_t>(tower.level) + 1,
+                        qint64{0},
+                        [](qint64 sum, const core::TowerLevel &level) { return sum + level.cost; });
+    return tower.spent == paid ? QString() : u"tower %1: its gold does not add up"_s.arg(tower.id);
 }
 
 QString checkTowers(const core::Content &content, const core::SimulationState &state)
@@ -74,6 +93,10 @@ QString checkTowers(const core::Content &content, const core::SimulationState &s
         }
         if (tower.cooldownTicks < 0) {
             return u"tower %1: negative cooldown"_s.arg(tower.id);
+        }
+        const QString level = checkLevel(content, tower);
+        if (!level.isEmpty()) {
+            return level;
         }
     }
     return {};

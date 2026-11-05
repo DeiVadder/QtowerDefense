@@ -113,8 +113,8 @@ void addBrokenListRows()
 {
     addBrokenRow("command type",
                  "\"type\": \"buildTower\", \"x\": 5",
-                 "\"type\": \"sellTower\", \"x\": 5",
-                 u"commands[0].type: unknown command \"sellTower\""_s);
+                 "\"type\": \"swapTower\", \"x\": 5",
+                 u"commands[0].type: unknown command \"swapTower\""_s);
     addBrokenRow("target priority",
                  "\"type\": \"buildTower\", \"x\": 5, \"y\": 1, \"towerType\": 0",
                  "\"type\": \"setTargetPriority\", \"tower\": 1, \"priority\": \"weakest\"",
@@ -385,6 +385,24 @@ private slots:
         QCOMPARE(command.tower, 9);
         QVERIFY(command.priority == qtd::core::TargetPriority::Strongest);
         QVERIFY(read.commands.front().result == CommandResult::UnknownTower);
+    }
+
+    void commandsOnTowersSurviveARoundTrip()
+    {
+        Replay replay;
+        replay.content = u"map.json"_s;
+        replay.seed = 7;
+        replay.contentHash = 255;
+        replay.commands.push_back(
+            {3, qtd::core::UpgradeTowerCommand{9}, CommandResult::HighestLevel});
+        replay.commands.push_back({4, qtd::core::SellTowerCommand{8}, CommandResult::Accepted});
+        replay.checkpoints.push_back({4, 16});
+        const ReplayLoadResult result = parseReplay(toJson(replay));
+        QCOMPARE(result.error, QString());
+        const Replay read = required(result.replay);
+        QCOMPARE(std::get<qtd::core::UpgradeTowerCommand>(read.commands.at(0).command).tower, 9);
+        QVERIFY(read.commands.at(0).result == CommandResult::HighestLevel);
+        QCOMPARE(std::get<qtd::core::SellTowerCommand>(read.commands.at(1).command).tower, 8);
     }
 
     void aCommandWithoutRotationStandsUnturned()

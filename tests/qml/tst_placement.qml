@@ -82,6 +82,32 @@ Item {
             compare(session.towerCount, 2);
         }
 
+        function test_theHudUpgradesAndSellsTheChosenTower() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            const actions = findChild(game.hud, "towerActions");
+            const upgrade = findChild(game.hud, "upgradeButton");
+            const sell = findChild(game.hud, "sellButton");
+            verify(!actions.visible);
+            verify(session.buildTower(4, 4));
+            waitForRendering(game.scene);
+            const place = game.scene.blockTopOnScreen(4, 4, 0.7);
+            mouseClick(game.scene, place.x, place.y);
+            verify(actions.visible);
+            tryVerify(() => upgrade.x > sell.x + sell.width - 1);
+            compare(sell.x, 0); // it stays where it is when the upgrade goes away
+            verify(upgrade.text.indexOf("40") >= 0);
+            mouseClick(upgrade);
+            compare(session.gold, 30);
+            compare(session.towerCount, 1);
+            verify(upgrade.text.indexOf("70") >= 0);
+            mouseClick(sell);
+            compare(session.gold, 93);
+            compare(session.towerCount, 0);
+            verify(!actions.visible);
+        }
+
         // The tap names the tower by the instance it hits, so each tower needs its own answer.
         function test_aTapChoosesTheTowerItHits() {
             const game = createTemporaryObject(gameComponent, stage);

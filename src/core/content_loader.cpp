@@ -26,6 +26,7 @@ constexpr qint64 kMaxFootprintReach = 8;
 constexpr qint64 kMaxRange = 30'000;
 constexpr qint64 kMaxSpeed = 1'000;
 constexpr qint64 kMaxDamage = 100'000;
+constexpr qint64 kMaxPercent = 100;
 
 /// A cell on the grid. The grid has at least one cell here, so a failed read still gives one.
 Cell readCell(ObjectReader &item, const Grid &grid)
@@ -148,25 +149,26 @@ DamageType readDamageType(ObjectReader &item)
     return type.value_or(DamageType::Physical);
 }
 
-void readEffects(ObjectReader &tower, TowerType *type)
+/// An upgrade that names effects replaces those of the level before.
+void readEffects(ObjectReader &tower, std::vector<StatusEffect> *effects)
 {
     if (!tower.has("effects"_L1)) {
         return;
     }
-    const auto read = [type](ObjectReader &item) {
+    effects->clear();
+    const auto read = [effects](ObjectReader &item) {
         const QString name = item.text("kind"_L1);
         const std::optional<StatusKind> kind = statusKindNamed(name);
         if (!kind) {
             item.fail(u"kind"_s, u"unknown status effect \"%1\""_s.arg(name));
             return;
         }
-        if (std::ranges::contains(type->effects, *kind, &StatusEffect::kind)) {
+        if (std::ranges::contains(*effects, *kind, &StatusEffect::kind)) {
             item.fail(u"kind"_s, u"repeats a status effect of this tower"_s);
         }
         const Fixed strongest = *kind == StatusKind::Slow ? maxSlow() : Fixed::fromInt(kMaxDamage);
         const Fixed strength = item.fixed("strength"_L1, Fixed::fromRaw(1), strongest);
-        type->effects.push_back(
-            {*kind, strength, item.integer("durationTicks"_L1, 1, kMaxInteger)});
+        effects->push_back({*kind, strength, item.integer("durationTicks"_L1, 1, kMaxInteger)});
     };
     tower.forEach("effects"_L1, read, ObjectReader::Items::MayBeEmpty);
 }
@@ -188,25 +190,55 @@ void readResistances(ObjectReader &enemy, EnemyType *type)
     enemy.forEach("resistances"_L1, read, ObjectReader::Items::MayBeEmpty);
 }
 
-void readTowers(ObjectReader &root, Content *content)
+/// The first level names all its values, an upgrade only what it changes.
+void readLevel(ObjectReader &item, TowerType *type)
 {
+    const bool first = type->levels.empty();
+    TowerLevel level = first ? TowerLevel{} : type->levels.back();
     const Fixed smallest = Fixed::fromRaw(1);
     const Fixed maxRange = Fixed::fromInt(kMaxRange);
     const Fixed maxDamage = Fixed::fromInt(kMaxDamage);
+    const auto readFixed = [&](QLatin1StringView key, Fixed highest, Fixed *value) {
+        if (first || item.has(key)) {
+            *value = item.fixed(key, smallest, highest);
+        }
+    };
+    level.cost = item.integer("cost"_L1, 0, kMaxInteger);
+    readFixed("range"_L1, maxRange, &level.range);
+    if (first || item.has("cooldownTicks"_L1)) {
+        level.cooldownTicks = item.integer("cooldownTicks"_L1, 1, kMaxInteger);
+    }
+    readFixed("damageMin"_L1, maxDamage, &level.damageMin);
+    readFixed("damageMax"_L1, maxDamage, &level.damageMax);
+    if (level.damageMin > level.damageMax) {
+        item.fail(u"damageMax"_s, u"must not be below damageMin"_s);
+    }
+    if (item.has("splashRadius"_L1)) {
+        level.splashRadius = item.fixed("splashRadius"_L1, smallest, maxRange);
+    }
+    readEffects(item, &level.effects);
+    type->levels.push_back(std::move(level));
+}
+
+void readUpgrades(ObjectReader &tower, TowerType *type)
+{
+    if (tower.has("upgrades"_L1)) {
+        tower.forEach(
+            "upgrades"_L1,
+            [type](ObjectReader &item) { readLevel(item, type); },
+            ObjectReader::Items::MayBeEmpty);
+    }
+}
+
+void readTowers(ObjectReader &root, Content *content)
+{
     root.forEach("towers"_L1, [&](ObjectReader &item) {
         TowerType tower;
         tower.id = item.text("id"_L1);
-        tower.cost = item.integer("cost"_L1, 0, kMaxInteger);
-        tower.range = item.fixed("range"_L1, smallest, maxRange);
-        tower.cooldownTicks = item.integer("cooldownTicks"_L1, 1, kMaxInteger);
-        tower.damageMin = item.fixed("damageMin"_L1, smallest, maxDamage);
-        tower.damageMax = item.fixed("damageMax"_L1, smallest, maxDamage);
-        if (tower.damageMin > tower.damageMax) {
-            item.fail(u"damageMax"_s, u"must not be below damageMin"_s);
-        }
+        readLevel(item, &tower);
         tower.damageType = readDamageType(item);
-        readEffects(item, &tower);
         readFootprint(item, &tower);
+        readUpgrades(item, &tower);
         content->towers.push_back(std::move(tower));
     });
     rejectDuplicateIds(root, u"towers"_s, content->towers);
@@ -224,6 +256,10 @@ void readEnemies(ObjectReader &root, Content *content)
         enemy.speedPerTick = item.fixed("speedPerTick"_L1, smallest, maxSpeed);
         enemy.bounty = item.integer("bounty"_L1, 0, kMaxInteger);
         enemy.lifeCost = item.integer("lifeCost"_L1, 1, kMaxInteger);
+        if (item.has("regeneration"_L1)) {
+            enemy.regeneration = item.fixed("regeneration"_L1, smallest, maxHealth);
+        }
+        enemy.boss = item.has("boss"_L1) && item.flag("boss"_L1);
         readResistances(item, &enemy);
         content->enemies.push_back(std::move(enemy));
     });
@@ -268,6 +304,9 @@ ContentLoadResult parseContent(QByteArrayView json)
     Content content;
     content.startGold = root.integer("startGold"_L1, 0, kMaxInteger);
     content.startLives = root.integer("startLives"_L1, 1, kMaxInteger);
+    if (root.has("sellPercent"_L1)) {
+        content.sellPercent = root.integer("sellPercent"_L1, 0, kMaxPercent);
+    }
     readGrid(root, &content);
     if (!root.failed()) {
         readPath(root, &content);

@@ -52,6 +52,7 @@ public:
     qint64 integer(QLatin1StringView key, qint64 lowest, qint64 highest);
     Fixed fixed(QLatin1StringView key, Fixed lowest, Fixed highest);
     QString text(QLatin1StringView key);
+    bool flag(QLatin1StringView key);
 
     /// Calls read for each object of an array.
     void forEach(QLatin1StringView key,

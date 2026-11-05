@@ -33,7 +33,11 @@
             "damageMin": "2",
             "damageMax": "4.5",
             "damageType": "physical",
-            "footprint": [{ "x": 0, "y": 0 }]
+            "footprint": [{ "x": 0, "y": 0 }],
+            "upgrades": [
+                { "cost": 40, "damageMin": "3", "damageMax": "6" },
+                { "cost": 70, "range": "4", "damageMin": "4.5", "damageMax": "8" }
+            ]
         },
         {
             "id": "twin_ballista",
@@ -43,7 +47,11 @@
             "damageMin": "3",
             "damageMax": "6",
             "damageType": "magic",
-            "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }]
+            "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }],
+            "upgrades": [
+                { "cost": 70, "damageMin": "4", "damageMax": "8" },
+                { "cost": 110, "cooldownTicks": 16, "damageMin": "6", "damageMax": "10" }
+            ]
         },
         {
             "id": "bastion",
@@ -53,7 +61,11 @@
             "damageMin": "6",
             "damageMax": "9",
             "damageType": "fire",
-            "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }, { "x": 0, "y": 1 }]
+            "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }, { "x": 0, "y": 1 }],
+            "upgrades": [
+                { "cost": 90, "damageMin": "8", "damageMax": "12" },
+                { "cost": 140, "range": "5", "damageMin": "10", "damageMax": "15" }
+            ]
         },
         {
             "id": "horseshoe",
@@ -69,6 +81,10 @@
                 { "x": -1, "y": 0 },
                 { "x": 0, "y": 0 },
                 { "x": 1, "y": 0 }
+            ],
+            "upgrades": [
+                { "cost": 110, "damageMin": "8", "damageMax": "13" },
+                { "cost": 170, "range": "5.5", "damageMin": "10", "damageMax": "16" }
             ]
         },
         {
@@ -80,7 +96,18 @@
             "damageMax": "2",
             "damageType": "ice",
             "effects": [{ "kind": "slow", "strength": "0.4", "durationTicks": 45 }],
-            "footprint": [{ "x": 0, "y": 0 }]
+            "footprint": [{ "x": 0, "y": 0 }],
+            "upgrades": [
+                {
+                    "cost": 50,
+                    "effects": [{ "kind": "slow", "strength": "0.5", "durationTicks": 60 }]
+                },
+                {
+                    "cost": 80,
+                    "range": "4",
+                    "effects": [{ "kind": "slow", "strength": "0.6", "durationTicks": 75 }]
+                }
+            ]
         },
         {
             "id": "venom_spire",
@@ -91,7 +118,33 @@
             "damageMax": "1",
             "damageType": "magic",
             "effects": [{ "kind": "poison", "strength": "0.05", "durationTicks": 90 }],
-            "footprint": [{ "x": 0, "y": 0 }]
+            "footprint": [{ "x": 0, "y": 0 }],
+            "upgrades": [
+                {
+                    "cost": 50,
+                    "effects": [{ "kind": "poison", "strength": "0.08", "durationTicks": 120 }]
+                },
+                {
+                    "cost": 80,
+                    "range": "3.5",
+                    "effects": [{ "kind": "poison", "strength": "0.12", "durationTicks": 150 }]
+                }
+            ]
+        },
+        {
+            "id": "catapult",
+            "cost": 110,
+            "range": "5",
+            "cooldownTicks": 60,
+            "damageMin": "5",
+            "damageMax": "8",
+            "damageType": "physical",
+            "splashRadius": "1.25",
+            "footprint": [{ "x": 0, "y": 0 }, { "x": 0, "y": 1 }],
+            "upgrades": [
+                { "cost": 90, "damageMin": "7", "damageMax": "11", "splashRadius": "1.5" },
+                { "cost": 140, "damageMin": "9", "damageMax": "14", "splashRadius": "1.75" }
+            ]
         }
     ],
     "enemies": [

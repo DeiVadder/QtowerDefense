@@ -30,6 +30,8 @@ class GameSession : public QObject
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
     Q_PROPERTY(int chosenPriority READ chosenPriority NOTIFY towersChanged)
+    Q_PROPERTY(qint64 chosenUpgradeCost READ chosenUpgradeCost NOTIFY towersChanged)
+    Q_PROPERTY(qint64 chosenSellValue READ chosenSellValue NOTIFY towersChanged)
     Q_PROPERTY(int towerCount READ towerCount NOTIFY towersChanged)
     Q_PROPERTY(QVariantList towerCells READ towerCells NOTIFY towersChanged)
     Q_PROPERTY(qint64 gold READ gold NOTIFY stateChanged)
@@ -58,6 +60,10 @@ public:
     Q_INVOKABLE void clearChosenTower();
     /// Tells the chosen tower what to aim at, as an index into core::TargetPriority.
     Q_INVOKABLE void setChosenPriority(int priority);
+    /// Takes the chosen tower to its next level, true if the game took the command.
+    Q_INVOKABLE bool upgradeChosenTower();
+    /// Sells the chosen tower, true if the game took the command. Then no tower is chosen.
+    Q_INVOKABLE bool sellChosenTower();
     /// Turns what a tap on the map builds by a quarter, clockwise.
     Q_INVOKABLE void rotateSelection();
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
@@ -75,6 +81,10 @@ public:
     [[nodiscard]] QVariantList selectedShape() const;
     /// What the chosen tower aims at, as an index into core::TargetPriority, -1 if none is chosen.
     [[nodiscard]] int chosenPriority() const;
+    /// The gold for the next level of the chosen tower, -1 if there is none or no tower is chosen.
+    [[nodiscard]] qint64 chosenUpgradeCost() const;
+    /// The gold that selling the chosen tower brings, -1 if none is chosen.
+    [[nodiscard]] qint64 chosenSellValue() const;
     /// The id of the chosen tower, 0 if none is chosen.
     [[nodiscard]] qint64 chosenTower() const;
     [[nodiscard]] int towerCount() const;
@@ -119,6 +129,11 @@ signals:
     void frameChanged();
 
 private:
+    /// The tower that is chosen, nothing if there is none, or no longer.
+    [[nodiscard]] const core::Tower *chosen() const;
+    /// Gives a command on the chosen tower and shows what it changed.
+    bool executeOnChosen(const core::Command &command);
+
     std::unique_ptr<core::ReplayRecorder> game_;
     core::TickClock clock_;
     std::map<qint64, core::Point> lastPlaces_; // of the enemies, by id, one tick ago

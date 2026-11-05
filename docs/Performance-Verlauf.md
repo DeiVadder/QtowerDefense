@@ -15,6 +15,7 @@ qtd_headless --map content/benchmark_arena.json --seed 7 --script tests/golden/b
 | 4 | 2026-11-05 | 6.925 | 144.400 | 4.813 |
 | 5 | 2026-11-05 | 7.111 | 140.620 | 4.687 |
 | 6 | 2026-11-05 | 7.523 | 132.922 | 4.430 |
+| 7 | 2026-11-05 | 7.594 | 131.668 | 4.388 |
 
 ## Echtes Spiel
 
@@ -38,3 +39,4 @@ Der Smoke-Test bleibt beim Standard: Bei fast 4.000 Bildern je Sekunde sinkt das
 |---|---|---|---|---|
 | 5 | 2026-11-05 | | | 167 |
 | 6 | 2026-11-05 | 204 | 128 | 167 |
+| 7 | 2026-11-05 | 210 | 127 | 167 |

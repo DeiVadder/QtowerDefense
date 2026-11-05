@@ -20,7 +20,9 @@ qtd_set_strict_warnings(qtd_client)
 qt_add_resources(qtd_client "qtd_content"
     PREFIX "/content"
     BASE "${PROJECT_SOURCE_DIR}/content"
-    FILES "${PROJECT_SOURCE_DIR}/content/training_ground.json")
+    FILES
+        "${PROJECT_SOURCE_DIR}/content/training_ground.json"
+        "${PROJECT_SOURCE_DIR}/content/mire_siege.json")
 
 # Generated code of qmlcachegen is third-party code in the sense of the warning rule: C4702 comes
 # from Qt templates that it instantiates, not from anything in this project.

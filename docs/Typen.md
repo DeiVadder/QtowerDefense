@@ -53,6 +53,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `StatusKind` | enum class | `content.h` |  |
 | `TargetPriority` | enum class | `content.h` | Which enemy in range a tower fires at. |
 | `Terrain` | enum class | `content.h` | What lies on a cell. |
+| `TowerLevel` | struct | `content.h` | What a tower does at one level. |
 | `TowerType` | struct | `content.h` |  |
 | `ContentLoadResult` | struct | `content_loader.h` | Holds the content, or an error text that names the place of the problem. |
 | `Fixed` | class | `fixed.h` | Decimal fixed point number: the raw integer counts ten-thousandths, so 1.5 is raw 15000. |
@@ -75,10 +76,12 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `CommandResult` | enum class | `simulation.h` |  |
 | `Enemy` | struct | `simulation.h` |  |
 | `GameStatus` | enum class | `simulation.h` |  |
+| `SellTowerCommand` | struct | `simulation.h` |  |
 | `SetTargetPriorityCommand` | struct | `simulation.h` |  |
 | `Simulation` | class | `simulation.h` | One game. |
 | `SimulationState` | struct | `simulation.h` | All that changes during a game. |
 | `Tower` | struct | `simulation.h` |  |
+| `UpgradeTowerCommand` | struct | `simulation.h` |  |
 | `Fields` | class | `state_hash.cpp` | Adds the fields of a hash in the given order. |
 | `Fnv1a64` | class | `state_hash.h` | FNV-1a with 64 bits. |
 | `TickClock` | class | `tick_clock.h` | Turns the time between two frames into ticks. |

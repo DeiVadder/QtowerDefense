@@ -27,6 +27,8 @@ constexpr float kFlatHeight = 0.04F;
 constexpr float kRockHeight = 0.5F;
 constexpr float kTreeHeight = 0.9F;
 constexpr float kTowerHeight = 0.7F;
+constexpr float kTowerHeightPerLevel = 0.25F;
+constexpr float kBossScale = 1.8F;
 constexpr int kChosenLight = 150; // percent, how much brighter the chosen tower is
 
 struct Piece
@@ -140,7 +142,8 @@ std::vector<Piece> towerPieces(const GameSession &game, float fieldSize)
                                        fieldSize,
                                        kTowerShare,
                                        shown,
-                                       kTowerHeight);
+                                       kTowerHeight +
+                                           kTowerHeightPerLevel * static_cast<float>(tower.level));
                                });
     }
     return pieces;
@@ -154,13 +157,15 @@ std::vector<Piece> enemyPieces(const GameSession &game, float fieldSize, float e
         return pieces;
     }
     const std::vector<core::Enemy> &enemies = game.simulation()->state().enemies;
+    const std::vector<core::EnemyType> &types = game.simulation()->content().enemies;
     pieces.reserve(places.size());
     std::ranges::transform(
-        places, enemies, std::back_inserter(pieces), [=](QPointF place, const core::Enemy &enemy) {
+        places, enemies, std::back_inserter(pieces), [&](QPointF place, const core::Enemy &enemy) {
             return Piece{QVector3D(static_cast<float>(place.x()) * fieldSize,
                                    0,
                                    static_cast<float>(place.y()) * fieldSize),
-                         QVector3D(1, 1, 1) * enemyScale,
+                         QVector3D(1, 1, 1) * enemyScale *
+                             (types[enemy.type].boss ? kBossScale : 1.0F),
                          colorOf(enemy)};
         });
     return pieces;

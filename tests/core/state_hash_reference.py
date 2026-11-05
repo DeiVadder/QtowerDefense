@@ -30,13 +30,15 @@ def scenario_content():
     terrain[:11] = [1] * 11                         # the path in the first row
     terrain[22] = 2                                 # a rock at (0, 2)
     return [
-        100, 3,                                     # start gold, start lives
+        100, 3, 70,                                 # start gold, start lives, sell percent
         2, 0, 0, 100000, 0,                         # path
         11, 11, *terrain,                           # grid
-        1, 40, 4, 30000, 20000, 20000, 0,           # towers: damage type physical
-        0,                                          # no status effects
+        1, 0,                                       # towers: damage type physical
         1, 0, 0,                                    # footprint
-        1, 40000, 5000, 7, 1, 0, 0, 0, 0,           # enemies, with four resistances
+        1, 40, 4, 30000, 20000, 20000, 0,           # one level, without a splash
+        0,                                          # no status effects
+        1, 40000, 5000, 7, 1, 0, 0,                 # enemies: no regeneration, no boss
+        0, 0, 0, 0,                                 # four resistances
         1, 0, 2, 0, 4,                              # wave
     ]  # fmt: skip
 
@@ -49,7 +51,7 @@ def handmade_state():
         random_state, increment,
         9, 1, 2, 4,                                 # next id, spawn group, spawned, countdown
         1, 3, 0, 15000, 25000, 4, 5000, 6, 2500,    # enemies with slow and poison
-        1, 5, 1, 2, 3, 6, 3, 2,                     # towers: turned, aiming at the last enemy
+        1, 5, 1, 2, 3, 6, 3, 2, 1, 70,              # towers: turned, aiming at the last, upgraded
     ]  # fmt: skip
 
 

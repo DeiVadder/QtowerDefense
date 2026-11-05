@@ -23,7 +23,7 @@ namespace {
 constexpr qint64 kFormatVersion = 1;
 constexpr qsizetype kHashDigits = 16;
 
-using ResultNames = std::array<QLatin1StringView, 8>;
+using ResultNames = std::array<QLatin1StringView, 9>;
 constexpr ResultNames kResultNames{"accepted"_L1,
                                    "gameOver"_L1,
                                    "unknownTowerType"_L1,
@@ -31,8 +31,9 @@ constexpr ResultNames kResultNames{"accepted"_L1,
                                    "cellBlocked"_L1,
                                    "cellOccupied"_L1,
                                    "notEnoughGold"_L1,
-                                   "unknownTower"_L1};
-static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::UnknownTower) + 1);
+                                   "unknownTower"_L1,
+                                   "highestLevel"_L1};
+static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::HighestLevel) + 1);
 
 enum class Kind : quint8 {
     Replay,
@@ -94,6 +95,12 @@ Command readCommand(ObjectReader &item)
     const QString type = item.text("type"_L1);
     if (type == "setTargetPriority"_L1) {
         return readTargetPriority(item);
+    }
+    if (type == "upgradeTower"_L1) {
+        return UpgradeTowerCommand{item.integer("tower"_L1, -kMaxExactInteger, kMaxExactInteger)};
+    }
+    if (type == "sellTower"_L1) {
+        return SellTowerCommand{item.integer("tower"_L1, -kMaxExactInteger, kMaxExactInteger)};
     }
     if (type != "buildTower"_L1) {
         item.fail(u"type"_s, u"unknown command \"%1\""_s.arg(type));
@@ -198,6 +205,16 @@ QJsonObject fieldsOf(const SetTargetPriorityCommand &command)
     return {{"type"_L1, "setTargetPriority"_L1},
             {"tower"_L1, command.tower},
             {"priority"_L1, toString(command.priority)}};
+}
+
+QJsonObject fieldsOf(const UpgradeTowerCommand &command)
+{
+    return {{"type"_L1, "upgradeTower"_L1}, {"tower"_L1, command.tower}};
+}
+
+QJsonObject fieldsOf(const SellTowerCommand &command)
+{
+    return {{"type"_L1, "sellTower"_L1}, {"tower"_L1, command.tower}};
 }
 
 QJsonObject commandToJson(const RecordedCommand &recorded)

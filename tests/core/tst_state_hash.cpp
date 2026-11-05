@@ -63,7 +63,9 @@ SimulationState handmadeState()
                             {2, 3},
                             6,
                             qtd::core::Rotation::ThreeQuarters,
-                            qtd::core::TargetPriority::Strongest});
+                            qtd::core::TargetPriority::Strongest,
+                            1,
+                            70});
     return state;
 }
 
@@ -121,6 +123,8 @@ NamedChanges entityChanges()
         {"tower rotation", [](auto &s) { s.towers[0].rotation = qtd::core::Rotation::Half; }},
         {"tower priority",
          [](auto &s) { s.towers[0].priority = qtd::core::TargetPriority::Nearest; }},
+        {"tower level", [](auto &s) { ++s.towers[0].level; }},
+        {"tower spent", [](auto &s) { ++s.towers[0].spent; }},
     };
 }
 
@@ -135,12 +139,12 @@ private slots:
     /// the project. They hold on every compiler and in every process.
     void theStateHashIsPinned()
     {
-        QCOMPARE(stateHash(handmadeState()), 0x084EDFD9F302B013ULL);
+        QCOMPARE(stateHash(handmadeState()), 0xCA983B4815B67094ULL);
     }
 
     void theContentHashIsPinned()
     {
-        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x1E6C0D89D8C8322EULL);
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x6D9C0DEAB6D73A61ULL);
     }
 
     // The test vectors of the FNV authors.
@@ -229,6 +233,11 @@ private slots:
         row(R"("count": 2)", R"("count": 3)");
         row(R"("delayTicks": 0)", R"("delayTicks": 1)");
         row(R"("intervalTicks": 4)", R"("intervalTicks": 5)");
+        row(R"("startLives": 3)", R"("startLives": 3, "sellPercent": 50)");
+        row(R"("cooldownTicks": 4)", R"("cooldownTicks": 4, "splashRadius": "1")");
+        row(R"("cost": 40)", R"("cost": 40, "upgrades": [{"cost": 1}])");
+        row(R"("lifeCost": 1)", R"("lifeCost": 1, "regeneration": "1")");
+        row(R"("lifeCost": 1)", R"("lifeCost": 1, "boss": true)");
     }
 
     static void hashIgnoresNothingButIds()
