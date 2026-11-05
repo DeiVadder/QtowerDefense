@@ -14,7 +14,7 @@ Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [Qtowe
 - Schichten: `qtd_core` (nur Qt6::Core) → `qtd_automation` → `qtd_client` → Programme `QtowerDefense` und `qtd_headless`.
 - Der Client liest den Zustand und schickt Befehle. Bots und Mensch nutzen dieselben Befehle.
 - **Simulation bleibt deterministisch:** fester Tick, Festkomma, eigener Zufallsgenerator, einsträngig. In Core verboten: `float`, `double`, `QHash`, `QRandomGenerator`, `QDateTime`, `std::chrono`.
-- Content ist datengetrieben (JSON). Gegner laufen auf festen Pfaden, Türme stehen auf Bauplätzen.
+- Content ist datengetrieben (JSON). Gegner laufen auf festen Pfaden, Türme stehen auf freien Feldern des Rasters (E-25).
 - Plattformneutral auch für Mobile: Qt-Funktionalität bevorzugen, alles per Touch bedienbar.
 - Eine einzige QML-Engine, QML nur in Modulen über `qt_add_qml_module()`.
 - Eigene Inhalte: nichts aus bestehenden Spielen übernehmen. Assets nur CC0, jedes in `docs/ASSETS.md`.

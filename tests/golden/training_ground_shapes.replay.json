@@ -1,0 +1,126 @@
+{
+    "checkpoints": [
+        {
+            "hash": "79957975c91d3322",
+            "tick": 0
+        },
+        {
+            "hash": "be3cf5a01713245e",
+            "tick": 30
+        },
+        {
+            "hash": "e89ea7a7a25286c2",
+            "tick": 60
+        },
+        {
+            "hash": "acbc704ea1325db7",
+            "tick": 90
+        },
+        {
+            "hash": "68b29adb26a62101",
+            "tick": 120
+        },
+        {
+            "hash": "97aafb785234f094",
+            "tick": 150
+        },
+        {
+            "hash": "5ce9d98086c2d528",
+            "tick": 180
+        },
+        {
+            "hash": "990fdf61c9e124c7",
+            "tick": 210
+        },
+        {
+            "hash": "23a98ce3bf844fd0",
+            "tick": 240
+        },
+        {
+            "hash": "d934076821eac0c8",
+            "tick": 270
+        },
+        {
+            "hash": "02594f0a950625f7",
+            "tick": 300
+        },
+        {
+            "hash": "8d9a55ee8b376d7e",
+            "tick": 330
+        },
+        {
+            "hash": "10262d1c2ead040b",
+            "tick": 360
+        },
+        {
+            "hash": "c74ed9f0cff2c34d",
+            "tick": 390
+        },
+        {
+            "hash": "62d798730a80c647",
+            "tick": 404
+        }
+    ],
+    "commands": [
+        {
+            "result": "cellBlocked",
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 2,
+            "y": 5
+        },
+        {
+            "result": "cellBlocked",
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 3,
+            "y": 2
+        },
+        {
+            "result": "outsideMap",
+            "tick": 0,
+            "towerType": 1,
+            "type": "buildTower",
+            "x": 16,
+            "y": 5
+        },
+        {
+            "result": "accepted",
+            "tick": 0,
+            "towerType": 1,
+            "type": "buildTower",
+            "x": 4,
+            "y": 3
+        },
+        {
+            "result": "cellOccupied",
+            "tick": 1,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 5,
+            "y": 3
+        },
+        {
+            "result": "notEnoughGold",
+            "tick": 1,
+            "towerType": 2,
+            "type": "buildTower",
+            "x": 10,
+            "y": 6
+        },
+        {
+            "result": "accepted",
+            "tick": 340,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 10,
+            "y": 6
+        }
+    ],
+    "content": "training_ground.json",
+    "contentHash": "5f4a0b0ef12c94d9",
+    "formatVersion": 1,
+    "seed": "5"
+}

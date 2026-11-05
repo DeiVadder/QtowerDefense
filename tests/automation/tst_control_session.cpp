@@ -33,9 +33,10 @@ QJsonObject start(ControlSession &session, const QString &seed = u"7"_s)
     return ask(session, {{"action"_L1, "startMap"_L1}, {"map"_L1, mapFile()}, {"seed"_L1, seed}});
 }
 
-QJsonObject build(ControlSession &session, int slot)
+QJsonObject build(ControlSession &session, int x, int y)
 {
-    return ask(session, {{"action"_L1, "buildTower"_L1}, {"slot"_L1, slot}, {"towerType"_L1, 0}});
+    return ask(session,
+               {{"action"_L1, "buildTower"_L1}, {"x"_L1, x}, {"y"_L1, y}, {"towerType"_L1, 0}});
 }
 
 QJsonObject advance(ControlSession &session, qint64 ticks)
@@ -70,11 +71,12 @@ private slots:
     {
         ControlSession session;
         start(session);
-        const QJsonObject answer = build(session, 1);
+        const QJsonObject answer = build(session, 6, 0);
         QCOMPARE(answer["result"_L1].toString(), u"accepted"_s);
         QCOMPARE(answer["gold"_L1].toInteger(), 70);
         const QJsonObject tower = answer["towers"_L1].toArray().first().toObject();
-        QCOMPARE(tower["slot"_L1].toInteger(), 1);
+        QCOMPARE(tower["x"_L1].toInteger(), 6);
+        QCOMPARE(tower["y"_L1].toInteger(), 0);
         QCOMPARE(tower["type"_L1].toInteger(), 0);
     }
 
@@ -82,9 +84,9 @@ private slots:
     {
         ControlSession session;
         const QString hash = start(session)["hash"_L1].toString();
-        const QJsonObject answer = build(session, 99);
+        const QJsonObject answer = build(session, 99, 99);
         QVERIFY(answer["ok"_L1].toBool());
-        QCOMPARE(answer["result"_L1].toString(), u"unknownSlot"_s);
+        QCOMPARE(answer["result"_L1].toString(), u"outsideMap"_s);
         QCOMPARE(answer["hash"_L1].toString(), hash);
     }
 
@@ -115,11 +117,11 @@ private slots:
     {
         ControlSession session;
         start(session);
-        build(session, 0);
+        build(session, 4, 4);
         const QJsonObject answer = advance(session, 150);
 
         qtd::core::Simulation game(required(qtd::core::loadContentFile(mapFile()).content), 7);
-        game.execute(qtd::core::BuildTowerCommand{0, 0});
+        game.execute(qtd::core::BuildTowerCommand{{4, 4}, 0});
         game.advance(150);
         QCOMPARE(answer["hash"_L1].toString(), qtd::core::hashToText(game.hash()));
         QCOMPARE(answer["tick"_L1].toInteger(), 150);
@@ -150,7 +152,7 @@ private slots:
         const QString file = directory.filePath(u"game.replay.json"_s);
         ControlSession session;
         start(session);
-        build(session, 0);
+        build(session, 4, 4);
         advance(session, 90);
         const QJsonObject answer =
             ask(session, {{"action"_L1, "saveReplay"_L1}, {"file"_L1, file}});
@@ -179,8 +181,8 @@ private slots:
         QTest::newRow("too many ticks")
             << QByteArray(R"({"action":"advance","ticks":1000001})") << u"ticks"_s;
         QTest::newRow("no ticks") << QByteArray(R"({"action":"advance"})") << u"ticks"_s;
-        QTest::newRow("text as slot")
-            << QByteArray(R"({"action":"buildTower","slot":"1","towerType":0})") << u"slot"_s;
+        QTest::newRow("text as cell")
+            << QByteArray(R"({"action":"buildTower","x":"1","y":0,"towerType":0})") << u"x"_s;
         QTest::newRow("no file") << QByteArray(R"({"action":"saveReplay"})") << u"file"_s;
         QTest::newRow("unknown key")
             << QByteArray(R"({"action":"observe","extra":1})") << u"extra"_s;
@@ -220,7 +222,7 @@ private slots:
     {
         ControlSession session;
         start(session);
-        build(session, 0);
+        build(session, 4, 4);
         session.handle(R"({"action":"startMap","map":"none","seed":"1"})");
         QCOMPARE(ask(session, {{"action"_L1, "observe"_L1}})["gold"_L1].toInteger(), 70);
     }

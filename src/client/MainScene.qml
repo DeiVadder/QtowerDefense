@@ -11,8 +11,8 @@ View3D {
 
     readonly property real fieldSize: 50
     readonly property real fieldOfView: 60
-    readonly property real groundWidth: (game.mapSize.width + 3) * fieldSize
-    readonly property real groundDepth: (game.mapSize.height + 3) * fieldSize
+    readonly property real groundWidth: (game.gridSize.width + 2) * fieldSize
+    readonly property real groundDepth: (game.gridSize.height + 2) * fieldSize
     // What the camera has to see from top to bottom. The factors leave room for the tilt: the near
     // edge of the ground looks wider than the far one.
     readonly property real groundExtent: Math.max(1.3 * groundDepth, 1.6 * groundWidth * viewHeight
@@ -46,8 +46,12 @@ View3D {
     }
 
     function tapAt(x: real, y: real): bool {
-        const slot = pick(x, y).objectHit as SlotMarker;
-        return slot !== null && game.buildTower(slot.index);
+        const hit = pick(x, y);
+        if (hit.objectHit !== board) {
+            return false;
+        }
+        const width = game.gridSize.width;
+        return game.buildTower(hit.instanceIndex % width, Math.floor(hit.instanceIndex / width));
     }
 
     camera: sceneCamera
@@ -110,65 +114,45 @@ View3D {
         eulerRotation.x: -90
         scale: Qt.vector3d(root.groundWidth / 100, root.groundDepth / 100, 1)
         materials: PrincipledMaterial {
-            baseColor: "#4f7942"
+            baseColor: "#33502c"
         }
     }
 
     Node {
         id: map
 
-        x: -root.game.mapSize.width * root.fieldSize / 2
-        z: -root.game.mapSize.height * root.fieldSize / 2
+        x: -(root.game.gridSize.width - 1) * root.fieldSize / 2
+        z: -(root.game.gridSize.height - 1) * root.fieldSize / 2
 
-        Repeater3D {
-            model: Math.max(root.game.path.length - 1, 0)
+        Model {
+            id: board
 
-            delegate: Model {
-                id: pathPiece
-
-                required property int index
-                readonly property point from: root.game.path[index]
-                readonly property point to: root.game.path[index + 1]
-                readonly property real length: Math.hypot(to.x - from.x, to.y - from.y)
-
-                source: "#Cube"
-                x: (from.x + to.x) / 2 * root.fieldSize
-                z: (from.y + to.y) / 2 * root.fieldSize
-                y: 1
-                eulerRotation.y: -Math.atan2(to.y - from.y, to.x - from.x) * 180 / Math.PI
-                scale: Qt.vector3d((length + 0.8) * root.fieldSize / 100, 0.02, 0.8 * root.fieldSize
-                                   / 100)
-                materials: PrincipledMaterial {
-                    baseColor: "#8a6f4d"
-                }
-            }
-        }
-
-        Repeater3D {
-            id: slots
-
-            model: root.game.buildSlots
-
-            delegate: SlotMarker {
+            source: "#Cube"
+            pickable: true // the block of a cell takes the taps, its instance names the cell
+            instanceRoot: board
+            instancing: MapInstances {
+                game: root.game
+                layer: MapInstances.Board
                 fieldSize: root.fieldSize
-                affordable: root.game.gold >= root.game.towerCost
+            }
+            materials: PrincipledMaterial {
+                baseColor: "white"
             }
         }
 
-        Repeater3D {
-            model: root.game.towerPlaces
+        Model {
+            id: towers
 
-            delegate: Model {
-                required property var modelData
-
-                source: "#Cone"
-                x: modelData.x * root.fieldSize
-                z: modelData.y * root.fieldSize
-                y: 8
-                scale: Qt.vector3d(root.fieldSize / 80, root.fieldSize / 60, root.fieldSize / 80)
-                materials: PrincipledMaterial {
-                    baseColor: "#c9a227"
-                }
+            source: "#Cube"
+            pickable: true // a tap on a tower must not reach the cell behind it
+            instanceRoot: towers
+            instancing: MapInstances {
+                game: root.game
+                layer: MapInstances.Towers
+                fieldSize: root.fieldSize
+            }
+            materials: PrincipledMaterial {
+                baseColor: "white"
             }
         }
 
@@ -178,8 +162,9 @@ View3D {
             source: "#Sphere"
             y: root.enemyHeight
             instanceRoot: enemies // without it, instances ignore the place of the map
-            instancing: EnemyInstances {
+            instancing: MapInstances {
                 game: root.game
+                layer: MapInstances.Enemies
                 fieldSize: root.fieldSize
                 enemyScale: root.fieldSize / 120
             }
@@ -195,8 +180,14 @@ View3D {
                                                                  mapY * fieldSize)));
     }
 
-    // The place of a build slot on the screen.
-    function slotOnScreen(slot: int): vector3d {
-        return mapFrom3DScene((slots.objectAt(slot) as SlotMarker).scenePosition);
+    // The middle of a cell on the screen.
+    function cellOnScreen(cellX: int, cellY: int): vector3d {
+        return blockTopOnScreen(cellX, cellY, 0);
+    }
+
+    // The middle of the top of a block on a cell, its height in shares of a field.
+    function blockTopOnScreen(cellX: int, cellY: int, height: real): vector3d {
+        return mapFrom3DScene(map.mapPositionToScene(Qt.vector3d(cellX * fieldSize, height
+                                                                 * fieldSize, cellY * fieldSize)));
     }
 }

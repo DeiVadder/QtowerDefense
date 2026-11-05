@@ -18,15 +18,18 @@ inline QByteArray scenarioJson()
     "formatVersion": 1,
     "startGold": 100,
     "startLives": 3,
+    "gridWidth": 11,
+    "gridHeight": 11,
     "path": [{ "x": 0, "y": 0 }, { "x": 10, "y": 0 }],
-    "buildSlots": [{ "x": 5, "y": 1 }, { "x": 2, "y": 1 }, { "x": 100, "y": 100 }],
+    "obstacles": [{ "terrain": "rock", "x": 0, "y": 2 }],
     "towers": [{
         "id": "arrow",
         "cost": 40,
         "range": "3",
         "cooldownTicks": 4,
         "damageMin": "2",
-        "damageMax": "2"
+        "damageMax": "2",
+        "footprint": [{"x": 0, "y": 0}]
     }],
     "enemies": [{
         "id": "grunt",

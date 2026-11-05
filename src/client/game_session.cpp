@@ -5,10 +5,13 @@
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QRandomGenerator>
+#include <QVariantMap>
 
 #include <algorithm>
 #include <iterator>
 #include <utility>
+
+using namespace Qt::StringLiterals;
 
 namespace qtd::client {
 
@@ -26,15 +29,6 @@ double mapUnits(core::Fixed value)
 QPointF mapPlace(const core::Point &point)
 {
     return {mapUnits(point.x), mapUnits(point.y)};
-}
-
-QVariantList mapPlaces(const std::vector<core::Point> &points)
-{
-    QVariantList places;
-    for (const core::Point &point : points) {
-        places.append(mapPlace(point));
-    }
-    return places;
 }
 
 } // namespace
@@ -75,16 +69,18 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
     clock_ = core::TickClock();
     clock_.setSpeed(speed_);
     paused_ = false;
+    selectedTower_ = 0;
     emit mapChanged();
+    emit selectionChanged();
     emit towersChanged();
     emit stateChanged();
     emit clockChanged();
 }
 
-bool GameSession::buildTower(int slot)
+bool GameSession::buildTower(int x, int y)
 {
-    if (!game_ ||
-        game_->execute(core::BuildTowerCommand{slot, 0}) != core::CommandResult::Accepted) {
+    if (!game_ || game_->execute(core::BuildTowerCommand{{x, y}, selectedTower_}) !=
+                      core::CommandResult::Accepted) {
         return false;
     }
     emit towersChanged();
@@ -119,44 +115,53 @@ const QString &GameSession::error() const
     return error_;
 }
 
-QSizeF GameSession::mapSize() const
+QSize GameSession::gridSize() const
 {
-    if (!game_) {
-        return {};
-    }
-    QSizeF size;
-    const auto include = [&size](const core::Point &point) {
-        size = size.expandedTo({mapUnits(point.x), mapUnits(point.y)});
-    };
-    std::ranges::for_each(game_->content().path.points(), include);
-    std::ranges::for_each(game_->content().buildSlots, include);
-    return size;
+    return game_ ? QSize(static_cast<int>(game_->content().grid.width()),
+                         static_cast<int>(game_->content().grid.height()))
+                 : QSize();
 }
 
-QVariantList GameSession::path() const
+QVariantList GameSession::towerTypes() const
 {
-    return game_ ? mapPlaces(game_->content().path.points()) : QVariantList();
-}
-
-QVariantList GameSession::buildSlots() const
-{
-    return game_ ? mapPlaces(game_->content().buildSlots) : QVariantList();
-}
-
-qint64 GameSession::towerCost() const
-{
-    return game_ ? game_->content().towers[0].cost : 0;
-}
-
-QVariantList GameSession::towerPlaces() const
-{
-    QVariantList places;
+    QVariantList types;
     if (game_) {
-        for (const core::Tower &tower : game_->state().towers) {
-            places.append(mapPlace(game_->content().buildSlots[tower.slot]));
+        for (const core::TowerType &type : game_->content().towers) {
+            types.append(QVariantMap{{u"name"_s, type.id}, {u"cost"_s, type.cost}});
         }
     }
-    return places;
+    return types;
+}
+
+int GameSession::selectedTower() const
+{
+    return selectedTower_;
+}
+
+int GameSession::towerCount() const
+{
+    return game_ ? static_cast<int>(game_->state().towers.size()) : 0;
+}
+
+const core::Grid *GameSession::grid() const
+{
+    return game_ ? &game_->content().grid : nullptr;
+}
+
+QVariantList GameSession::towerCells() const
+{
+    QVariantList cells;
+    if (game_) {
+        for (const core::Tower &tower : game_->state().towers) {
+            std::ranges::transform(
+                core::footprintAt(game_->content().towers[tower.type], tower.cell),
+                std::back_inserter(cells),
+                [](core::Cell cell) {
+                    return QPoint(static_cast<int>(cell.x), static_cast<int>(cell.y));
+                });
+        }
+    }
+    return cells;
 }
 
 qint64 GameSession::gold() const
@@ -230,6 +235,16 @@ void GameSession::applicationStateChanged(Qt::ApplicationState state)
 {
     if (state == Qt::ApplicationSuspended || state == Qt::ApplicationHidden) {
         setPaused(true);
+    }
+}
+
+void GameSession::setSelectedTower(int index)
+{
+    const int last = game_ ? static_cast<int>(game_->content().towers.size()) - 1 : 0;
+    const int limited = std::clamp(index, 0, last);
+    if (selectedTower_ != limited) {
+        selectedTower_ = limited;
+        emit selectionChanged();
     }
 }
 

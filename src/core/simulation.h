@@ -32,7 +32,7 @@ struct Tower
 {
     qint64 id = 0;
     std::size_t type = 0;
-    std::size_t slot = 0;
+    Cell cell;                // the cell it stands on, see TowerType::footprint
     qint64 cooldownTicks = 0; // ticks until the tower can fire
 };
 
@@ -56,7 +56,7 @@ struct SimulationState
 
 struct BuildTowerCommand
 {
-    qint64 slot = 0;
+    Cell cell;
     qint64 towerType = 0;
 };
 
@@ -66,9 +66,10 @@ using Command = std::variant<BuildTowerCommand>;
 enum class CommandResult : quint8 {
     Accepted,
     GameOver,
-    UnknownSlot,
     UnknownTowerType,
-    SlotOccupied,
+    OutsideMap,
+    CellBlocked,
+    CellOccupied,
     NotEnoughGold,
 };
 
@@ -88,6 +89,9 @@ public:
         return state_;
     }
 
+    /// What execute() would answer for this command right now.
+    CommandResult check(const BuildTowerCommand &command) const;
+
     /// Applies a command between two ticks. Anything but Accepted leaves the state untouched.
     CommandResult execute(const Command &command);
 
@@ -106,6 +110,7 @@ public:
 
 private:
     CommandResult build(const BuildTowerCommand &command);
+    bool hasTowerAt(Cell cell) const;
     void moveEnemies();
     void spawnEnemies();
     void fireTowers();

@@ -36,12 +36,6 @@ Item {
             color: "#f0f4f8"
             font.pixelSize: root.unit * 0.45
         }
-
-        Text {
-            text: qsTr("Tower: %1 gold").arg(root.game.towerCost)
-            color: "#b8c4cf"
-            font.pixelSize: root.unit * 0.45
-        }
     }
 
     Row {
@@ -70,6 +64,30 @@ Item {
                 text: qsTr("%1x").arg(speed)
                 highlighted: root.game.speed === speed
                 onClicked: root.game.speed = speed
+            }
+        }
+    }
+
+    // What a tap on the map builds.
+    Flow {
+        objectName: "towerButtons"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: root.unit / 4
+        spacing: root.unit / 4
+
+        Repeater {
+            model: root.game.towerTypes
+
+            delegate: HudButton {
+                required property int index
+                required property var modelData
+
+                unit: root.unit
+                text: qsTr("%1: %2 gold").arg(modelData.name).arg(modelData.cost)
+                highlighted: root.game.selectedTower === index
+                onClicked: root.game.selectedTower = index
             }
         }
     }

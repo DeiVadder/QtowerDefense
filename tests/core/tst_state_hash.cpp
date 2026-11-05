@@ -30,7 +30,7 @@ namespace {
 Simulation runningGame()
 {
     Simulation game(contentOf(scenarioJson()), 7);
-    game.execute(BuildTowerCommand{0, 0});
+    game.execute(BuildTowerCommand{{5, 1}, 0});
     game.advance(3);
     return game;
 }
@@ -53,7 +53,7 @@ SimulationState handmadeState()
     state.spawnedInGroup = 2;
     state.spawnCountdownTicks = 4;
     state.enemies.push_back({3, 0, Fixed::fromRaw(15000), Fixed::fromRaw(25000)});
-    state.towers.push_back({5, 1, 2, 6});
+    state.towers.push_back({5, 1, {2, 3}, 6});
     return state;
 }
 
@@ -101,7 +101,8 @@ NamedChanges entityChanges()
         {"tower removed", [](auto &s) { s.towers.clear(); }},
         {"tower id", [](auto &s) { ++s.towers[0].id; }},
         {"tower type", [](auto &s) { ++s.towers[0].type; }},
-        {"tower slot", [](auto &s) { ++s.towers[0].slot; }},
+        {"tower x", [](auto &s) { ++s.towers[0].cell.x; }},
+        {"tower y", [](auto &s) { ++s.towers[0].cell.y; }},
         {"tower cooldown", [](auto &s) { ++s.towers[0].cooldownTicks; }},
     };
 }
@@ -117,12 +118,12 @@ private slots:
     /// the project. They hold on every compiler and in every process.
     void theStateHashIsPinned()
     {
-        QCOMPARE(stateHash(handmadeState()), 0x2F3184CCCB5A0EEDULL);
+        QCOMPARE(stateHash(handmadeState()), 0x1109AD7A5261B20EULL);
     }
 
     void theContentHashIsPinned()
     {
-        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x37D3A1FB011664E8ULL);
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x44CDE2B42100B02EULL);
     }
 
     // The test vectors of the FNV authors.
@@ -187,10 +188,13 @@ private slots:
         };
         row(R"("startGold": 100)", R"("startGold": 101)");
         row(R"("startLives": 3)", R"("startLives": 4)");
-        row(R"({ "x": 10, "y": 0 })", R"({ "x": 11, "y": 0 })");
-        row(R"({ "x": 10, "y": 0 })", R"({ "x": 10, "y": 1 })");
-        row(R"({ "x": 5, "y": 1 })", R"({ "x": 6, "y": 1 })");
-        row(R"({ "x": 5, "y": 1 })", R"({ "x": 5, "y": 2 })");
+        row(R"({ "x": 10, "y": 0 })", R"({ "x": 9, "y": 0 })");
+        row(R"("gridWidth": 11)", R"("gridWidth": 12)");
+        row(R"("gridHeight": 11)", R"("gridHeight": 12)");
+        row(R"("terrain": "rock")", R"("terrain": "tree")");
+        row(R"("x": 0, "y": 2)", R"("x": 1, "y": 2)");
+        row(R"("footprint": [{"x": 0, "y": 0}])",
+            R"("footprint": [{"x": 0, "y": 0}, {"x": 1, "y": 0}])");
         row(R"("cost": 40)", R"("cost": 41)");
         row(R"("range": "3")", R"("range": "3.0001")");
         row(R"("cooldownTicks": 4)", R"("cooldownTicks": 5)");

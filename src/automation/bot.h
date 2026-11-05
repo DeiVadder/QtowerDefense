@@ -12,7 +12,7 @@ namespace qtd::automation {
 /// The players that need no script. Bots give the same commands as a human.
 enum class BotKind : quint8 {
     Idle,  // does nothing
-    Naive, // builds the first tower type on the first free slot, whenever the gold is there
+    Naive, // builds the first tower type beside the path, whenever the gold is there
     Fuzz,  // random commands, many of them invalid
 };
 

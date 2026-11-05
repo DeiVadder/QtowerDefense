@@ -23,12 +23,13 @@ namespace {
 constexpr qint64 kFormatVersion = 1;
 constexpr qsizetype kHashDigits = 16;
 
-using ResultNames = std::array<QLatin1StringView, 6>;
+using ResultNames = std::array<QLatin1StringView, 7>;
 constexpr ResultNames kResultNames{"accepted"_L1,
                                    "gameOver"_L1,
-                                   "unknownSlot"_L1,
                                    "unknownTowerType"_L1,
-                                   "slotOccupied"_L1,
+                                   "outsideMap"_L1,
+                                   "cellBlocked"_L1,
+                                   "cellOccupied"_L1,
                                    "notEnoughGold"_L1};
 static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::NotEnoughGold) + 1);
 
@@ -84,8 +85,9 @@ Command readCommand(ObjectReader &item)
         return BuildTowerCommand{};
     }
     // Any number is allowed, a rejected command is part of a recording too.
-    const qint64 slot = item.integer("slot"_L1, -kMaxExactInteger, kMaxExactInteger);
-    return BuildTowerCommand{slot,
+    const qint64 x = item.integer("x"_L1, -kMaxExactInteger, kMaxExactInteger);
+    const qint64 y = item.integer("y"_L1, -kMaxExactInteger, kMaxExactInteger);
+    return BuildTowerCommand{{x, y},
                              item.integer("towerType"_L1, -kMaxExactInteger, kMaxExactInteger)};
 }
 
@@ -172,7 +174,8 @@ QJsonObject commandToJson(const RecordedCommand &recorded)
     const auto &build = std::get<BuildTowerCommand>(recorded.command);
     return {{"tick"_L1, recorded.tick},
             {"type"_L1, "buildTower"_L1},
-            {"slot"_L1, build.slot},
+            {"x"_L1, build.cell.x},
+            {"y"_L1, build.cell.y},
             {"towerType"_L1, build.towerType},
             {"result"_L1, toString(recorded.result)}};
 }

@@ -1,5 +1,5 @@
-#include "client/enemy_instances.h"
 #include "client/game_session.h"
+#include "client/map_instances.h"
 
 #include <QDir>
 #include <QFile>
@@ -10,8 +10,8 @@
 
 #include <cstring>
 
-using qtd::client::EnemyInstances;
 using qtd::client::GameSession;
+using qtd::client::MapInstances;
 
 using namespace Qt::StringLiterals;
 
@@ -38,7 +38,7 @@ void runTicks(GameSession &game, qint64 ticks)
 }
 
 /// Reaches the protected buffer of the instancing.
-class OpenInstances : public EnemyInstances
+class OpenInstances : public MapInstances
 {
 public:
     int count()
@@ -48,13 +48,18 @@ public:
         return instances;
     }
 
-    InstanceTableEntry first()
+    InstanceTableEntry entry(int index)
     {
         int instances = 0;
         const QByteArray buffer = getInstanceBuffer(&instances);
-        InstanceTableEntry entry{};
-        std::memcpy(&entry, buffer.constData(), sizeof(entry));
-        return entry;
+        InstanceTableEntry found{};
+        std::memcpy(&found, buffer.constData() + index * qsizetype{sizeof(found)}, sizeof(found));
+        return found;
+    }
+
+    InstanceTableEntry first()
+    {
+        return entry(0);
     }
 };
 
@@ -72,12 +77,13 @@ private slots:
         QCOMPARE(game.error(), QString());
         QCOMPARE(game.gold(), 120);
         QCOMPARE(game.lives(), 5);
-        QCOMPARE(game.towerCost(), 50);
-        QCOMPARE(game.mapSize(), QSizeF(16, 10));
-        QCOMPARE(game.path().size(), 4);
-        QCOMPARE(game.path().at(1).toPointF(), QPointF(8, 2));
-        QCOMPARE(game.buildSlots().size(), 4);
-        QCOMPARE(game.buildSlots().at(2).toPointF(), QPointF(10, 6));
+        QCOMPARE(game.gridSize(), QSize(17, 11));
+        QCOMPARE(game.towerTypes().size(), 3);
+        const QVariantMap first = game.towerTypes().at(0).toMap();
+        QCOMPARE(first[u"name"_s].toString(), u"ballista"_s);
+        QCOMPARE(first[u"cost"_s].toLongLong(), 50);
+        QVERIFY(game.grid() != nullptr);
+        QVERIFY(game.grid()->terrainAt({8, 2}) == qtd::core::Terrain::Path);
     }
 
     void theMapIsPartOfTheProgram()
@@ -96,9 +102,10 @@ private slots:
         game.startGame(u"none.json"_s, 7);
         QVERIFY(game.error().contains(u"none.json"_s));
         QCOMPARE(game.gold(), 0);
-        QVERIFY(game.path().isEmpty());
-        QCOMPARE(game.mapSize(), QSizeF());
-        QVERIFY(!game.buildTower(0));
+        QVERIFY(game.grid() == nullptr);
+        QVERIFY(game.towerTypes().isEmpty());
+        QCOMPARE(game.gridSize(), QSize());
+        QVERIFY(!game.buildTower(4, 4));
         game.advanceTime(kTickMicroseconds);
         QCOMPARE(game.tick(), 0);
         QVERIFY(!game.won());
@@ -110,22 +117,43 @@ private slots:
         GameSession game;
         game.startGame(mapFile(), 7);
         const QSignalSpy towers(&game, &GameSession::towersChanged);
-        QVERIFY(game.buildTower(2));
+        QVERIFY(game.buildTower(10, 6));
         QCOMPARE(towers.size(), 1);
         QCOMPARE(game.gold(), 70);
-        QCOMPARE(game.towerPlaces().size(), 1);
-        QCOMPARE(game.towerPlaces().at(0).toPointF(), QPointF(10, 6));
+        QCOMPARE(game.towerCount(), 1);
+        QCOMPARE(game.towerCells(), QVariantList{QPoint(10, 6)});
+    }
+
+    void theSelectedTowerIsBuiltWithItsShape()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        const QSignalSpy selection(&game, &GameSession::selectionChanged);
+        game.setSelectedTower(1);
+        QCOMPARE(selection.size(), 1);
+        QVERIFY(game.buildTower(10, 6));
+        QCOMPARE(game.gold(), 30);
+        QCOMPARE(game.towerCells(), (QVariantList{QPoint(10, 6), QPoint(11, 6)}));
+        game.setSelectedTower(99);
+        QCOMPARE(game.selectedTower(), 2);
+        game.setSelectedTower(-1);
+        QCOMPARE(game.selectedTower(), 0);
+        game.setSelectedTower(2);
+        game.restart();
+        QCOMPARE(game.selectedTower(), 0);
     }
 
     void aRejectedCommandChangesNothing()
     {
         GameSession game;
         game.startGame(mapFile(), 7);
-        QVERIFY(game.buildTower(0));
+        QVERIFY(game.buildTower(4, 4));
         const QSignalSpy towers(&game, &GameSession::towersChanged);
-        QVERIFY(!game.buildTower(0));
-        QVERIFY(!game.buildTower(99));
-        QVERIFY(!game.buildTower(-1));
+        QVERIFY(!game.buildTower(4, 4));
+        QVERIFY(!game.buildTower(99, 99));
+        QVERIFY(!game.buildTower(-1, 0));
+        QVERIFY(!game.buildTower(3, 2)); // the path
+        QVERIFY(!game.buildTower(2, 5)); // a rock
         QCOMPARE(towers.size(), 0);
         QCOMPARE(game.gold(), 70);
     }
@@ -272,15 +300,55 @@ private slots:
     {
         GameSession game;
         game.startGame(mapFile(), 7);
-        QVERIFY(game.buildTower(0));
-        QVERIFY(game.buildTower(2));
+        QVERIFY(game.buildTower(4, 4));
+        QVERIFY(game.buildTower(10, 6));
         runTicks(game, 100'000);
         QVERIFY(game.won());
         game.restart();
         QVERIFY(!game.won());
         QCOMPARE(game.tick(), 0);
         QCOMPARE(game.gold(), 120);
-        QVERIFY(game.towerPlaces().isEmpty());
+        QCOMPARE(game.towerCount(), 0);
+    }
+
+    void theBoardShowsEveryCellInTheLookOfItsTerrain()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        OpenInstances board;
+        board.setLayer(MapInstances::Layer::Board);
+        board.setFieldSize(50);
+        board.setGame(&game);
+        QCOMPARE(board.count(), 17 * 11);
+        const auto at = [&board](int x, int y) {
+            return board.entry(y * 17 + x);
+        };
+        QCOMPARE(at(16, 3).getPosition().x(), 16 * 50.0F);
+        QCOMPARE(at(16, 3).getPosition().z(), 3 * 50.0F);
+        QVERIFY(at(5, 5).getColor() != at(6, 5).getColor()); // the chessboard
+        QCOMPARE(at(5, 5).getColor(), at(6, 6).getColor());
+        const QColor open = at(5, 5).getColor();
+        QVERIFY(at(3, 2).getColor() != open && at(6, 5).getColor() != at(3, 2).getColor()); // path
+        QVERIFY(at(2, 9).getColor() != open);                                               // water
+        QVERIFY(at(2, 5).getScale().y() > at(5, 5).getScale().y());                         // rock
+        QVERIFY(at(13, 2).getScale().y() > at(2, 5).getScale().y());                        // tree
+    }
+
+    void towersShowWithAllTheirCells()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        OpenInstances towers;
+        towers.setLayer(MapInstances::Layer::Towers);
+        towers.setFieldSize(50);
+        towers.setGame(&game);
+        QCOMPARE(towers.count(), 0);
+        game.setSelectedTower(1);
+        QVERIFY(game.buildTower(10, 6));
+        QCOMPARE(towers.count(), 2);
+        QCOMPARE(towers.entry(1).getPosition().x(), 11 * 50.0F);
+        QCOMPARE(towers.entry(1).getPosition().z(), 6 * 50.0F);
+        QVERIFY(towers.entry(1).getPosition().y() > 0);
     }
 
     void instancesFollowTheEnemies()

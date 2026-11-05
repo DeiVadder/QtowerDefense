@@ -68,15 +68,15 @@ Item {
             verify(condition());
         }
 
-        // Moves the map until a build slot lies under this point of the view.
-        function moveSlotTo(scene, slot, target) {
+        // Moves the map until the cell (4, 4) lies under this point of the view.
+        function moveCellTo(scene, target) {
             for (let step = 0; step < 20; ++step) {
                 wait(50); // the camera moves with the next frame
-                const place = scene.slotOnScreen(slot);
+                const place = scene.cellOnScreen(4, 4);
                 scene.panBy(target.x - place.x, target.y - place.y);
             }
             tryVerify(() => scene.pick(target.x, target.y).objectHit !== null, 3000,
-            "no slot under the button");
+            "no cell under the button");
         }
 
         function test_fitCameraDistance_data() {
@@ -108,20 +108,154 @@ Item {
             verify(scene.camera.y > 0);
         }
 
-        function test_aTapOnASlotBuildsATower() {
+        function test_aTapOnAFreeCellBuildsATower() {
             const scene = createScene();
             waitForRendering(scene);
-            const place = scene.slotOnScreen(0);
+            const place = scene.cellOnScreen(4, 4);
             mouseClick(scene, place.x, place.y);
-            compare(scene.game.towerPlaces.length, 1);
+            compare(scene.game.towerCount, 1);
             compare(scene.game.gold, 70);
         }
 
-        function test_aTapBesideTheSlotsBuildsNothing() {
+        function test_aTapBesideTheMapBuildsNothing() {
             const scene = createScene();
             waitForRendering(scene);
             mouseClick(scene, 2, 2);
-            compare(scene.game.towerPlaces.length, 0);
+            compare(scene.game.towerCount, 0);
+        }
+
+        function test_aTapOnBlockedCellsBuildsNothing_data() {
+            return [
+                        {
+                            tag: "path",
+                            x: 3,
+                            y: 2
+                        },
+                        {
+                            tag: "rock",
+                            x: 2,
+                            y: 5
+                        },
+                        {
+                            tag: "water",
+                            x: 2,
+                            y: 9
+                        },
+                    ];
+        }
+
+        function test_aTapOnBlockedCellsBuildsNothing(data) {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.cellOnScreen(data.x, data.y);
+            mouseClick(scene, place.x, place.y);
+            compare(scene.game.towerCount, 0);
+            compare(scene.game.gold, 120);
+        }
+
+        // The tap names the cell, the wide tower also takes the cell to its right.
+        function test_theChosenTowerIsBuiltOnTheTappedCell() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const towerButtons = findChild(game.hud, "towerButtons");
+            tryVerify(() => towerButtons.children.length > 2);
+            mouseClick(towerButtons.children[1]);
+            compare(game.scene.game.selectedTower, 1);
+            verify(towerButtons.children[1].highlighted);
+            const place = game.scene.cellOnScreen(4, 4);
+            mouseClick(game.scene, place.x, place.y);
+            compare(game.scene.game.gold, 30);
+            const cells = game.scene.game.towerCells;
+            compare(cells.length, 2);
+            compare(Qt.point(cells[0].x, cells[0].y), Qt.point(4, 4));
+            compare(Qt.point(cells[1].x, cells[1].y), Qt.point(5, 4));
+        }
+
+        function test_aTapHitsTheCellUnderTheFinger_data() {
+            return [
+                        {
+                            tag: "near the camera",
+                            x: 12,
+                            y: 10
+                        },
+                        {
+                            tag: "far from the camera",
+                            x: 6,
+                            y: 0
+                        },
+                        {
+                            tag: "left edge",
+                            x: 0,
+                            y: 5
+                        },
+                        {
+                            tag: "right edge",
+                            x: 16,
+                            y: 5
+                        },
+                    ];
+        }
+
+        function test_aTapHitsTheCellUnderTheFinger(data) {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.cellOnScreen(data.x, data.y);
+            mouseClick(scene, place.x, place.y);
+            const cells = scene.game.towerCells;
+            compare(cells.length, 1);
+            compare(Qt.point(cells[0].x, cells[0].y), Qt.point(data.x, data.y));
+        }
+
+        // A high block hides the cells behind it, a tap on it means the block.
+        function test_aTapOnTheTopOfAnObstacleBuildsNothing_data() {
+            return [
+                        {
+                            tag: "tree",
+                            x: 13,
+                            y: 2,
+                            height: 0.85
+                        },
+                        {
+                            tag: "tree beside the path",
+                            x: 14,
+                            y: 3,
+                            height: 0.85
+                        },
+                        {
+                            tag: "rock",
+                            x: 2,
+                            y: 5,
+                            height: 0.45
+                        },
+                    ];
+        }
+
+        function test_aTapOnTheTopOfAnObstacleBuildsNothing(data) {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(data.x, data.y, data.height);
+            mouseClick(scene, place.x, place.y);
+            compare(scene.game.towerCount, 0);
+        }
+
+        function test_aTapOnTheTopOfATowerBuildsNothing() {
+            const scene = createScene();
+            verify(scene.game.buildTower(12, 5));
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(12, 5, 0.65);
+            mouseClick(scene, place.x, place.y);
+            compare(scene.game.towerCount, 1);
+            compare(scene.game.gold, 70);
+        }
+
+        function test_aBuiltTowerIsDrawn() {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(12, 5, 0.7);
+            const before = grabImage(scene).pixel(place.x, place.y);
+            verify(scene.game.buildTower(12, 5));
+            tryVerify(() => !Qt.colorEqual(grabImage(scene).pixel(place.x, place.y), before), 3000,
+            "the tower does not show");
         }
 
         function test_zoomStaysInItsRange() {
@@ -193,10 +327,10 @@ Item {
         function test_aDragMovesTheMapAndBuildsNothing() {
             const scene = createScene();
             waitForRendering(scene);
-            const place = scene.slotOnScreen(0);
+            const place = scene.cellOnScreen(4, 4);
             mouseDrag(scene, place.x, place.y, 60, 0);
             verify(scene.panX < 0);
-            compare(scene.game.towerPlaces.length, 0);
+            compare(scene.game.towerCount, 0);
         }
 
         function test_theWheelZoomsByItsStrength() {
@@ -212,14 +346,14 @@ Item {
             compare(scene.zoom, 1);
         }
 
-        function test_aTouchOnASlotBuildsATower() {
+        function test_aTouchOnACellBuildsATower() {
             const scene = createScene();
             waitForRendering(scene);
-            const place = scene.slotOnScreen(0);
+            const place = scene.cellOnScreen(4, 4);
             const touch = touchEvent(scene);
             touch.press(0, scene, place.x, place.y).commit();
             touch.release(0, scene, place.x, place.y).commit();
-            compare(scene.game.towerPlaces.length, 1);
+            compare(scene.game.towerCount, 1);
         }
 
         function test_aPinchZooms() {
@@ -230,6 +364,9 @@ Item {
             for (let step = 1; step <= 10; ++step) {
                 touch.move(0, scene, 250 - step * 8, 180).move(1, scene, 350 + step * 8, 180).commit(
                             );
+                // Quick merges the touch moves of one frame. Without frames in between, a busy machine
+                // sends one single move, and that only starts the pinch.
+                wait(50);
             }
             touch.release(0, scene, 170, 180).release(1, scene, 430, 180).commit();
             verify(scene.zoom < 1, "zoom " + scene.zoom);
@@ -241,12 +378,12 @@ Item {
             runUntil(session, () => session.lost);
             const button = findChild(game.hud, "restartButton");
             waitForRendering(game.scene);
-            moveSlotTo(game.scene, 2, button.mapToItem(game.scene, button.width / 2, button.height
-                                                       / 2));
+            moveCellTo(game.scene, button.mapToItem(game.scene, button.width / 2, button.height
+                                                    / 2));
             mouseClick(button);
             compare(session.tick, 0);
             compare(session.gold, 120);
-            compare(session.towerPlaces.length, 0);
+            compare(session.towerCount, 0);
         }
 
         function test_theHudFitsSmallDisplays_data() {
@@ -277,6 +414,11 @@ Item {
             const buttons = findChild(hud, "buttons");
             tryVerify(() => buttons.width > 0);
             verify(stats.x + stats.width <= buttons.x, stats.width + " and " + buttons.x);
+            const towerButtons = findChild(hud, "towerButtons");
+            tryVerify(() => towerButtons.children.length > 2);
+            const lastButton = towerButtons.children[2];
+            verify(lastButton.x + lastButton.width <= towerButtons.width);
+            verify(stats.y + stats.height <= towerButtons.y);
         }
 
         function test_aMapThatDoesNotLoadOffersNoNewTry() {
@@ -290,7 +432,7 @@ Item {
             const hud = createHud();
             compare(findChild(hud, "goldLabel").text, "Gold: 120");
             compare(findChild(hud, "livesLabel").text, "Lives: 5");
-            hud.game.buildTower(0);
+            hud.game.buildTower(4, 4);
             compare(findChild(hud, "goldLabel").text, "Gold: 70");
         }
 

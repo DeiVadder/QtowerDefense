@@ -241,7 +241,7 @@ private slots:
         const QJsonObject report =
             parsed(runHeadless(game).json)["games"_L1].toArray().first().toObject();
         QCOMPARE(report["seed"_L1].toString(), u"20261104"_s);
-        QCOMPARE(report["hash"_L1].toString(), u"673da2402c04fc84"_s);
+        QCOMPARE(report["hash"_L1].toString(), u"2aa462d18aa4fe67"_s);
     }
 
     void theSeedOptionBeatsTheScript()
@@ -263,8 +263,8 @@ private slots:
         QFile file(game.script);
         QVERIFY(file.open(QIODevice::WriteOnly));
         file.write(R"({"formatVersion": 1, "content": "c", "seed": "1", "commands": [
-            {"tick": 10, "type": "buildTower", "slot": 0, "towerType": 0},
-            {"tick": 500, "type": "buildTower", "slot": 1, "towerType": 0}]})");
+            {"tick": 10, "type": "buildTower", "x": 4, "y": 4, "towerType": 0},
+            {"tick": 500, "type": "buildTower", "x": 6, "y": 0, "towerType": 0}]})");
         file.close();
         game.maxTicks = 10;
         const QJsonObject report =

@@ -10,6 +10,7 @@ using qtd::core::loadContentFile;
 using qtd::core::parseContent;
 using qtd::core::Path;
 using qtd::core::Point;
+using qtd::core::Terrain;
 using qtd::tests::editedJson;
 using qtd::tests::required;
 using qtd::tests::scenarioJson;
@@ -106,6 +107,49 @@ void addBrokenFixedRows()
         "enemies[0].id: must be a text that is not empty");
 }
 
+void addBrokenMapRows()
+{
+    const auto row = [](const char *name, const char *from, const char *to, const char *error) {
+        QTest::newRow(name) << QByteArray(from) << QByteArray(to) << QString::fromUtf8(error);
+    };
+    row("diagonal path",
+        R"({ "x": 10, "y": 0 })",
+        R"({ "x": 10, "y": 1 })",
+        "path[1].x: must share a row or column with the point before it");
+    row("grid too large",
+        R"("gridWidth": 11)",
+        R"("gridWidth": 257)",
+        "gridWidth: must be an integer from 1 to 256");
+    row("obstacle outside a small grid",
+        R"("gridHeight": 11)",
+        R"("gridHeight": 1)",
+        "obstacles[0].y: must be an integer from 0 to 0");
+    row("unknown obstacle",
+        R"("terrain": "rock")",
+        R"("terrain": "lava")",
+        "obstacles[0].terrain: unknown obstacle \"lava\"");
+    row("obstacle on the path",
+        R"("terrain": "rock", "x": 0, "y": 2)",
+        R"("terrain": "rock", "x": 4, "y": 0)",
+        "obstacles[0].x: the cell is not free");
+    row("same cell twice",
+        R"("obstacles": [{)",
+        R"("obstacles": [{ "terrain": "tree", "x": 0, "y": 2 }, {)",
+        "obstacles[1].x: the cell is not free");
+    row("footprint without its cell",
+        R"("footprint": [{"x": 0, "y": 0}])",
+        R"("footprint": [{"x": 1, "y": 0}])",
+        "towers[0].footprint: needs the cell 0, 0 that the tower stands on");
+    row("footprint cell twice",
+        R"("footprint": [{"x": 0, "y": 0}])",
+        R"("footprint": [{"x": 0, "y": 0}, {"x": 0, "y": 0}])",
+        "towers[0].footprint[1].x: repeats a cell of the footprint");
+    row("footprint too wide",
+        R"("footprint": [{"x": 0, "y": 0}])",
+        R"("footprint": [{"x": 0, "y": 0}, {"x": 9, "y": 0}])",
+        "towers[0].footprint[1].x: must be an integer from -8 to 8");
+}
+
 void addBrokenStructureRows()
 {
     QTest::addColumn<QByteArray>("from");
@@ -125,16 +169,13 @@ void addBrokenStructureRows()
     row("point no object", R"({ "x": 10, "y": 0 })", "7", "path[1]: must be an object");
     row("point off the map",
         R"({ "x": 10, "y": 0 })",
-        R"({ "x": 10001, "y": 0 })",
-        "path[1].x: must be a number from -10000 to 10000");
-    row("same slot twice",
-        R"({ "x": 2, "y": 1 })",
-        R"({ "x": 5, "y": 1 })",
-        "buildSlots[1].x: another build slot has the same place");
+        R"({ "x": 11, "y": 0 })",
+        "path[1].x: must be an integer from 0 to 10");
     row("tower twice",
         R"("towers": [{)",
         R"("towers": [{"id": "arrow", "cost": 1, "range": 1, "cooldownTicks": 1,
-            "damageMin": 1, "damageMax": 1}, {)",
+            "damageMin": 1, "damageMax": 1,
+            "footprint": [{"x": 0, "y": 0}]}, {)",
         "towers: id \"arrow\" is used twice");
     row("enemy twice",
         R"("enemies": [{)",
@@ -168,8 +209,13 @@ private slots:
         QCOMPARE(content.startLives, 3);
         QCOMPARE(content.path.points().size(), 2U);
         QCOMPARE(content.path.length().raw(), 100'000);
-        QCOMPARE(content.buildSlots.size(), 3U);
-        QVERIFY(content.buildSlots[1] == at(2, 1));
+        QCOMPARE(content.grid.width(), 11);
+        QCOMPARE(content.grid.height(), 11);
+        QVERIFY(content.grid.terrainAt({0, 0}) == Terrain::Path);
+        QVERIFY(content.grid.terrainAt({10, 0}) == Terrain::Path);
+        QVERIFY(content.grid.terrainAt({0, 1}) == Terrain::Open);
+        QVERIFY(content.grid.terrainAt({0, 2}) == Terrain::Rock);
+        QCOMPARE(content.towers.at(0).footprint.size(), 1U);
         const qtd::core::TowerType &tower = content.towers.at(0);
         QCOMPARE(tower.id, QStringLiteral("arrow"));
         QCOMPARE(tower.cost, 40);
@@ -208,8 +254,11 @@ private slots:
             << QByteArray(R"("range": "3")") << QByteArray(R"("range": "0.0001")");
         QTest::newRow("integer as fixed")
             << QByteArray(R"("range": "3")") << QByteArray(R"("range": 30000)");
-        QTest::newRow("negative coordinate")
-            << QByteArray(R"("x": 5)") << QByteArray(R"("x": -10000)");
+        QTest::newRow("largest grid")
+            << QByteArray(R"("gridWidth": 11)") << QByteArray(R"("gridWidth": 256)");
+        QTest::newRow("widest footprint")
+            << QByteArray(R"("footprint": [{"x": 0, "y": 0}])")
+            << QByteArray(R"("footprint": [{"x": 0, "y": 0}, {"x": 8, "y": -8}])");
         QTest::newRow("number-like id")
             << QByteArray(R"("id": "arrow")") << QByteArray(R"("id": "1.5e3")");
         // No raw string here: moc loses its way at a backslash and a quote in one.
@@ -248,6 +297,7 @@ private slots:
     static void rejectsBrokenStructure_data()
     {
         addBrokenStructureRows();
+        addBrokenMapRows();
     }
 
     static void rejectsBrokenStructure()
@@ -277,7 +327,7 @@ private slots:
             parseContent(editedJson(R"("cost": 40)", R"("cost": )" + number));
         QVERIFY(!result.content.has_value());
         QCOMPARE(result.error,
-                 QStringLiteral("line 9: number %1 is no integer, write decimal "
+                 QStringLiteral("line 11: number %1 is no integer, write decimal "
                                 "values as strings like \"1.5\"")
                      .arg(QString::fromLatin1(number)));
     }
@@ -287,7 +337,7 @@ private slots:
         const qtd::core::ContentLoadResult result =
             parseContent(editedJson(R"("cost": 40)", R"("cost": 9007199254740993000)"));
         QVERIFY(!result.content.has_value());
-        QCOMPARE(result.error, QStringLiteral("line 9: number 9007199254740993000 is too large"));
+        QCOMPARE(result.error, QStringLiteral("line 11: number 9007199254740993000 is too large"));
     }
 
     static void rejectsInvalidJson_data()

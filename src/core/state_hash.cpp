@@ -60,7 +60,10 @@ quint64 contentHash(const Content &content)
     Fields fields;
     fields.add(content.startGold, content.startLives);
     fields.addPoints(content.path.points());
-    fields.addPoints(content.buildSlots);
+    fields.add(content.grid.width(), content.grid.height());
+    for (const Terrain terrain : content.grid.cells()) {
+        fields.add(terrain);
+    }
     fields.add(content.towers.size());
     for (const TowerType &tower : content.towers) {
         fields.add(tower.cost,
@@ -68,6 +71,10 @@ quint64 contentHash(const Content &content)
                    tower.range.raw(),
                    tower.damageMin.raw(),
                    tower.damageMax.raw());
+        fields.add(tower.footprint.size());
+        for (const Cell cell : tower.footprint) {
+            fields.add(cell.x, cell.y);
+        }
     }
     fields.add(content.enemies.size());
     for (const EnemyType &enemy : content.enemies) {
@@ -93,7 +100,7 @@ quint64 stateHash(const SimulationState &state)
     }
     fields.add(state.towers.size());
     for (const Tower &tower : state.towers) {
-        fields.add(tower.id, tower.type, tower.slot, tower.cooldownTicks);
+        fields.add(tower.id, tower.type, tower.cell.x, tower.cell.y, tower.cooldownTicks);
     }
     return fields.value();
 }

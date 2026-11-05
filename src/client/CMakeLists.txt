@@ -6,10 +6,10 @@ qt_add_qml_module(qtd_client
     DEPENDENCIES QtQuick3D
     SOURCES
         app_info.cpp app_info.h
-        enemy_instances.cpp enemy_instances.h
         game_session.cpp game_session.h
         graphics.cpp graphics.h
-    QML_FILES Hud.qml HudButton.qml Main.qml MainScene.qml SlotMarker.qml)
+        map_instances.cpp map_instances.h
+    QML_FILES Hud.qml HudButton.qml Main.qml MainScene.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D)
 qtd_set_strict_warnings(qtd_client)
 

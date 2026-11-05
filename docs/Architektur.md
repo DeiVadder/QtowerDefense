@@ -34,12 +34,13 @@ Reihenfolge in einem Tick: Gegner laufen (wer das Pfadende erreicht, kostet Lebe
 
 ## Inhalte
 
-`content/` enthält die Spieldaten: `training_ground.json` und `benchmark_arena.json`, die Standardszene für Messungen (200 Gegner, 30 Bauplätze). Felder einer Datei:
+`content/` enthält die Spieldaten: `training_ground.json` und `benchmark_arena.json`, die Standardszene für Messungen (200 Gegner, 30 Türme). Felder einer Datei:
 
 - `formatVersion` (1), `startGold`, `startLives`
-- `path`: mindestens zwei Punkte `{x, y}` in Feldern
-- `buildSlots`: Punkte
-- `towers`: `id`, `cost`, `range`, `cooldownTicks`, `damageMin`, `damageMax`
+- `path`: mindestens zwei Ecken `{x, y}` auf dem Raster, je zwei nacheinander in einer Zeile oder Spalte
+- `gridWidth`, `gridHeight`: Größe des Rasters, je 1 bis 256 Felder. Der Mittelpunkt von Feld `(x, y)` ist der Kartenpunkt `(x, y)`
+- `obstacles`: Felder mit `terrain` (`rock`, `tree`, `water`), `x` und `y`, darf leer sein
+- `towers`: `id`, `cost`, `range`, `cooldownTicks`, `damageMin`, `damageMax`, `footprint` (Felder `{x, y}` relativ zum Standfeld, mit `0, 0`, je Richtung höchstens 8)
 - `enemies`: `id`, `health`, `speedPerTick`, `bounty`, `lifeCost`
 - `wave`: Gruppen aus `enemy`, `count`, `delayTicks` (Wartezeit vor dem ersten Gegner), `intervalTicks`
 
@@ -49,7 +50,7 @@ Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen 
 
 Eine Replay-Datei (`*.replay.json`) enthält `formatVersion` (1), `content` (Dateiname der Inhalte), `seed` (Dezimaltext, 64 Bit), `contentHash`, `commands` und `checkpoints`. Hashes sind 16 kleine Hex-Ziffern.
 
-- `commands`: `tick`, `type` (`buildTower`), `slot`, `towerType`, `result` (`accepted`, `gameOver`, `unknownSlot`, `unknownTowerType`, `slotOccupied`, `notEnoughGold`). Auch abgelehnte Befehle stehen darin.
+- `commands`: `tick`, `type` (`buildTower`), `x`, `y`, `towerType`, `result` (`accepted`, `gameOver`, `unknownTowerType`, `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold`). Auch abgelehnte Befehle stehen darin.
 - `checkpoints`: `tick`, `hash`: der Zustand nach allen Befehlen dieses Ticks. Einer je Sekunde Spielzeit ab Tick 0, der letzte ist das Ende der Aufzeichnung.
 
 Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` dürfen fehlen und bedeuten nichts. `seed` gilt, solange `--seed` ihn nicht ersetzt; `content` dient nur der Orientierung, gespielt wird `--map`. Jedes Replay ist auch ein Skript.
@@ -58,7 +59,7 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 
 ## Client
 
-`qtd_client` ist eine statische Bibliothek mit QML-Modul über `qt_add_qml_module()`. Programme und Tests linken `qtd_clientplugin` und nennen `Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)`. Es gibt genau eine Engine, in `src/app/main.cpp`. `Main.qml` ist das Fenster und treibt die Zeit, `MainScene.qml` die 3D-Szene mit Kamera und Eingabe, `Hud.qml` die Anzeige. `GameSession` verbindet QML mit der Simulation, `EnemyInstances` zeichnet die Gegner (E-24).
+`qtd_client` ist eine statische Bibliothek mit QML-Modul über `qt_add_qml_module()`. Programme und Tests linken `qtd_clientplugin` und nennen `Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)`. Es gibt genau eine Engine, in `src/app/main.cpp`. `Main.qml` ist das Fenster und treibt die Zeit, `MainScene.qml` die 3D-Szene mit Kamera und Eingabe, `Hud.qml` die Anzeige. `GameSession` verbindet QML mit der Simulation, `MapInstances` zeichnet Brett, Türme und Gegner mit je einem Modell.
 
 ## Startoptionen
 
@@ -86,5 +87,5 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | `core` | QtTest: `tst_core_version`, `_fixed`, `_random`, `_content`, `_state_hash`, `_simulation`, `_tick_clock`, `_replay`. Tests schalten Ticks von Hand weiter; `tests/core/scenario.h` ist die von Hand nachrechenbare Beispielpartie |
 | `automation` | QtTest: `tst_automation_headless_runner`, `_invariants`, `_control_session`, `_build_info`; dazu `qtd_headless --build-info` und `headless_control` (echter Prozess, beide Zeilenenden, Leerzeile, Ctrl-Z) |
 | `golden` | `tst_golden` (festgeschriebene Hashes, Tempo 1x bis 3x mit ungleichen Frames und Pause, Neuaufzeichnung Byte für Byte), `headless_golden_defence` (eigener Prozess, Hash zusätzlich in `tests/CMakeLists.txt`) |
-| `client` | `tst_client_window` (rendert das echte Fenster auf der GPU), `tst_client_game_session`, `tst_qml` (QuickTest: echte Taps auf Bauplätze, Gegner als Pixel auf dem Pfad, HUD) |
+| `client` | `tst_client_window` (rendert das echte Fenster auf der GPU), `tst_client_game_session`, `tst_qml` (QuickTest: echte Taps auf Felder, Gegner als Pixel auf dem Pfad, HUD) |
 | `asan` | `asan_selfcheck`, nur im Preset `asan`: muss mit einem ASan-Bericht sterben |

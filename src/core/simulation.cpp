@@ -29,30 +29,46 @@ CommandResult Simulation::execute(const Command &command)
     return std::visit([this](const auto &concrete) { return build(concrete); }, command);
 }
 
-CommandResult Simulation::build(const BuildTowerCommand &command)
+CommandResult Simulation::check(const BuildTowerCommand &command) const
 {
     if (state_.status != GameStatus::Running) {
         return CommandResult::GameOver;
-    }
-    if (command.slot < 0 || std::cmp_greater_equal(command.slot, content_.buildSlots.size())) {
-        return CommandResult::UnknownSlot;
     }
     if (command.towerType < 0 ||
         std::cmp_greater_equal(command.towerType, content_.towers.size())) {
         return CommandResult::UnknownTowerType;
     }
-    const auto slot = static_cast<std::size_t>(command.slot);
-    if (std::ranges::find(state_.towers, slot, &Tower::slot) != state_.towers.end()) {
-        return CommandResult::SlotOccupied;
+    const TowerType &type = content_.towers[static_cast<std::size_t>(command.towerType)];
+    const std::vector<Cell> cells = footprintAt(type, command.cell);
+    if (!std::ranges::all_of(cells, [this](Cell cell) { return content_.grid.contains(cell); })) {
+        return CommandResult::OutsideMap;
     }
-    const auto type = static_cast<std::size_t>(command.towerType);
-    const qint64 cost = content_.towers[type].cost;
-    if (state_.gold < cost) {
-        return CommandResult::NotEnoughGold;
+    if (!std::ranges::all_of(
+            cells, [this](Cell cell) { return content_.grid.terrainAt(cell) == Terrain::Open; })) {
+        return CommandResult::CellBlocked;
     }
-    state_.gold -= cost;
-    state_.towers.push_back({state_.nextEntityId++, type, slot, 0});
-    return CommandResult::Accepted;
+    if (std::ranges::any_of(cells, [this](Cell cell) { return hasTowerAt(cell); })) {
+        return CommandResult::CellOccupied;
+    }
+    return state_.gold < type.cost ? CommandResult::NotEnoughGold : CommandResult::Accepted;
+}
+
+CommandResult Simulation::build(const BuildTowerCommand &command)
+{
+    const CommandResult result = check(command);
+    if (result == CommandResult::Accepted) {
+        const auto type = static_cast<std::size_t>(command.towerType);
+        state_.gold -= content_.towers[type].cost;
+        state_.towers.push_back({state_.nextEntityId++, type, command.cell, 0});
+    }
+    return result;
+}
+
+bool Simulation::hasTowerAt(Cell cell) const
+{
+    return std::ranges::any_of(state_.towers, [this, cell](const Tower &tower) {
+        return std::ranges::contains(footprintAt(content_.towers[tower.type], tower.cell), cell);
+    });
 }
 
 void Simulation::tick()
@@ -127,7 +143,7 @@ Enemy *Simulation::findTarget(const Tower &tower, const std::vector<Point> &posi
 {
     const Fixed range = content_.towers[tower.type].range;
     const Fixed reach = range * range;
-    const Point place = content_.buildSlots[tower.slot];
+    const Point place = centreOf(tower.cell);
     Enemy *target = nullptr;
     for (std::size_t index = 0; index < state_.enemies.size(); ++index) {
         Enemy &enemy = state_.enemies[index];

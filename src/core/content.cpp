@@ -6,6 +6,46 @@
 
 namespace qtd::core {
 
+Point centreOf(Cell cell)
+{
+    return {Fixed::fromInt(cell.x), Fixed::fromInt(cell.y)};
+}
+
+Grid::Grid(qint64 width, qint64 height)
+    : width_(width), height_(height), cells_(static_cast<std::size_t>(width * height))
+{
+}
+
+bool Grid::contains(Cell cell) const
+{
+    return cell.x >= 0 && cell.x < width_ && cell.y >= 0 && cell.y < height_;
+}
+
+Terrain Grid::terrainAt(Cell cell) const
+{
+    return cells_[indexOf(cell)];
+}
+
+void Grid::setTerrain(Cell cell, Terrain terrain)
+{
+    cells_[indexOf(cell)] = terrain;
+}
+
+std::size_t Grid::indexOf(Cell cell) const
+{
+    return static_cast<std::size_t>(cell.y * width_ + cell.x);
+}
+
+std::vector<Cell> footprintAt(const TowerType &type, Cell cell)
+{
+    std::vector<Cell> cells;
+    cells.reserve(type.footprint.size());
+    std::ranges::transform(type.footprint, std::back_inserter(cells), [cell](Cell offset) {
+        return Cell{cell.x + offset.x, cell.y + offset.y};
+    });
+    return cells;
+}
+
 Path::Path(std::vector<Point> points) : points_(std::move(points))
 {
     Fixed travelled;

@@ -33,7 +33,7 @@ QString checkEnemies(const core::Content &content, const core::SimulationState &
 QString checkTowers(const core::Content &content, const core::SimulationState &state)
 {
     qint64 lastId = 0;
-    std::set<std::size_t> taken;
+    std::set<core::Cell> taken;
     std::set<qint64> enemyIds;
     for (const core::Enemy &enemy : state.enemies) {
         enemyIds.insert(enemy.id);
@@ -49,11 +49,16 @@ QString checkTowers(const core::Content &content, const core::SimulationState &s
         if (tower.type >= content.towers.size()) {
             return u"tower %1: unknown type"_s.arg(tower.id);
         }
-        if (tower.slot >= content.buildSlots.size()) {
-            return u"tower %1: unknown slot"_s.arg(tower.id);
-        }
-        if (!taken.insert(tower.slot).second) {
-            return u"tower %1: its slot is taken"_s.arg(tower.id);
+        for (const core::Cell cell : core::footprintAt(content.towers[tower.type], tower.cell)) {
+            if (!content.grid.contains(cell)) {
+                return u"tower %1: outside the map"_s.arg(tower.id);
+            }
+            if (content.grid.terrainAt(cell) != core::Terrain::Open) {
+                return u"tower %1: on a blocked cell"_s.arg(tower.id);
+            }
+            if (!taken.insert(cell).second) {
+                return u"tower %1: its cell is taken"_s.arg(tower.id);
+            }
         }
         if (tower.cooldownTicks < 0) {
             return u"tower %1: negative cooldown"_s.arg(tower.id);

@@ -60,7 +60,8 @@ QJsonObject observation(const core::Simulation &game)
     for (const core::Tower &tower : state.towers) {
         towers.append(QJsonObject{{"id"_L1, tower.id},
                                   {"type"_L1, static_cast<qint64>(tower.type)},
-                                  {"slot"_L1, static_cast<qint64>(tower.slot)},
+                                  {"x"_L1, tower.cell.x},
+                                  {"y"_L1, tower.cell.y},
                                   {"cooldownTicks"_L1, tower.cooldownTicks}});
     }
     QJsonArray enemies;
@@ -147,14 +148,15 @@ QByteArray ControlSession::startMap(core::ObjectReader &request)
 
 QByteArray ControlSession::buildTower(core::ObjectReader &request)
 {
-    const qint64 slot = request.integer("slot"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const qint64 x = request.integer("x"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const qint64 y = request.integer("y"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
     const qint64 tower =
         request.integer("towerType"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
     request.rejectUnknownKeys();
     if (request.failed()) {
         return failure(request.error());
     }
-    const core::CommandResult result = game_->execute(core::BuildTowerCommand{slot, tower});
+    const core::CommandResult result = game_->execute(core::BuildTowerCommand{{x, y}, tower});
     QJsonObject answer = observation(game_->simulation());
     answer.insert("result"_L1, core::toString(result));
     return compact(answer);

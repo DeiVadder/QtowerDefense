@@ -1,129 +1,138 @@
 {
     "checkpoints": [
         {
-            "hash": "b76395ff36a9ef86",
+            "hash": "2de4325889edc5da",
             "tick": 0
         },
         {
-            "hash": "bad6e3f0b96a6e48",
+            "hash": "04faf2ff65809f7b",
             "tick": 30
         },
         {
-            "hash": "c55f91dd86a1e928",
+            "hash": "d9989f051263c2d3",
             "tick": 60
         },
         {
-            "hash": "c8db6c7decf6de9d",
+            "hash": "e36ab53682d511ee",
             "tick": 90
         },
         {
-            "hash": "61ba700079f81ede",
+            "hash": "9486dc07178c9efd",
             "tick": 120
         },
         {
-            "hash": "28df85a05efd7805",
+            "hash": "814feca55f9f72e6",
             "tick": 150
         },
         {
-            "hash": "d8940b0b2e24cf62",
+            "hash": "f75ea9a1c022e5d9",
             "tick": 180
         },
         {
-            "hash": "c0bb2b0bea2d6604",
+            "hash": "1160f8ae04b1e0ef",
             "tick": 210
         },
         {
-            "hash": "7c8ddb54d7ba9858",
+            "hash": "e1a73088ab38f9ab",
             "tick": 240
         },
         {
-            "hash": "50c55883f828e395",
+            "hash": "45d0f6552d6b1f66",
             "tick": 270
         },
         {
-            "hash": "8086ef4b4b2306f4",
+            "hash": "777da01453425c47",
             "tick": 300
         },
         {
-            "hash": "d66d6a0b3e23a2e2",
+            "hash": "58e6f3d395337561",
             "tick": 330
         },
         {
-            "hash": "ea083ef5a33941a2",
+            "hash": "05c7900cac5c0fc1",
             "tick": 360
         },
         {
-            "hash": "6fc5000461a14b66",
+            "hash": "3fe89baef52719b5",
             "tick": 364
         }
     ],
     "commands": [
         {
-            "result": "unknownSlot",
-            "slot": 99,
+            "result": "outsideMap",
             "tick": 0,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 99,
+            "y": 99
         },
         {
-            "result": "unknownSlot",
-            "slot": -1,
+            "result": "outsideMap",
             "tick": 0,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": -1,
+            "y": -1
         },
         {
             "result": "unknownTowerType",
-            "slot": 0,
             "tick": 0,
             "towerType": 7,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 4,
+            "y": 4
         },
         {
             "result": "accepted",
-            "slot": 0,
             "tick": 5,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 4,
+            "y": 4
         },
         {
-            "result": "slotOccupied",
-            "slot": 0,
+            "result": "cellOccupied",
             "tick": 5,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 4,
+            "y": 4
         },
         {
             "result": "accepted",
-            "slot": 1,
             "tick": 6,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 6,
+            "y": 0
         },
         {
             "result": "notEnoughGold",
-            "slot": 2,
             "tick": 6,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 10,
+            "y": 6
         },
         {
             "result": "notEnoughGold",
-            "slot": 2,
             "tick": 30,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 10,
+            "y": 6
         },
         {
             "result": "gameOver",
-            "slot": 3,
             "tick": 364,
             "towerType": 0,
-            "type": "buildTower"
+            "type": "buildTower",
+            "x": 12,
+            "y": 10
         }
     ],
     "content": "training_ground.json",
-    "contentHash": "07bcdc69fb429718",
+    "contentHash": "5f4a0b0ef12c94d9",
     "formatVersion": 1,
     "seed": "18446744073709551615"
 }

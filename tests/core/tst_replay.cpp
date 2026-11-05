@@ -46,15 +46,15 @@ Content slowScenario()
 }
 
 /// A whole game of the scenario: one tower at tick 0, a rejected command at tick 2 and a second
-/// tower at tick 3. The tower at slot 0 wins it.
+/// tower at tick 3. The tower at (5, 1) wins it.
 Replay recordedGame()
 {
     ReplayRecorder recorder(scenario(), u"scenario.json"_s, 7);
-    recorder.execute(BuildTowerCommand{0, 0});
+    recorder.execute(BuildTowerCommand{{5, 1}, 0});
     recorder.advance(2);
-    recorder.execute(BuildTowerCommand{0, 0});
+    recorder.execute(BuildTowerCommand{{5, 1}, 0});
     recorder.advance(1);
-    recorder.execute(BuildTowerCommand{1, 0});
+    recorder.execute(BuildTowerCommand{{2, 1}, 0});
     recorder.advance(1000);
     return recorder.replay();
 }
@@ -68,8 +68,8 @@ QByteArray editedReplay(const QByteArray &from, const QByteArray &to)
     "seed": "7",
     "contentHash": "00000000000000ff",
     "commands": [
-        { "tick": 3, "type": "buildTower", "slot": 0, "towerType": 0, "result": "accepted" },
-        { "tick": 5, "type": "buildTower", "slot": -1, "towerType": 0, "result": "unknownSlot" }
+        { "tick": 3, "type": "buildTower", "x": 5, "y": 1, "towerType": 0, "result": "accepted" },
+        { "tick": 5, "type": "buildTower", "x": -1, "y": 0, "towerType": 0, "result": "outsideMap" }
     ],
     "checkpoints": [{ "tick": 0, "hash": "0000000000000001" }, { "tick": 30, "hash": "abcdef0123456789" }]
 }
@@ -112,8 +112,8 @@ void addBrokenHeaderRows()
 void addBrokenListRows()
 {
     addBrokenRow("command type",
-                 "\"type\": \"buildTower\", \"slot\": 0",
-                 "\"type\": \"sellTower\", \"slot\": 0",
+                 "\"type\": \"buildTower\", \"x\": 5",
+                 "\"type\": \"sellTower\", \"x\": 5",
                  u"commands[0].type: unknown command \"sellTower\""_s);
     addBrokenRow("result",
                  "\"result\": \"accepted\"",
@@ -181,7 +181,7 @@ private slots:
         QCOMPARE(replay.commands[0].tick, 0);
         QVERIFY(replay.commands[0].result == CommandResult::Accepted);
         QCOMPARE(replay.commands[1].tick, 2);
-        QVERIFY(replay.commands[1].result == CommandResult::SlotOccupied);
+        QVERIFY(replay.commands[1].result == CommandResult::CellOccupied);
         QCOMPARE(replay.commands[2].tick, 3);
     }
 
@@ -202,7 +202,7 @@ private slots:
     {
         ReplayRecorder recorder(slowScenario(), u"s"_s, 1);
         recorder.advance(30);
-        recorder.execute(BuildTowerCommand{0, 0});
+        recorder.execute(BuildTowerCommand{{5, 1}, 0});
         const quint64 afterCommand = recorder.simulation().hash();
         recorder.advance(1);
         const Replay replay = recorder.replay();
@@ -235,9 +235,9 @@ private slots:
     void commandsAfterTheEndAreRecordedAndRepeated()
     {
         ReplayRecorder recorder(scenario(), u"s"_s, 7);
-        recorder.execute(BuildTowerCommand{0, 0});
+        recorder.execute(BuildTowerCommand{{5, 1}, 0});
         recorder.advance(1000);
-        QVERIFY(recorder.execute(BuildTowerCommand{1, 0}) == CommandResult::GameOver);
+        QVERIFY(recorder.execute(BuildTowerCommand{{2, 1}, 0}) == CommandResult::GameOver);
         QCOMPARE(verifyReplay(scenario(), recorder.replay()), QString());
     }
 
@@ -284,7 +284,7 @@ private slots:
         Replay replay = recordedGame();
         replay.commands[1].result = CommandResult::Accepted;
         QCOMPARE(verifyReplay(scenario(), std::move(replay)),
-                 u"tick 2: a command gave slotOccupied, the replay expects accepted"_s);
+                 u"tick 2: a command gave cellOccupied, the replay expects accepted"_s);
     }
 
     void otherContentIsFoundBeforeTheGameStarts()
@@ -315,8 +315,8 @@ private slots:
         QCOMPARE(read.contentHash, replay.contentHash);
         QCOMPARE(read.commands.size(), replay.commands.size());
         QCOMPARE(read.commands[1].tick, 2);
-        QVERIFY(read.commands[1].result == CommandResult::SlotOccupied);
-        QCOMPARE(std::get<BuildTowerCommand>(read.commands[2].command).slot, 1);
+        QVERIFY(read.commands[1].result == CommandResult::CellOccupied);
+        QCOMPARE(std::get<BuildTowerCommand>(read.commands[2].command).cell.x, 2);
         QCOMPARE(read.checkpoints.size(), replay.checkpoints.size());
         QCOMPARE(read.checkpoints.back().hash, replay.checkpoints.back().hash);
         QCOMPARE(toJson(read), toJson(replay));
@@ -328,14 +328,15 @@ private slots:
         replay.content = u"map.json"_s;
         replay.seed = 7;
         replay.contentHash = 255;
-        replay.commands.push_back({3, BuildTowerCommand{1, 0}, CommandResult::NotEnoughGold});
+        replay.commands.push_back({3, BuildTowerCommand{{2, 1}, 0}, CommandResult::NotEnoughGold});
         replay.checkpoints.push_back({3, 16});
         const QByteArray compact = QByteArray(toJson(replay)).replace(' ', "").replace('\n', "");
-        QCOMPARE(compact,
-                 QByteArray(R"({"checkpoints":[{"hash":"0000000000000010","tick":3}],)"
-                            R"("commands":[{"result":"notEnoughGold","slot":1,"tick":3,)"
-                            R"("towerType":0,"type":"buildTower"}],"content":"map.json",)"
-                            R"("contentHash":"00000000000000ff","formatVersion":1,"seed":"7"})"));
+        QCOMPARE(
+            compact,
+            QByteArray(R"({"checkpoints":[{"hash":"0000000000000010","tick":3}],)"
+                       R"("commands":[{"result":"notEnoughGold","tick":3,)"
+                       R"("towerType":0,"type":"buildTower","x":2,"y":1}],"content":"map.json",)"
+                       R"("contentHash":"00000000000000ff","formatVersion":1,"seed":"7"})"));
     }
 
     void aValidFileIsRead()
@@ -343,8 +344,8 @@ private slots:
         const ReplayLoadResult result = parseReplay(editedReplay("", ""));
         QCOMPARE(result.error, QString());
         const Replay replay = required(result.replay);
-        QVERIFY(replay.commands[1].result == CommandResult::UnknownSlot);
-        QCOMPARE(std::get<BuildTowerCommand>(replay.commands[1].command).slot, -1);
+        QVERIFY(replay.commands[1].result == CommandResult::OutsideMap);
+        QCOMPARE(std::get<BuildTowerCommand>(replay.commands[1].command).cell.x, -1);
         QCOMPARE(replay.checkpoints[1].hash, 0xABCDEF0123456789ULL);
     }
 
@@ -380,7 +381,7 @@ private slots:
     {
         const ReplayLoadResult result =
             parseScript(R"({"formatVersion": 1, "content": "c", "seed": "9",
-            "commands": [{"tick": 4, "type": "buildTower", "slot": 2, "towerType": 0}]})");
+            "commands": [{"tick": 4, "type": "buildTower", "x": 10, "y": 10, "towerType": 0}]})");
         QCOMPARE(result.error, QString());
         const Replay script = required(result.replay);
         QCOMPARE(script.seed, 9ULL);

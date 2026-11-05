@@ -4,8 +4,9 @@
 #include "core/tick_clock.h"
 
 #include <QObject>
+#include <QPoint>
 #include <QPointF>
-#include <QSizeF>
+#include <QSize>
 #include <QString>
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
@@ -23,11 +24,11 @@ class GameSession : public QObject
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QString error READ error NOTIFY mapChanged)
-    Q_PROPERTY(QSizeF mapSize READ mapSize NOTIFY mapChanged)
-    Q_PROPERTY(QVariantList path READ path NOTIFY mapChanged)
-    Q_PROPERTY(QVariantList buildSlots READ buildSlots NOTIFY mapChanged)
-    Q_PROPERTY(qint64 towerCost READ towerCost NOTIFY mapChanged)
-    Q_PROPERTY(QVariantList towerPlaces READ towerPlaces NOTIFY towersChanged)
+    Q_PROPERTY(QSize gridSize READ gridSize NOTIFY mapChanged)
+    Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
+    Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
+    Q_PROPERTY(int towerCount READ towerCount NOTIFY towersChanged)
+    Q_PROPERTY(QVariantList towerCells READ towerCells NOTIFY towersChanged)
     Q_PROPERTY(qint64 gold READ gold NOTIFY stateChanged)
     Q_PROPERTY(qint64 lives READ lives NOTIFY stateChanged)
     Q_PROPERTY(qint64 tick READ tick NOTIFY stateChanged)
@@ -47,19 +48,23 @@ public:
     Q_INVOKABLE void startNewGame(const QString &fileName);
     /// The same map again.
     Q_INVOKABLE void restart();
-    /// Gives the first tower type to a slot, true if the game took the command.
-    Q_INVOKABLE bool buildTower(int slot);
+    /// Puts a tower of the selected type on a cell, true if the game took the command.
+    Q_INVOKABLE bool buildTower(int x, int y);
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
     Q_INVOKABLE void advanceTime(qint64 microseconds);
 
     void startGame(const QString &fileName, quint64 seed);
 
     [[nodiscard]] const QString &error() const;
-    [[nodiscard]] QSizeF mapSize() const;
-    [[nodiscard]] QVariantList path() const;
-    [[nodiscard]] QVariantList buildSlots() const;
-    [[nodiscard]] qint64 towerCost() const;
-    [[nodiscard]] QVariantList towerPlaces() const;
+    [[nodiscard]] QSize gridSize() const;
+    /// What can be built, as maps with the name and the cost of each type.
+    [[nodiscard]] QVariantList towerTypes() const;
+    [[nodiscard]] int selectedTower() const;
+    [[nodiscard]] int towerCount() const;
+    /// The chessboard of the map, nothing without a game.
+    [[nodiscard]] const core::Grid *grid() const;
+    /// All cells that towers take, as QPoint.
+    [[nodiscard]] QVariantList towerCells() const;
     [[nodiscard]] qint64 gold() const;
     [[nodiscard]] qint64 lives() const;
     [[nodiscard]] qint64 tick() const;
@@ -76,11 +81,13 @@ public:
     /// A game in the background must not go on without its player.
     void applicationStateChanged(Qt::ApplicationState state);
 
+    void setSelectedTower(int index);
     void setPaused(bool paused);
     void setSpeed(int speed);
 
 signals:
     void mapChanged();
+    void selectionChanged();
     void towersChanged();
     void stateChanged();
     void clockChanged();
@@ -93,6 +100,7 @@ private:
     std::map<qint64, core::Point> lastPlaces_; // of the enemies, by id, one tick ago
     QString fileName_;
     QString error_;
+    int selectedTower_ = 0;
     bool paused_ = false;
     int speed_ = 1;
 };

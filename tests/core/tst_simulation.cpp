@@ -43,10 +43,10 @@ std::vector<quint64> playShippedGame(quint64 seed, std::vector<Fixed> *healthTra
 {
     Simulation game(shippedContent(), seed);
     std::vector<quint64> hashes{game.hash()};
-    game.execute(BuildTowerCommand{0, 0});
+    game.execute(BuildTowerCommand{{5, 1}, 0});
     while (game.state().status == GameStatus::Running) {
         if (game.state().tick == 200) {
-            game.execute(BuildTowerCommand{2, 0});
+            game.execute(BuildTowerCommand{{10, 10}, 0});
         }
         game.tick();
         hashes.push_back(game.hash());
@@ -145,7 +145,7 @@ private slots:
     static void towerDefendsAndWins()
     {
         Simulation game = scenarioGame();
-        QVERIFY(game.execute(BuildTowerCommand{0, 0}) == CommandResult::Accepted);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 1}, 0}) == CommandResult::Accepted);
         QCOMPARE(game.state().gold, 60);
         game.advance(5);
         QCOMPARE(game.state().enemies[0].health.raw(), 40'000);
@@ -181,7 +181,7 @@ private slots:
         json.replace(R"("enemies": [{)", enemies);
         Simulation game(contentOf(json), kSeed);
         game.advance(4);
-        game.execute(BuildTowerCommand{1, 0});
+        game.execute(BuildTowerCommand{{2, 1}, 0});
         game.tick();
         const qtd::core::SimulationState &state = game.state();
         QCOMPARE(state.enemies[0].travelled.raw(), state.enemies[1].travelled.raw());
@@ -203,10 +203,8 @@ private slots:
     {
         QFETCH(const QByteArray, range);
         QFETCH(const int, healthAfterTickOne);
-        QByteArray json = editedJson(R"({ "x": 5, "y": 1 })", R"({ "x": 4, "y": 3 })");
-        json.replace(R"("range": "3")", range);
-        Simulation game(contentOf(json), kSeed);
-        game.execute(BuildTowerCommand{0, 0});
+        Simulation game(contentOf(editedJson(R"("range": "3")", range)), kSeed);
+        game.execute(BuildTowerCommand{{4, 3}, 0});
         game.tick();
         QCOMPARE(game.state().enemies.size(), std::size_t{1});
         QCOMPARE(game.state().enemies[0].health.raw(), healthAfterTickOne);
@@ -220,8 +218,8 @@ private slots:
         json.replace(R"("count": 2)", R"("count": 1)");
         Simulation game(contentOf(json), kSeed);
         game.advance(7);
-        game.execute(BuildTowerCommand{0, 0});
-        game.execute(BuildTowerCommand{1, 0});
+        game.execute(BuildTowerCommand{{5, 1}, 0});
+        game.execute(BuildTowerCommand{{2, 1}, 0});
         game.tick();
         QVERIFY(game.state().status == GameStatus::Won);
         QCOMPARE(game.state().gold, 27);
@@ -237,35 +235,96 @@ private slots:
                                              R"("damageMin": "1",
         "damageMax": "3")")),
                         kSeed);
-        game.execute(BuildTowerCommand{0, 0});
+        game.execute(BuildTowerCommand{{5, 1}, 0});
         game.advance(6);
         QCOMPARE(game.state().enemies[0].health.raw(), 40'000 - 16'432);
         game.advance(4);
         QCOMPARE(game.state().enemies[0].health.raw(), 40'000 - 16'432 - 19'687);
     }
 
+    static void aShapedTowerTakesAllItsCells_data()
+    {
+        QTest::addColumn<qint64>("x");
+        QTest::addColumn<qint64>("y");
+        QTest::addColumn<CommandResult>("result");
+        QTest::newRow("on its first cell") << qint64{5} << qint64{1} << CommandResult::CellOccupied;
+        QTest::newRow("on its last cell") << qint64{6} << qint64{2} << CommandResult::CellOccupied;
+        QTest::newRow("reaching into it") << qint64{4} << qint64{1} << CommandResult::CellOccupied;
+        QTest::newRow("touching it") << qint64{3} << qint64{1} << CommandResult::Accepted;
+        QTest::newRow("reaching over the edge")
+            << qint64{10} << qint64{5} << CommandResult::OutsideMap;
+        QTest::newRow("reaching into the rock")
+            << qint64{7} << qint64{2} << CommandResult::CellBlocked;
+    }
+
+    // The tower takes (x, y), (x + 1, y) and (x + 1, y + 1).
+    static void aShapedTowerTakesAllItsCells()
+    {
+        QFETCH(const qint64, x);
+        QFETCH(const qint64, y);
+        QFETCH(const CommandResult, result);
+        QByteArray json = editedJson(R"("footprint": [{"x": 0, "y": 0}])",
+                                     R"("footprint": [{"x": 0, "y": 0}, {"x": 1, "y": 0},
+                                                      {"x": 1, "y": 1}])");
+        json.replace(R"("x": 0, "y": 2)", R"("x": 8, "y": 2)");
+        Simulation game(required(qtd::core::parseContent(json).content), 1);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 1}, 0}) == CommandResult::Accepted);
+        QVERIFY(game.check(BuildTowerCommand{{x, y}, 0}) == result);
+        QVERIFY(game.execute(BuildTowerCommand{{x, y}, 0}) == result);
+    }
+
+    // The shape takes (x, y), (x, y - 1) and (x + 1, y). The first problem found is the answer.
+    static void problemsComeInTheirOrder()
+    {
+        const QByteArray json = editedJson(R"("footprint": [{"x": 0, "y": 0}])",
+                                           R"("footprint": [{"x": 0, "y": 0}, {"x": 0, "y": -1},
+                                                            {"x": 1, "y": 0}])");
+        Simulation game(required(qtd::core::parseContent(json).content), 1);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 2}, 0}) == CommandResult::Accepted);
+        QVERIFY(game.execute(BuildTowerCommand{{2, 3}, 0}) == CommandResult::Accepted);
+        QCOMPARE(game.state().gold, 20);
+        const auto answer = [&game](qint64 x, qint64 y) {
+            return game.check(BuildTowerCommand{{x, y}, 0});
+        };
+        QVERIFY(answer(10, 1) == CommandResult::OutsideMap);  // and on the path
+        QVERIFY(answer(5, 1) == CommandResult::CellBlocked);  // and on a tower
+        QVERIFY(answer(5, 2) == CommandResult::CellOccupied); // and too expensive
+        QVERIFY(answer(8, 4) == CommandResult::NotEnoughGold);
+    }
+
     static void invalidCommandsChangeNothing_data()
     {
-        QTest::addColumn<qint64>("slot");
+        QTest::addColumn<qint64>("x");
+        QTest::addColumn<qint64>("y");
         QTest::addColumn<qint64>("towerType");
         QTest::addColumn<CommandResult>("result");
-        QTest::newRow("slot below") << qint64{-1} << qint64{0} << CommandResult::UnknownSlot;
-        QTest::newRow("slot above") << qint64{3} << qint64{0} << CommandResult::UnknownSlot;
-        QTest::newRow("type below") << qint64{1} << qint64{-1} << CommandResult::UnknownTowerType;
-        QTest::newRow("type above") << qint64{1} << qint64{1} << CommandResult::UnknownTowerType;
-        QTest::newRow("occupied") << qint64{0} << qint64{0} << CommandResult::SlotOccupied;
+        const auto row =
+            [](const char *name, qint64 x, qint64 y, qint64 type, CommandResult result) {
+                QTest::newRow(name) << x << y << type << result;
+            };
+        row("left of the map", -1, 1, 0, CommandResult::OutsideMap);
+        row("right of the map", 11, 1, 0, CommandResult::OutsideMap);
+        row("above the map", 2, -1, 0, CommandResult::OutsideMap);
+        row("below the map", 2, 11, 0, CommandResult::OutsideMap);
+        row("type below", 2, 1, -1, CommandResult::UnknownTowerType);
+        row("type before the map", -1, 1, 1, CommandResult::UnknownTowerType);
+        row("type above", 2, 1, 1, CommandResult::UnknownTowerType);
+        row("path", 3, 0, 0, CommandResult::CellBlocked);
+        row("rock", 0, 2, 0, CommandResult::CellBlocked);
+        row("occupied", 5, 1, 0, CommandResult::CellOccupied);
     }
 
     static void invalidCommandsChangeNothing()
     {
-        QFETCH(const qint64, slot);
+        QFETCH(const qint64, x);
+        QFETCH(const qint64, y);
         QFETCH(const qint64, towerType);
         QFETCH(const CommandResult, result);
         Simulation game = scenarioGame();
-        game.execute(BuildTowerCommand{0, 0});
+        game.execute(BuildTowerCommand{{5, 1}, 0});
         game.advance(2);
         const quint64 before = game.hash();
-        QVERIFY(game.execute(BuildTowerCommand{slot, towerType}) == result);
+        QVERIFY(game.execute(BuildTowerCommand{{x, y}, towerType}) == result);
         QCOMPARE(game.hash(), before);
         QCOMPARE(game.state().gold, 60);
         QCOMPARE(game.state().towers.size(), 1U);
@@ -274,18 +333,18 @@ private slots:
     static void towersCostGold()
     {
         Simulation game = scenarioGame();
-        QVERIFY(game.execute(BuildTowerCommand{0, 0}) == CommandResult::Accepted);
-        QVERIFY(game.execute(BuildTowerCommand{1, 0}) == CommandResult::Accepted);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 1}, 0}) == CommandResult::Accepted);
+        QVERIFY(game.execute(BuildTowerCommand{{2, 1}, 0}) == CommandResult::Accepted);
         QCOMPARE(game.state().gold, 20);
         const quint64 before = game.hash();
-        QVERIFY(game.execute(BuildTowerCommand{2, 0}) == CommandResult::NotEnoughGold);
+        QVERIFY(game.execute(BuildTowerCommand{{10, 10}, 0}) == CommandResult::NotEnoughGold);
         QCOMPARE(game.hash(), before);
     }
 
     static void theExactPriceIsEnough()
     {
         Simulation game(contentOf(editedJson(R"("startGold": 100)", R"("startGold": 40)")), kSeed);
-        QVERIFY(game.execute(BuildTowerCommand{0, 0}) == CommandResult::Accepted);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 1}, 0}) == CommandResult::Accepted);
         QCOMPARE(game.state().gold, 0);
     }
 
@@ -296,7 +355,7 @@ private slots:
         QVERIFY(game.state().status != GameStatus::Running);
         const quint64 before = game.hash();
         game.tick();
-        QVERIFY(game.execute(BuildTowerCommand{0, 0}) == CommandResult::GameOver);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 1}, 0}) == CommandResult::GameOver);
         QCOMPARE(game.hash(), before);
     }
 
@@ -330,8 +389,8 @@ private slots:
     {
         Simulation inSteps = scenarioGame();
         Simulation atOnce = scenarioGame();
-        inSteps.execute(BuildTowerCommand{0, 0});
-        atOnce.execute(BuildTowerCommand{0, 0});
+        inSteps.execute(BuildTowerCommand{{5, 1}, 0});
+        atOnce.execute(BuildTowerCommand{{5, 1}, 0});
         for (int tick = 0; tick < 12; ++tick) {
             inSteps.tick();
         }
@@ -342,7 +401,7 @@ private slots:
     static void aCopyGoesOnTheSameWay()
     {
         Simulation game(shippedContent(), kSeed);
-        game.execute(BuildTowerCommand{0, 0});
+        game.execute(BuildTowerCommand{{5, 1}, 0});
         game.advance(150);
         Simulation copy = game;
         game.advance(150);

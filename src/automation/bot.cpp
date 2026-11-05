@@ -13,9 +13,10 @@ namespace {
 
 constexpr quint64 kFuzzStream = 99; // apart from the stream of the game
 constexpr quint32 kMaxFuzzCommandsPerTick = 3;
+constexpr quint32 kCommandValues = 3; // x, y and the tower type
 
-/// A game draws how often a value is valid, one in so many. 0 means never: such a game builds
-/// nothing and gets lost, the others mostly win.
+/// A game draws how often a command is well-formed, one in so many. 0 means never: such a game
+/// builds nothing and gets lost. A well-formed command can still meet a blocked cell.
 constexpr std::array<quint32, 3> kFuzzValidOneIn{0, 8, 2};
 
 class IdleBot : public Bot
@@ -37,12 +38,28 @@ public:
         if (state.status != core::GameStatus::Running || state.gold < content.towers[0].cost) {
             return std::nullopt;
         }
-        for (std::size_t slot = 0; slot < content.buildSlots.size(); ++slot) {
-            if (std::ranges::find(state.towers, slot, &core::Tower::slot) == state.towers.end()) {
-                return core::BuildTowerCommand{static_cast<qint64>(slot), 0};
+        for (qint64 y = 0; y < content.grid.height(); ++y) {
+            for (qint64 x = 0; x < content.grid.width(); ++x) {
+                const core::BuildTowerCommand command{{x, y}, 0};
+                if (nextToPath(content.grid, command.cell) &&
+                    game.check(command) == core::CommandResult::Accepted) {
+                    return command;
+                }
             }
         }
         return std::nullopt;
+    }
+
+private:
+    static bool nextToPath(const core::Grid &grid, core::Cell cell)
+    {
+        const std::array<core::Cell, 4> neighbours{core::Cell{cell.x - 1, cell.y},
+                                                   core::Cell{cell.x + 1, cell.y},
+                                                   core::Cell{cell.x, cell.y - 1},
+                                                   core::Cell{cell.x, cell.y + 1}};
+        return std::ranges::any_of(neighbours, [&grid](core::Cell neighbour) {
+            return grid.contains(neighbour) && grid.terrainAt(neighbour) == core::Terrain::Path;
+        });
     }
 };
 
@@ -67,18 +84,23 @@ public:
             return std::nullopt;
         }
         --commandsLeft_;
-        const qint64 slot = pick(static_cast<qint64>(game.content().buildSlots.size()));
-        return core::BuildTowerCommand{slot,
-                                       pick(static_cast<qint64>(game.content().towers.size()))};
+        const core::Content &content = game.content();
+        const bool wellFormed = validOneIn_ != 0 && random_.nextBelow(validOneIn_) == 0;
+        // A broken command breaks one value, so that each of them reaches its check.
+        const quint32 broken = wellFormed ? kCommandValues : random_.nextBelow(kCommandValues);
+        const qint64 x = pick(content.grid.width(), broken != 0);
+        const qint64 y = pick(content.grid.height(), broken != 1);
+        return core::BuildTowerCommand{
+            {x, y}, pick(static_cast<qint64>(content.towers.size()), broken != 2)};
     }
 
 private:
-    /// A valid index as often as this game wants, otherwise a value next to or far off the range.
-    qint64 pick(qint64 size)
+    /// A valid index, or a value next to or far off the range.
+    qint64 pick(qint64 size, bool valid)
     {
         const std::array<qint64, 5> invalid{
             -1, size, size + 1, -core::kMaxExactInteger, core::kMaxExactInteger};
-        if (validOneIn_ != 0 && random_.nextBelow(validOneIn_) == 0) {
+        if (valid) {
             return random_.nextBelow(static_cast<quint32>(size));
         }
         return invalid[random_.nextBelow(static_cast<quint32>(invalid.size()))];

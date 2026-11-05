@@ -2,17 +2,27 @@
     "formatVersion": 1,
     "startGold": 120,
     "startLives": 5,
+    "gridWidth": 17,
+    "gridHeight": 11,
     "path": [
         { "x": 0, "y": 2 },
         { "x": 8, "y": 2 },
         { "x": 8, "y": 8 },
         { "x": 16, "y": 8 }
     ],
-    "buildSlots": [
-        { "x": 4, "y": 4 },
-        { "x": 6, "y": 0 },
-        { "x": 10, "y": 6 },
-        { "x": 12, "y": 10 }
+    "obstacles": [
+        { "terrain": "rock", "x": 2, "y": 5 },
+        { "terrain": "rock", "x": 3, "y": 5 },
+        { "terrain": "rock", "x": 2, "y": 6 },
+        { "terrain": "tree", "x": 13, "y": 2 },
+        { "terrain": "tree", "x": 14, "y": 2 },
+        { "terrain": "tree", "x": 14, "y": 3 },
+        { "terrain": "tree", "x": 5, "y": 9 },
+        { "terrain": "water", "x": 1, "y": 8 },
+        { "terrain": "water", "x": 2, "y": 8 },
+        { "terrain": "water", "x": 1, "y": 9 },
+        { "terrain": "water", "x": 2, "y": 9 },
+        { "terrain": "water", "x": 3, "y": 9 }
     ],
     "towers": [
         {
@@ -21,7 +31,26 @@
             "range": "3.5",
             "cooldownTicks": 20,
             "damageMin": "2",
-            "damageMax": "4.5"
+            "damageMax": "4.5",
+            "footprint": [{ "x": 0, "y": 0 }]
+        },
+        {
+            "id": "twin_ballista",
+            "cost": 90,
+            "range": "4",
+            "cooldownTicks": 20,
+            "damageMin": "3",
+            "damageMax": "6",
+            "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }]
+        },
+        {
+            "id": "bastion",
+            "cost": 120,
+            "range": "4.5",
+            "cooldownTicks": 30,
+            "damageMin": "6",
+            "damageMax": "9",
+            "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }, { "x": 0, "y": 1 }]
         }
     ],
     "enemies": [

@@ -12,6 +12,7 @@ using qtd::core::Fixed;
 using qtd::core::Simulation;
 using qtd::core::SimulationState;
 using qtd::tests::contentOf;
+using qtd::tests::editedJson;
 using qtd::tests::scenarioJson;
 
 using namespace Qt::StringLiterals;
@@ -21,13 +22,47 @@ Q_DECLARE_METATYPE(Damage)
 
 namespace {
 
-/// A game with one enemy on the path and one tower on slot 0, after a few ticks.
+/// A game with one enemy on the path and one tower at (5, 1), after a few ticks.
 SimulationState healthyState(const Content &content)
 {
     Simulation game(content, 7);
-    game.execute(BuildTowerCommand{0, 0});
+    game.execute(BuildTowerCommand{{5, 1}, 0});
     game.advance(3);
     return game.state();
+}
+
+void addTowerRows()
+{
+    const auto row = [](const char *name, const Damage &damage, const QString &expected) {
+        QTest::newRow(name) << damage << expected;
+    };
+    row(
+        "tower with the id of an enemy",
+        [](SimulationState &s) { s.towers.front().id = s.enemies.front().id; },
+        u"an enemy has its id"_s);
+    row("tower type", [](SimulationState &s) { s.towers.front().type = 5; }, u"unknown type"_s);
+    row(
+        "tower outside",
+        [](SimulationState &s) { s.towers.front().cell = {11, 1}; },
+        u"outside the map"_s);
+    row(
+        "tower on the path",
+        [](SimulationState &s) { s.towers.front().cell = {3, 0}; },
+        u"on a blocked cell"_s);
+    row(
+        "tower on a rock",
+        [](SimulationState &s) { s.towers.front().cell = {0, 2}; },
+        u"on a blocked cell"_s);
+    row(
+        "shared cell",
+        [](SimulationState &s) {
+            s.towers.push_back({s.nextEntityId++, 0, s.towers.front().cell, 0});
+        },
+        u"its cell is taken"_s);
+    row(
+        "cooldown",
+        [](SimulationState &s) { s.towers.front().cooldownTicks = -1; },
+        u"negative cooldown"_s);
 }
 
 } // namespace
@@ -41,7 +76,7 @@ private slots:
     {
         const Content content = contentOf(scenarioJson());
         Simulation game(content, 7);
-        game.execute(BuildTowerCommand{0, 0});
+        game.execute(BuildTowerCommand{{5, 1}, 0});
         for (int tick = 0; tick < 40; ++tick) {
             game.tick();
             QCOMPARE(checkInvariants(content, game.state()), QString());
@@ -89,22 +124,34 @@ private slots:
             "orphaned tower id",
             [](SimulationState &s) { s.nextEntityId = s.towers.front().id; },
             u"its id is out of order"_s);
-        row(
-            "tower with the id of an enemy",
-            [](SimulationState &s) { s.towers.front().id = s.enemies.front().id; },
-            u"an enemy has its id"_s);
-        row("tower type", [](SimulationState &s) { s.towers.front().type = 5; }, u"unknown type"_s);
-        row("tower slot", [](SimulationState &s) { s.towers.front().slot = 3; }, u"unknown slot"_s);
-        row(
-            "shared slot",
-            [](SimulationState &s) {
-                s.towers.push_back({s.nextEntityId++, 0, s.towers.front().slot, 0});
-            },
-            u"its slot is taken"_s);
-        row(
-            "cooldown",
-            [](SimulationState &s) { s.towers.front().cooldownTicks = -1; },
-            u"negative cooldown"_s);
+        addTowerRows();
+    }
+
+    // With this shape, a tower also takes the cell to its left.
+    void everyCellOfAShapeIsChecked_data()
+    {
+        QTest::addColumn<qint64>("x");
+        QTest::addColumn<qint64>("y");
+        QTest::addColumn<QString>("expected");
+        QTest::newRow("free") << qint64{2} << qint64{1} << QString();
+        QTest::newRow("over the edge") << qint64{0} << qint64{1} << u"outside the map"_s;
+        QTest::newRow("onto the rock") << qint64{1} << qint64{2} << u"on a blocked cell"_s;
+        QTest::newRow("into a tower") << qint64{6} << qint64{1} << u"its cell is taken"_s;
+    }
+
+    void everyCellOfAShapeIsChecked()
+    {
+        QFETCH(const qint64, x);
+        QFETCH(const qint64, y);
+        QFETCH(const QString, expected);
+        const Content content = contentOf(editedJson(R"("footprint": [{"x": 0, "y": 0}])",
+                                                     R"("footprint": [{"x": 0, "y": 0},
+                                                                      {"x": -1, "y": 0}])"));
+        SimulationState state = healthyState(content);
+        state.towers.push_back({state.nextEntityId++, 0, {x, y}, 0});
+        const QString problem = qtd::automation::checkInvariants(content, state);
+        QVERIFY2(expected.isEmpty() ? problem.isEmpty() : problem.contains(expected),
+                 qPrintable(problem));
     }
 
     void damageIsFound()

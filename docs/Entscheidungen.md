@@ -167,3 +167,14 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Ein Turmtyp:** Der Client baut immer den ersten Typ, mehr gibt es erst mit Etappe 7. Die Auswahl kommt dann mit.
 - **Seed:** Jede Partie im Client bekommt einen Seed aus `QRandomGenerator`. Das ist außerhalb von Core erlaubt, und die Simulation bleibt davon unberührt.
 - **Verworfen:** `ControlSession` als Grundlage des Clients: Der Weg über JSON brächte nichts, die Befehle sind dieselben. Der Client zeichnet noch kein Replay auf; das kommt mit dem Smoke-Test, wenn die Steuerschnittstelle ins echte Spiel einzieht.
+
+## E-25 Raster statt Bauplätze
+- **Was:** Wunsch des Menschen vom 2026-11-05. Eine Karte ist ein Schachbrett aus `gridWidth` mal `gridHeight` Feldern (`Grid`, `Cell`, `Terrain`). Der Pfad läuft in geraden Stücken über die Felder, Hindernisse (`rock`, `tree`, `water`) belegen je ein Feld. `TowerType::footprint` nennt die Felder eines Turms relativ zu dem Feld, auf dem er steht, und muss `0, 0` enthalten. `BuildTowerCommand` nennt Feld und Typ, `Simulation::check` sagt vorab, was `execute` antworten würde.
+- **Auftrag:** `QtowerDefense-Agent-Auftrag.md` nennt noch Bauplätze. Der spätere Wunsch des Menschen geht vor, die Datei bleibt seine.
+- **Annahmen:** Gegner bleiben auf festen Pfaden, Türme sperren keine Wege. Pfad- und Hindernisfelder sind nicht bebaubar. Ein Turm schießt von seinem Standfeld aus, nicht aus der Mitte seiner Form. Formen lassen sich noch nicht drehen, das wäre ein weiterer Wert im Befehl.
+- **Mittelpunkte:** Der Mittelpunkt von Feld `(x, y)` ist der Kartenpunkt `(x, y)`. Pfade, Reichweiten und Gegnerpositionen rechnen dadurch wie zuvor. Die Spiele der Golden Replays bleiben bis auf die Hashes gleich: gleiche Endticks, gleiches Gold, gleiche Leben.
+- **Gelände als Enum:** Die Menge steht fest, Regeln werden daran hängen. Die Namen gibt es nur in der Kartendatei. Der Inhaltshash nimmt jedes Feld auf.
+- **Ablehnungen:** `outsideMap`, `cellBlocked` (Gelände) und `cellOccupied` (Turm) ersetzen `unknownSlot` und `slotOccupied`. Geprüft wird in der Reihenfolge Spielende, Turmtyp, Karte, Gelände, Türme, Gold.
+- **Formatversion:** Bleibt 1. Es gibt keine ausgelieferten Dateien, die alten Golden Replays sind umgestellt.
+- **Client:** `MapInstances` ersetzt `EnemyInstances` und zeichnet drei Ebenen (Brett, Türme, Gegner). Die Ebene `Board` zeichnet auch Pfad und Hindernisse, damit gilt der Satz aus E-24 zu Türmen als QML-Objekte nicht mehr. Getippt wird auf die Blöcke des Bretts, der Index der getroffenen Instanz nennt das Feld. So meint ein Tipp auf einen hohen Block diesen Block und nicht das Feld dahinter. Die Turmauswahl aus E-24 kommt damit schon jetzt, weil die Formen sonst nicht erreichbar wären.
+- **Verworfen:** Belegte Felder als eigene Tabelle im Zustand: Sie wäre abgeleitet und müsste in den Hash oder mit den Türmen übereinstimmen. Ein Modell je Feld: Es wären Hunderte von QML-Objekten.

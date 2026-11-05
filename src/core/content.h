@@ -9,6 +9,59 @@
 
 namespace qtd::core {
 
+/// A field of the chessboard. Its centre is the point (x, y) of the map, see centreOf().
+struct Cell
+{
+    qint64 x = 0;
+    qint64 y = 0;
+
+    constexpr auto operator<=>(const Cell &) const = default;
+};
+
+Point centreOf(Cell cell);
+
+/// What lies on a cell. Towers only stand on open cells.
+enum class Terrain : quint8 {
+    Open,
+    Path,
+    Rock,
+    Tree,
+    Water,
+};
+
+/// The chessboard of a map, row by row.
+class Grid
+{
+public:
+    Grid() = default;
+    Grid(qint64 width, qint64 height);
+
+    qint64 width() const
+    {
+        return width_;
+    }
+    qint64 height() const
+    {
+        return height_;
+    }
+    const std::vector<Terrain> &cells() const
+    {
+        return cells_;
+    }
+    bool contains(Cell cell) const;
+
+    /// The cell must be on the grid.
+    Terrain terrainAt(Cell cell) const;
+    void setTerrain(Cell cell, Terrain terrain);
+
+private:
+    std::size_t indexOf(Cell cell) const;
+
+    qint64 width_ = 0;
+    qint64 height_ = 0;
+    std::vector<Terrain> cells_;
+};
+
 /// A fixed route for enemies: straight segments through at least two different points.
 class Path
 {
@@ -41,7 +94,11 @@ struct TowerType
     qint64 cooldownTicks = 1;
     Fixed damageMin; // every shot rolls a raw value in [damageMin, damageMax]
     Fixed damageMax;
+    std::vector<Cell> footprint; // the cells it takes, relative to the cell it stands on
 };
+
+/// The cells a tower of this type takes when it stands on the given cell.
+std::vector<Cell> footprintAt(const TowerType &type, Cell cell);
 
 struct EnemyType
 {
@@ -67,8 +124,8 @@ struct Content
 {
     qint64 startGold = 0;
     qint64 startLives = 1;
+    Grid grid;
     Path path;
-    std::vector<Point> buildSlots;
     std::vector<TowerType> towers;
     std::vector<EnemyType> enemies;
     std::vector<SpawnGroup> wave;

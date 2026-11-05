@@ -26,11 +26,14 @@ def pcg32_state(seed, stream):
 
 def scenario_content():
     """The content of tests/core/scenario.h, decimal values in ten-thousandths."""
+    terrain = [0] * 121
+    terrain[:11] = [1] * 11                         # the path in the first row
+    terrain[22] = 2                                 # a rock at (0, 2)
     return [
         100, 3,                                     # start gold, start lives
         2, 0, 0, 100000, 0,                         # path
-        3, 50000, 10000, 20000, 10000, 1000000, 1000000,  # build slots
-        1, 40, 4, 30000, 20000, 20000,              # towers
+        11, 11, *terrain,                           # grid
+        1, 40, 4, 30000, 20000, 20000, 1, 0, 0,     # towers
         1, 40000, 5000, 7, 1,                       # enemies
         1, 0, 2, 0, 4,                              # wave
     ]  # fmt: skip
@@ -44,7 +47,7 @@ def handmade_state():
         random_state, increment,
         9, 1, 2, 4,                                 # next id, spawn group, spawned, countdown
         1, 3, 0, 15000, 25000,                      # enemies
-        1, 5, 1, 2, 6,                              # towers
+        1, 5, 1, 2, 3, 6,                           # towers
     ]  # fmt: skip
 
 

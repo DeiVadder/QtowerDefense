@@ -6,7 +6,7 @@ foreach(style UNIX DOS)
     file(CONFIGURE OUTPUT "${requests}" NEWLINE_STYLE ${style} @ONLY CONTENT
 "{\"action\":\"startMap\",\"map\":\"${MAP}\",\"seed\":\"7\"}
 
-{\"action\":\"buildTower\",\"slot\":0,\"towerType\":0}
+{\"action\":\"buildTower\",\"x\":4,\"y\":4,\"towerType\":0}
 {\"action\":\"observe\"}${ctrlZ} garbage
 {\"action\":\"advance\",\"ticks\":10}
 ")

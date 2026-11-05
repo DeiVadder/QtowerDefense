@@ -182,7 +182,8 @@ void ObjectReader::forEach(QLatin1StringView key,
             fail(name, u"must be an object"_s);
             return;
         }
-        ObjectReader item(array[index].toObject(), place_ + name, error_);
+        ObjectReader item(
+            array[index].toObject(), place_.isEmpty() ? name : place_ + u'.' + name, error_);
         read(item);
         item.rejectUnknownKeys();
     }

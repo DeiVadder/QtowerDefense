@@ -25,17 +25,23 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | Typ | Art | Datei | Zweck |
 |---|---|---|---|
 | `AppInfo` | class | `app_info.h` | Build information for the QML side. |
-| `EnemyInstances` | class | `enemy_instances.h` | Draws all enemies of a game with one model: their number changes with every wave, and creating a QML object for each of them would not hold up with hundreds. |
 | `GameSession` | class | `game_session.h` | The running game for the QML side. |
+| `Look` | struct | `map_instances.cpp` |  |
+| `Piece` | struct | `map_instances.cpp` |  |
+| `MapInstances` | class | `map_instances.h` | Draws one layer of a game with a single model: a map has hundreds of cells, and the number of enemies changes with every wave. |
+| `MapInstances::Layer` | enum class | `map_instances.h` |  |
 
 ## core
 
 | Typ | Art | Datei | Zweck |
 |---|---|---|---|
+| `Cell` | struct | `content.h` | A field of the chessboard. |
 | `Content` | struct | `content.h` | Everything the data files decide. |
 | `EnemyType` | struct | `content.h` |  |
+| `Grid` | class | `content.h` | The chessboard of a map, row by row. |
 | `Path` | class | `content.h` | A fixed route for enemies: straight segments through at least two different points. |
 | `SpawnGroup` | struct | `content.h` | Enemies of one type that enter the path one after the other. |
+| `Terrain` | enum class | `content.h` | What lies on a cell. |
 | `TowerType` | struct | `content.h` |  |
 | `ContentLoadResult` | struct | `content_loader.h` | Holds the content, or an error text that names the place of the problem. |
 | `Fixed` | class | `fixed.h` | Decimal fixed point number: the raw integer counts ten-thousandths, so 1.5 is raw 15000. |
