@@ -27,6 +27,9 @@ SILENCE_SECONDS = 2
 MIN_COLORS = 12
 # Section 4 of the assignment: 60 frames per second with 200 enemies.
 MIN_FRAMES_PER_SECOND = 60
+# What a frame may cost, on the CPU and on the GPU: room for 400 frames per second. The frame rate
+# stops at a pace of its own and says nothing above it.
+MAX_FRAME_MICROSECONDS = 2_500
 BENCHMARK_ENEMIES = 200
 TRAINING_GROUND = CONTENT / "training_ground.json"
 
@@ -47,7 +50,10 @@ class Game:
         self.log = self.log_path.open("w", encoding="utf-8")
         # Without this, Qt sends the messages of a window program to the debugger. Without vsync,
         # the frame rate says something about the game and not about the display.
-        environment = dict(os.environ, QT_FORCE_STDERR_LOGGING="1", QSG_NO_VSYNC="1")
+        # QSG_RHI_PROFILE gives the timestamps for the GPU time of a frame.
+        environment = dict(
+            os.environ, QT_FORCE_STDERR_LOGGING="1", QSG_NO_VSYNC="1", QSG_RHI_PROFILE="1"
+        )
         self.process = subprocess.Popen(
             [program, "--control"],
             stdin=subprocess.PIPE,
@@ -136,6 +142,12 @@ def check_same_game_without_window(hashes, replay):
         raise SystemExit(f"the replay differs: {report}, expected {hashes[-1]}")
 
 
+def frame_cost(before, after, key):
+    """The mean of one cost per frame, in microseconds, between two answers."""
+    frames = after["frameCosts"]["frames"] - before["frameCosts"]["frames"]
+    return round((after["frameCosts"][key] - before["frameCosts"][key]) / frames, 1)
+
+
 def measure_frames(game):
     """Real time on purpose: the frame rate of the standard scene with all its enemies."""
     golden = json.loads((GOLDEN / "benchmark_arena.replay.json").read_text(encoding="utf-8"))
@@ -157,8 +169,16 @@ def measure_frames(game):
         raise SystemExit(f"{frames_per_second} frames per second")
     if after["tick"] <= before["tick"]:
         raise SystemExit("the game stood still during the measurement")
+    cpu = frame_cost(before, after, "cpuMicroseconds")
+    gpu = frame_cost(before, after, "gpuMicroseconds")
+    if gpu <= 0:
+        raise SystemExit("no GPU time: the backend gave no timestamps")
+    if max(cpu, gpu) > MAX_FRAME_MICROSECONDS:
+        raise SystemExit(f"a frame costs {cpu} on the CPU and {gpu} on the GPU, in microseconds")
     return {
         "framesPerSecond": frames_per_second,
+        "cpuMicroseconds": cpu,
+        "gpuMicroseconds": gpu,
         "ticks": after["tick"] - before["tick"],
         "enemiesAtStart": len(before["enemies"]),
         "enemiesAtEnd": len(after["enemies"]),

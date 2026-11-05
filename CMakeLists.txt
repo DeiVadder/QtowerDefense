@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 option(QTD_ENABLE_ASAN "Build everything with MSVC AddressSanitizer" OFF)
 option(QTD_ENABLE_UBSAN "Build core and automation with clang-cl UBSan, without the client" OFF)
 
-find_package(Qt6 6.12 REQUIRED COMPONENTS Core Gui Qml Quick Quick3D Test QuickTest)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Core Gui GuiPrivate Qml Quick Quick3D Test QuickTest)
 qt_standard_project_setup(REQUIRES 6.12)
 
 # qmlls finds the QML modules of the build through this generated file.

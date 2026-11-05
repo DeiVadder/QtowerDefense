@@ -32,6 +32,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Piece` | struct | `map_instances.cpp` |  |
 | `MapInstances` | class | `map_instances.h` | Draws one layer of a game with a single model: a map has hundreds of cells, and the number of enemies changes with every wave. |
 | `MapInstances::Layer` | enum class | `map_instances.h` |  |
+| `FrameCosts` | class | `screen_control.cpp` | What frames cost, apart from how often the window draws them. |
 | `ScreenControl::Mailbox` | struct | `screen_control.cpp` | The way from the thread that reads to the control. |
 | `ScreenControl::ScreenGame` | class | `screen_control.cpp` | The game on the screen, as the control interface sees it. |
 | `ScreenControl` | class | `screen_control.h` | The control interface in the real game: requests play the game on the screen. |

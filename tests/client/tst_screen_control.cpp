@@ -122,6 +122,10 @@ private slots:
         };
         const qint64 first = frames();
         QVERIFY(QTest::qWaitFor([&frames, first] { return frames() > first; }));
+        const QJsonObject costs =
+            ask(control, {{"action"_L1, "observe"_L1}})["frameCosts"_L1].toObject();
+        QVERIFY(costs["frames"_L1].toInteger() > 0);
+        QVERIFY(costs["cpuMicroseconds"_L1].toInteger() > 0);
         QCOMPARE(window.game()->tick(), 0);
         QVERIFY(!ask(control, {{"action"_L1, "resume"_L1}})["paused"_L1].toBool());
         GameSession *game = window.game();

@@ -40,7 +40,7 @@ All answers with `"ok": true` report the state:
 
 ## In the real game
 
-The requests play the game on the screen. The game starts with time standing still, and `startMap` stops it again: only `advance` moves the game until `resume` lets it run. The observation adds `paused` and `frames`, the number of frames shown so far. As without a window, everything but `startMap` and `quit` needs a game from `startMap`: the game that the window opened with has a seed of its own. The end of the input ends the program. Qt writes its messages to the debugger unless `QT_FORCE_STDERR_LOGGING=1` is set.
+The requests play the game on the screen. The game starts with time standing still, and `startMap` stops it again: only `advance` moves the game until `resume` lets it run. The observation adds `frameCosts` with `frames`, `cpuMicroseconds` and `gpuMicroseconds`, sums over all frames so far (the GPU time needs `QSG_RHI_PROFILE=1`, the CPU time is the wall clock of the render thread, including its waits, and a screenshot adds GPU time without a frame, so compare sums from before a screenshot), and `paused` and `frames`, the number of frames shown so far. As without a window, everything but `startMap` and `quit` needs a game from `startMap`: the game that the window opened with has a seed of its own. The end of the input ends the program. Qt writes its messages to the debugger unless `QT_FORCE_STDERR_LOGGING=1` is set.
 
 ## Example
 

@@ -8,15 +8,19 @@
 
 #include <QBuffer>
 #include <QCoreApplication>
+#include <QElapsedTimer>
 #include <QImage>
 #include <QJsonObject>
 #include <QLatin1StringView>
 #include <QMetaObject>
 #include <QPointer>
 #include <QQuickWindow>
+#include <rhi/qrhi.h>
 
+#include <atomic>
 #include <cstdio>
 #include <exception>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <thread>
@@ -26,6 +30,65 @@ using namespace Qt::StringLiterals;
 namespace qtd::client {
 
 namespace {
+
+constexpr double kNanosecondsPerSecond = 1e9;
+constexpr qint64 kNanosecondsPerMicrosecond = 1000;
+
+/// What frames cost, apart from how often the window draws them. The render thread writes, the
+/// control reads. The GPU time needs timestamps, see QSG_RHI_PROFILE in
+/// docs/Performance-Verlauf.md.
+class FrameCosts
+{
+public:
+    /// From the start of a frame to its end, in the render thread.
+    static void watch(const std::shared_ptr<FrameCosts> &costs, QQuickWindow *window)
+    {
+        constexpr Qt::ConnectionType direct = Qt::DirectConnection;
+        QObject::connect(
+            window, &QQuickWindow::beforeFrameBegin, window, [costs] { costs->begin(); }, direct);
+        QObject::connect(
+            window,
+            &QQuickWindow::afterRendering,
+            window,
+            [costs, window] { costs->noteGpuTime(window->swapChain()); },
+            direct);
+        QObject::connect(
+            window, &QQuickWindow::afterFrameEnd, window, [costs] { costs->end(); }, direct);
+    }
+
+    [[nodiscard]] QJsonObject report() const
+    {
+        return {{"frames"_L1, frames_.load()},
+                {"cpuMicroseconds"_L1, cpuNanoseconds_.load() / kNanosecondsPerMicrosecond},
+                {"gpuMicroseconds"_L1, gpuNanoseconds_.load() / kNanosecondsPerMicrosecond}};
+    }
+
+private:
+    void begin()
+    {
+        running_.start();
+    }
+
+    /// The time of a frame that the GPU has finished, one or two frames ago.
+    void noteGpuTime(QRhiSwapChain *swapChain)
+    {
+        if (swapChain != nullptr) {
+            const double seconds = swapChain->currentFrameCommandBuffer()->lastCompletedGpuTime();
+            gpuNanoseconds_ += static_cast<qint64>(seconds * kNanosecondsPerSecond);
+        }
+    }
+
+    void end()
+    {
+        cpuNanoseconds_ += running_.nsecsElapsed();
+        ++frames_;
+    }
+
+    QElapsedTimer running_;
+    std::atomic<qint64> frames_ = 0;
+    std::atomic<qint64> cpuNanoseconds_ = 0;
+    std::atomic<qint64> gpuNanoseconds_ = 0;
+};
 
 /// Enough points to tell a picture from an empty window.
 constexpr int kColorGridSteps = 32;
@@ -48,7 +111,10 @@ qint64 distinctColors(const QImage &image)
 class ScreenControl::ScreenGame : public automation::ControlledGame
 {
 public:
-    ScreenGame(GameSession *game, QQuickWindow *window) : game_(game), window_(window) {}
+    ScreenGame(GameSession *game, QQuickWindow *window) : game_(game), window_(window)
+    {
+        FrameCosts::watch(frameCosts_, window);
+    }
 
     QString start(const QString &map, quint64 seed) override
     {
@@ -76,6 +142,7 @@ public:
     {
         answer->insert("paused"_L1, game_->paused());
         answer->insert("frames"_L1, frames_);
+        answer->insert("frameCosts"_L1, frameCosts_->report());
     }
 
     QString saveScreenshot(const QString &file, QJsonObject *answer) override
@@ -120,6 +187,7 @@ private:
     QPointer<GameSession> game_;
     QPointer<QQuickWindow> window_;
     qint64 frames_ = 0;
+    std::shared_ptr<FrameCosts> frameCosts_ = std::make_shared<FrameCosts>();
     bool started_ = false; // the game that the window opened with has a seed of its own
 };
 
