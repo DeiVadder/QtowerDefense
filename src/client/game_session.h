@@ -28,6 +28,7 @@ class GameSession : public QObject
     Q_PROPERTY(QSize gridSize READ gridSize NOTIFY mapChanged)
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
+    Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
     Q_PROPERTY(int towerCount READ towerCount NOTIFY towersChanged)
     Q_PROPERTY(QVariantList towerCells READ towerCells NOTIFY towersChanged)
     Q_PROPERTY(qint64 gold READ gold NOTIFY stateChanged)
@@ -51,6 +52,8 @@ public:
     Q_INVOKABLE void restart();
     /// Puts a tower of the selected type on a cell, true if the game took the command.
     Q_INVOKABLE bool buildTower(int x, int y);
+    /// Turns what a tap on the map builds by a quarter, clockwise.
+    Q_INVOKABLE void rotateSelection();
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
     Q_INVOKABLE void advanceTime(qint64 microseconds);
 
@@ -61,6 +64,9 @@ public:
     /// What can be built, as maps with the name and the cost of each type.
     [[nodiscard]] QVariantList towerTypes() const;
     [[nodiscard]] int selectedTower() const;
+    /// The cells of what a tap builds, turned as it would stand, as maps with x and y from 0 and
+    /// anchor for the cell that the tap names.
+    [[nodiscard]] QVariantList selectedShape() const;
     [[nodiscard]] int towerCount() const;
     /// The chessboard of the map, nothing without a game.
     [[nodiscard]] const core::Grid *grid() const;
@@ -107,6 +113,7 @@ private:
     QString fileName_;
     QString error_;
     int selectedTower_ = 0;
+    core::Rotation selectedRotation_ = core::Rotation::None;
     bool paused_ = false;
     int speed_ = 1;
 };

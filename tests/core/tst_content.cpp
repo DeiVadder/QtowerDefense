@@ -5,6 +5,8 @@
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <vector>
+
 using qtd::core::Fixed;
 using qtd::core::loadContentFile;
 using qtd::core::parseContent;
@@ -399,6 +401,42 @@ private slots:
         const qtd::core::ContentLoadResult result = loadContentFile(name);
         QVERIFY(!result.content.has_value());
         QVERIFY2(result.error.startsWith(name + QStringLiteral(": ")), qPrintable(result.error));
+    }
+
+    static void aTurnedFootprintGoesRoundItsCell_data()
+    {
+        using qtd::core::Cell;
+        using Cells = std::vector<Cell>;
+        QTest::addColumn<qtd::core::Rotation>("rotation");
+        QTest::addColumn<Cells>("cells");
+        QTest::newRow("none") << qtd::core::Rotation::None
+                              << Cells{Cell{5, 5}, Cell{7, 5}, Cell{5, 6}};
+        QTest::newRow("quarter") << qtd::core::Rotation::Quarter
+                                 << Cells{Cell{5, 5}, Cell{5, 7}, Cell{4, 5}};
+        QTest::newRow("half") << qtd::core::Rotation::Half
+                              << Cells{Cell{5, 5}, Cell{3, 5}, Cell{5, 4}};
+        QTest::newRow("three quarters")
+            << qtd::core::Rotation::ThreeQuarters << Cells{Cell{5, 5}, Cell{5, 3}, Cell{6, 5}};
+    }
+
+    static void aTurnedFootprintGoesRoundItsCell()
+    {
+        using Cells = std::vector<qtd::core::Cell>;
+        QFETCH(const qtd::core::Rotation, rotation);
+        QFETCH(const Cells, cells);
+        qtd::core::TowerType type;
+        type.footprint = {{0, 0}, {2, 0}, {0, 1}};
+        QVERIFY(qtd::core::footprintAt(type, {5, 5}, rotation) == cells);
+    }
+
+    static void fourQuarterTurnsComeBack()
+    {
+        using qtd::core::nextRotation;
+        using qtd::core::Rotation;
+        QVERIFY(nextRotation(Rotation::None) == Rotation::Quarter);
+        QVERIFY(nextRotation(Rotation::Quarter) == Rotation::Half);
+        QVERIFY(nextRotation(Rotation::Half) == Rotation::ThreeQuarters);
+        QVERIFY(nextRotation(Rotation::ThreeQuarters) == Rotation::None);
     }
 
     // 3-4-5 triangle, then six tiles straight on: all positions can be read off directly.

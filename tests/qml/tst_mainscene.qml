@@ -158,7 +158,7 @@ Item {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);
             const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 2);
+            tryVerify(() => towerButtons.children.length > 3);
             mouseClick(towerButtons.children[1]);
             compare(game.scene.game.selectedTower, 1);
             verify(towerButtons.children[1].highlighted);
@@ -415,10 +415,13 @@ Item {
             tryVerify(() => buttons.width > 0);
             verify(stats.x + stats.width <= buttons.x, stats.width + " and " + buttons.x);
             const towerButtons = findChild(hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 2);
-            const lastButton = towerButtons.children[2];
-            verify(lastButton.x + lastButton.width <= towerButtons.width);
-            verify(stats.y + stats.height <= towerButtons.y);
+            tryVerify(() => towerButtons.children.length > 3);
+            const list = findChild(hud, "towerList");
+            const rotation = findChild(hud, "rotation");
+            verify(stats.y + stats.height <= list.y);
+            verify(list.width >= towerButtons.children[0].width / 2, list.width);
+            verify(list.x + list.width <= rotation.x);
+            verify(rotation.x + rotation.width <= hud.width);
         }
 
         function test_aMapThatDoesNotLoadOffersNoNewTry() {

@@ -39,7 +39,7 @@ CommandResult Simulation::check(const BuildTowerCommand &command) const
         return CommandResult::UnknownTowerType;
     }
     const TowerType &type = content_.towers[static_cast<std::size_t>(command.towerType)];
-    const std::vector<Cell> cells = footprintAt(type, command.cell);
+    const std::vector<Cell> cells = footprintAt(type, command.cell, command.rotation);
     if (!std::ranges::all_of(cells, [this](Cell cell) { return content_.grid.contains(cell); })) {
         return CommandResult::OutsideMap;
     }
@@ -59,7 +59,7 @@ CommandResult Simulation::build(const BuildTowerCommand &command)
     if (result == CommandResult::Accepted) {
         const auto type = static_cast<std::size_t>(command.towerType);
         state_.gold -= content_.towers[type].cost;
-        state_.towers.push_back({state_.nextEntityId++, type, command.cell, 0});
+        state_.towers.push_back({state_.nextEntityId++, type, command.cell, 0, command.rotation});
     }
     return result;
 }
@@ -67,7 +67,8 @@ CommandResult Simulation::build(const BuildTowerCommand &command)
 bool Simulation::hasTowerAt(Cell cell) const
 {
     return std::ranges::any_of(state_.towers, [this, cell](const Tower &tower) {
-        return std::ranges::contains(footprintAt(content_.towers[tower.type], tower.cell), cell);
+        return std::ranges::contains(
+            footprintAt(content_.towers[tower.type], tower.cell, tower.rotation), cell);
     });
 }
 

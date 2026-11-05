@@ -78,7 +78,8 @@ QJsonObject observationOf(const core::Simulation &game)
                                   {"type"_L1, static_cast<qint64>(tower.type)},
                                   {"x"_L1, tower.cell.x},
                                   {"y"_L1, tower.cell.y},
-                                  {"cooldownTicks"_L1, tower.cooldownTicks}});
+                                  {"cooldownTicks"_L1, tower.cooldownTicks},
+                                  {"rotation"_L1, static_cast<qint64>(tower.rotation)}});
     }
     QJsonArray enemies;
     for (const core::Enemy &enemy : state.enemies) {
@@ -248,12 +249,13 @@ QByteArray ControlSession::buildTower(core::ObjectReader &request)
     const qint64 y = request.integer("y"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
     const qint64 tower =
         request.integer("towerType"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const core::Rotation rotation = core::readRotation(request);
     request.rejectUnknownKeys();
     if (request.failed()) {
         return failure(request.error());
     }
     const core::CommandResult result =
-        game_->recorder()->execute(core::BuildTowerCommand{{x, y}, tower});
+        game_->recorder()->execute(core::BuildTowerCommand{{x, y}, tower, rotation});
     game_->changed();
     QJsonObject answer = observation();
     answer.insert("result"_L1, core::toString(result));

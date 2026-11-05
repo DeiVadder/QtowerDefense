@@ -100,7 +100,8 @@ quint64 stateHash(const SimulationState &state)
     }
     fields.add(state.towers.size());
     for (const Tower &tower : state.towers) {
-        fields.add(tower.id, tower.type, tower.cell.x, tower.cell.y, tower.cooldownTicks);
+        fields.add(
+            tower.id, tower.type, tower.cell.x, tower.cell.y, tower.cooldownTicks, tower.rotation);
     }
     return fields.value();
 }

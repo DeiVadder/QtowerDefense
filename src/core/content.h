@@ -86,6 +86,18 @@ private:
     std::vector<Fixed> lengths_; // distance from the start to each point
 };
 
+/// How far a tower is turned clockwise, around the cell it stands on.
+enum class Rotation : quint8 {
+    None,
+    Quarter,
+    Half,
+    ThreeQuarters,
+};
+constexpr quint32 kRotations = 4;
+
+/// The next quarter turn, after the last one comes None.
+Rotation nextRotation(Rotation rotation);
+
 struct TowerType
 {
     QString id;
@@ -97,8 +109,8 @@ struct TowerType
     std::vector<Cell> footprint; // the cells it takes, relative to the cell it stands on
 };
 
-/// The cells a tower of this type takes when it stands on the given cell.
-std::vector<Cell> footprintAt(const TowerType &type, Cell cell);
+/// The cells a tower of this type takes when it stands on the given cell, turned as given.
+std::vector<Cell> footprintAt(const TowerType &type, Cell cell, Rotation rotation);
 
 struct EnemyType
 {

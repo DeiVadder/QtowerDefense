@@ -11,7 +11,7 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | Action | Fields | Effect |
 |---|---|---|
 | `startMap` | `map` (file), `seed` (decimal digits as text) | Starts a game and drops the current one. If it fails, the current game stays |
-| `buildTower` | `x`, `y` (a cell of the grid), `towerType` (index) | Runs the command. The answer adds `result` |
+| `buildTower` | `x`, `y` (a cell of the grid), `towerType` (index), optional `rotation` (clockwise quarter turns around that cell, 0 to 3, default 0) | Runs the command. The answer adds `result` |
 | `advance` | `ticks` (0 to 1000000) | Runs that many ticks, it stops at the end of the game |
 | `observe` | none | Reports the state, changes nothing |
 | `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay |
@@ -30,7 +30,7 @@ All answers with `"ok": true` report the state:
 ```json
 {"ok": true, "status": "running", "tick": 61, "gold": 70, "lives": 5, "hash": "00ab...",
  "wave": {"group": 0, "spawnedInGroup": 1, "countdownTicks": 45},
- "towers": [{"id": 1, "type": 0, "x": 4, "y": 4, "cooldownTicks": 0}],
+ "towers": [{"id": 1, "type": 0, "x": 4, "y": 4, "cooldownTicks": 0, "rotation": 0}],
  "enemies": [{"id": 2, "type": 0, "health": "12", "travelled": "0", "x": "0", "y": "2"}]}
 ```
 

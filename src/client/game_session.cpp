@@ -72,6 +72,7 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
     clock_.setSpeed(speed_);
     paused_ = false;
     selectedTower_ = 0;
+    selectedRotation_ = core::Rotation::None;
     emit mapChanged();
     emit selectionChanged();
     emit towersChanged();
@@ -81,13 +82,20 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
 
 bool GameSession::buildTower(int x, int y)
 {
-    if (!game_ || game_->execute(core::BuildTowerCommand{{x, y}, selectedTower_}) !=
-                      core::CommandResult::Accepted) {
+    if (!game_ ||
+        game_->execute(core::BuildTowerCommand{{x, y}, selectedTower_, selectedRotation_}) !=
+            core::CommandResult::Accepted) {
         return false;
     }
     emit towersChanged();
     emit stateChanged();
     return true;
+}
+
+void GameSession::rotateSelection()
+{
+    selectedRotation_ = core::nextRotation(selectedRotation_);
+    emit selectionChanged();
 }
 
 core::ReplayRecorder *GameSession::recorder()
@@ -153,6 +161,24 @@ int GameSession::selectedTower() const
     return selectedTower_;
 }
 
+QVariantList GameSession::selectedShape() const
+{
+    QVariantList shape;
+    if (!game_) {
+        return shape;
+    }
+    const core::TowerType &type =
+        game_->simulation().content().towers[static_cast<std::size_t>(selectedTower_)];
+    const std::vector<core::Cell> cells = core::footprintAt(type, {}, selectedRotation_);
+    const qint64 left = std::ranges::min(cells, {}, &core::Cell::x).x;
+    const qint64 top = std::ranges::min(cells, {}, &core::Cell::y).y;
+    for (const core::Cell cell : cells) {
+        shape.append(QVariantMap{
+            {u"x"_s, cell.x - left}, {u"y"_s, cell.y - top}, {u"anchor"_s, cell == core::Cell{}}});
+    }
+    return shape;
+}
+
 int GameSession::towerCount() const
 {
     return game_ ? static_cast<int>(game_->simulation().state().towers.size()) : 0;
@@ -169,7 +195,8 @@ QVariantList GameSession::towerCells() const
     if (game_) {
         for (const core::Tower &tower : game_->simulation().state().towers) {
             std::ranges::transform(
-                core::footprintAt(game_->simulation().content().towers[tower.type], tower.cell),
+                core::footprintAt(
+                    game_->simulation().content().towers[tower.type], tower.cell, tower.rotation),
                 std::back_inserter(cells),
                 [](core::Cell cell) {
                     return QPoint(static_cast<int>(cell.x), static_cast<int>(cell.y));

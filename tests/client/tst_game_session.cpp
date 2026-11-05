@@ -78,7 +78,7 @@ private slots:
         QCOMPARE(game.gold(), 120);
         QCOMPARE(game.lives(), 5);
         QCOMPARE(game.gridSize(), QSize(17, 11));
-        QCOMPARE(game.towerTypes().size(), 3);
+        QCOMPARE(game.towerTypes().size(), 4);
         const QVariantMap first = game.towerTypes().at(0).toMap();
         QCOMPARE(first[u"name"_s].toString(), u"ballista"_s);
         QCOMPARE(first[u"cost"_s].toLongLong(), 50);
@@ -135,12 +135,53 @@ private slots:
         QCOMPARE(game.gold(), 30);
         QCOMPARE(game.towerCells(), (QVariantList{QPoint(10, 6), QPoint(11, 6)}));
         game.setSelectedTower(99);
-        QCOMPARE(game.selectedTower(), 2);
+        QCOMPARE(game.selectedTower(), 3);
         game.setSelectedTower(-1);
         QCOMPARE(game.selectedTower(), 0);
         game.setSelectedTower(2);
         game.restart();
         QCOMPARE(game.selectedTower(), 0);
+    }
+
+    void aTowerIsBuiltAsItIsTurned()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        const QSignalSpy selection(&game, &GameSession::selectionChanged);
+        game.rotateSelection();
+        game.rotateSelection();
+        QCOMPARE(selection.size(), 2);
+        game.setSelectedTower(1); // the turn stays with another type
+        QVERIFY(game.buildTower(10, 6));
+        QCOMPARE(game.towerCells(), (QVariantList{QPoint(10, 6), QPoint(9, 6)}));
+        game.restart();
+        game.setSelectedTower(1);
+        QVERIFY(game.buildTower(10, 6));
+        QCOMPARE(game.towerCells(), (QVariantList{QPoint(10, 6), QPoint(11, 6)}));
+    }
+
+    // The wide tower: from its anchor one cell to the right, after a half turn one to the left.
+    void theShapeShowsHowATowerWillStand()
+    {
+        GameSession game;
+        QVERIFY(game.selectedShape().isEmpty());
+        game.startGame(mapFile(), 7);
+        game.setSelectedTower(1);
+        const auto cell = [&game](qsizetype index) {
+            return game.selectedShape().at(index).toMap();
+        };
+        QCOMPARE(game.selectedShape().size(), 2);
+        QCOMPARE(cell(0)[u"x"_s].toInt(), 0);
+        QVERIFY(cell(0)[u"anchor"_s].toBool());
+        QCOMPARE(cell(1)[u"x"_s].toInt(), 1);
+        QVERIFY(!cell(1)[u"anchor"_s].toBool());
+        game.rotateSelection();
+        QCOMPARE(cell(1)[u"x"_s].toInt(), 0);
+        QCOMPARE(cell(1)[u"y"_s].toInt(), 1);
+        game.rotateSelection();
+        QCOMPARE(cell(0)[u"x"_s].toInt(), 1);
+        QVERIFY(cell(0)[u"anchor"_s].toBool());
+        QCOMPARE(cell(1)[u"x"_s].toInt(), 0);
     }
 
     void aRejectedCommandChangesNothing()

@@ -90,8 +90,9 @@ public:
         const quint32 broken = wellFormed ? kCommandValues : random_.nextBelow(kCommandValues);
         const qint64 x = pick(content.grid.width(), broken != 0);
         const qint64 y = pick(content.grid.height(), broken != 1);
+        const qint64 type = pick(static_cast<qint64>(content.towers.size()), broken != 2);
         return core::BuildTowerCommand{
-            {x, y}, pick(static_cast<qint64>(content.towers.size()), broken != 2)};
+            {x, y}, type, static_cast<core::Rotation>(random_.nextBelow(core::kRotations))};
     }
 
 private:

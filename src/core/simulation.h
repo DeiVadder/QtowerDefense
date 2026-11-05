@@ -34,6 +34,7 @@ struct Tower
     std::size_t type = 0;
     Cell cell;                // the cell it stands on, see TowerType::footprint
     qint64 cooldownTicks = 0; // ticks until the tower can fire
+    Rotation rotation = Rotation::None;
 };
 
 /// All that changes during a game. stateHash() must cover every field. Enemies and towers stay in
@@ -58,6 +59,7 @@ struct BuildTowerCommand
 {
     Cell cell;
     qint64 towerType = 0;
+    Rotation rotation = Rotation::None;
 };
 
 /// What a player, human or bot, can ask for. New commands join this list.

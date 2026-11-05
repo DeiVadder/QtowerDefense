@@ -118,6 +118,18 @@ private slots:
         QCOMPARE(tower["type"_L1].toInteger(), 0);
     }
 
+    void aTowerStandsAsItWasTurned()
+    {
+        ControlSession session;
+        start(session);
+        const QByteArray request =
+            R"({"action":"buildTower","x":6,"y":5,"towerType":0,"rotation":3})";
+        const QJsonObject answer = QJsonDocument::fromJson(session.handle(request)).object();
+        QCOMPARE(answer["result"_L1].toString(), u"accepted"_s);
+        const QJsonObject tower = answer["towers"_L1].toArray().first().toObject();
+        QCOMPARE(tower["rotation"_L1].toInteger(), 3);
+    }
+
     void aRequestWithAWrongKeyDoesNothing_data()
     {
         QTest::addColumn<QByteArray>("request");
@@ -258,6 +270,12 @@ private slots:
         QTest::newRow("no ticks") << QByteArray(R"({"action":"advance"})") << u"ticks"_s;
         QTest::newRow("text as cell")
             << QByteArray(R"({"action":"buildTower","x":"1","y":0,"towerType":0})") << u"x"_s;
+        QTest::newRow("rotation too far")
+            << QByteArray(R"({"action":"buildTower","x":1,"y":1,"towerType":0,"rotation":4})")
+            << u"rotation"_s;
+        QTest::newRow("negative rotation")
+            << QByteArray(R"({"action":"buildTower","x":1,"y":1,"towerType":0,"rotation":-1})")
+            << u"rotation"_s;
         QTest::newRow("no file") << QByteArray(R"({"action":"saveReplay"})") << u"file"_s;
         QTest::newRow("unknown key")
             << QByteArray(R"({"action":"observe","extra":1})") << u"extra"_s;

@@ -68,27 +68,89 @@ Item {
         }
     }
 
-    // What a tap on the map builds.
-    Flow {
-        objectName: "towerButtons"
+    // What a tap on the map builds. The row scrolls, so that the list never covers more of the map.
+    Flickable {
+        objectName: "towerList"
         anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: root.unit / 4
+        width: Math.min(towerButtons.width, parent.width - placement.width - root.unit * 3 / 4)
+        height: root.unit
+        contentWidth: towerButtons.width
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
+        clip: true
+
+        Row {
+            id: towerButtons
+
+            objectName: "towerButtons"
+            spacing: root.unit / 4
+
+            Repeater {
+                model: root.game.towerTypes
+
+                delegate: HudButton {
+                    required property int index
+                    required property var modelData
+
+                    unit: root.unit
+                    text: qsTr("%1: %2 gold").arg(modelData.name).arg(modelData.cost)
+                    highlighted: root.game.selectedTower === index
+                    onClicked: root.game.selectedTower = index
+                }
+            }
+        }
+    }
+
+    // How it will stand: the dark cell is the one that is tapped.
+    Row {
+        id: placement
+
+        objectName: "rotation"
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: root.unit / 4
         spacing: root.unit / 4
 
-        Repeater {
-            model: root.game.towerTypes
+        Item {
+            id: shape
 
-            delegate: HudButton {
-                required property int index
-                required property var modelData
+            readonly property int extent: root.game.selectedShape.reduce((most, cell) => Math.max(most,
+                                                                                                  cell.x + 1,
+                                                                                                  cell.y + 1),
+            1)
+            readonly property real cellSize: root.unit / extent
 
-                unit: root.unit
-                text: qsTr("%1: %2 gold").arg(modelData.name).arg(modelData.cost)
-                highlighted: root.game.selectedTower === index
-                onClicked: root.game.selectedTower = index
+            objectName: "shape"
+            width: root.unit
+            height: root.unit
+
+            // The shape lies over the map, a tap on it builds nothing there.
+            MouseArea {
+                anchors.fill: parent
             }
+
+            Repeater {
+                model: root.game.selectedShape
+
+                delegate: Rectangle {
+                    required property var modelData
+
+                    x: modelData.x * shape.cellSize
+                    y: modelData.y * shape.cellSize
+                    width: shape.cellSize - 1
+                    height: shape.cellSize - 1
+                    color: modelData.anchor ? "#8a6d12" : "#c9a227"
+                }
+            }
+        }
+
+        HudButton {
+            objectName: "rotateButton"
+            unit: root.unit
+            text: qsTr("Rotate")
+            onClicked: root.game.rotateSelection()
         }
     }
 

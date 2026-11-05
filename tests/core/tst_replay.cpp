@@ -115,6 +115,10 @@ void addBrokenListRows()
                  "\"type\": \"buildTower\", \"x\": 5",
                  "\"type\": \"sellTower\", \"x\": 5",
                  u"commands[0].type: unknown command \"sellTower\""_s);
+    addBrokenRow("rotation",
+                 "\"type\": \"buildTower\", \"x\": 5",
+                 "\"type\": \"buildTower\", \"rotation\": 4, \"x\": 5",
+                 u"commands[0].rotation: must be an integer from 0 to 3"_s);
     addBrokenRow("result",
                  "\"result\": \"accepted\"",
                  "\"result\": \"maybe\"",
@@ -328,15 +332,43 @@ private slots:
         replay.content = u"map.json"_s;
         replay.seed = 7;
         replay.contentHash = 255;
-        replay.commands.push_back({3, BuildTowerCommand{{2, 1}, 0}, CommandResult::NotEnoughGold});
+        replay.commands.push_back({3,
+                                   BuildTowerCommand{{2, 1}, 0, qtd::core::Rotation::Half},
+                                   CommandResult::NotEnoughGold});
         replay.checkpoints.push_back({3, 16});
         const QByteArray compact = QByteArray(toJson(replay)).replace(' ', "").replace('\n', "");
         QCOMPARE(
             compact,
             QByteArray(R"({"checkpoints":[{"hash":"0000000000000010","tick":3}],)"
-                       R"("commands":[{"result":"notEnoughGold","tick":3,)"
+                       R"("commands":[{"result":"notEnoughGold","rotation":2,"tick":3,)"
                        R"("towerType":0,"type":"buildTower","x":2,"y":1}],"content":"map.json",)"
                        R"("contentHash":"00000000000000ff","formatVersion":1,"seed":"7"})"));
+    }
+
+    void aRotationComesBackFromAFile()
+    {
+        Replay replay;
+        replay.content = u"map.json"_s;
+        replay.seed = 7;
+        replay.contentHash = 255;
+        replay.commands.push_back({3,
+                                   BuildTowerCommand{{2, 1}, 0, qtd::core::Rotation::ThreeQuarters},
+                                   CommandResult::Accepted});
+        replay.checkpoints.push_back({3, 16});
+        const ReplayLoadResult result = parseReplay(toJson(replay));
+        QCOMPARE(result.error, QString());
+        const Replay read = required(result.replay);
+        const auto &build = std::get<BuildTowerCommand>(read.commands.front().command);
+        QVERIFY(build.rotation == qtd::core::Rotation::ThreeQuarters);
+    }
+
+    void aCommandWithoutRotationStandsUnturned()
+    {
+        const ReplayLoadResult result = parseReplay(editedReplay("", ""));
+        QCOMPARE(result.error, QString());
+        const Replay read = required(result.replay);
+        const auto &build = std::get<BuildTowerCommand>(read.commands.front().command);
+        QVERIFY(build.rotation == qtd::core::Rotation::None);
     }
 
     void aValidFileIsRead()

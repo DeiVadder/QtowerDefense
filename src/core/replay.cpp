@@ -87,8 +87,8 @@ Command readCommand(ObjectReader &item)
     // Any number is allowed, a rejected command is part of a recording too.
     const qint64 x = item.integer("x"_L1, -kMaxExactInteger, kMaxExactInteger);
     const qint64 y = item.integer("y"_L1, -kMaxExactInteger, kMaxExactInteger);
-    return BuildTowerCommand{{x, y},
-                             item.integer("towerType"_L1, -kMaxExactInteger, kMaxExactInteger)};
+    const qint64 towerType = item.integer("towerType"_L1, -kMaxExactInteger, kMaxExactInteger);
+    return BuildTowerCommand{{x, y}, towerType, readRotation(item)};
 }
 
 void readCommands(ObjectReader &root, Kind kind, Replay *replay)
@@ -172,11 +172,13 @@ ReplayLoadResult loadFile(const QString &fileName, Kind kind)
 QJsonObject commandToJson(const RecordedCommand &recorded)
 {
     const auto &build = std::get<BuildTowerCommand>(recorded.command);
+    const auto rotation = static_cast<qint64>(build.rotation);
     return {{"tick"_L1, recorded.tick},
             {"type"_L1, "buildTower"_L1},
             {"x"_L1, build.cell.x},
             {"y"_L1, build.cell.y},
             {"towerType"_L1, build.towerType},
+            {"rotation"_L1, rotation},
             {"result"_L1, toString(recorded.result)}};
 }
 
@@ -193,6 +195,14 @@ std::optional<quint64> hashFromText(QStringView text)
         return std::nullopt;
     }
     return text.toULongLong(nullptr, 16);
+}
+
+Rotation readRotation(ObjectReader &item)
+{
+    if (!item.has("rotation"_L1)) {
+        return Rotation::None;
+    }
+    return static_cast<Rotation>(item.integer("rotation"_L1, 0, kRotations - 1));
 }
 
 std::optional<quint64> seedFromText(const QString &text)

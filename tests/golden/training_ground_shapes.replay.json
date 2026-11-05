@@ -1,69 +1,70 @@
 {
     "checkpoints": [
         {
-            "hash": "79957975c91d3322",
+            "hash": "b6355da9a4bf361c",
             "tick": 0
         },
         {
-            "hash": "be3cf5a01713245e",
+            "hash": "048577bd08cc6e60",
             "tick": 30
         },
         {
-            "hash": "e89ea7a7a25286c2",
+            "hash": "23ed3b987e85e4ac",
             "tick": 60
         },
         {
-            "hash": "acbc704ea1325db7",
+            "hash": "197b05bc40b25ee5",
             "tick": 90
         },
         {
-            "hash": "68b29adb26a62101",
+            "hash": "be3219431e02ff23",
             "tick": 120
         },
         {
-            "hash": "97aafb785234f094",
+            "hash": "c965271ba941a64e",
             "tick": 150
         },
         {
-            "hash": "5ce9d98086c2d528",
+            "hash": "0a3872b4dc0a78ae",
             "tick": 180
         },
         {
-            "hash": "990fdf61c9e124c7",
+            "hash": "d39582d888e4dd4d",
             "tick": 210
         },
         {
-            "hash": "23a98ce3bf844fd0",
+            "hash": "0649060562da57c2",
             "tick": 240
         },
         {
-            "hash": "d934076821eac0c8",
+            "hash": "7c7188a43fbb8242",
             "tick": 270
         },
         {
-            "hash": "02594f0a950625f7",
+            "hash": "03dd16e1942d7e39",
             "tick": 300
         },
         {
-            "hash": "8d9a55ee8b376d7e",
+            "hash": "0d94b6feaac07874",
             "tick": 330
         },
         {
-            "hash": "10262d1c2ead040b",
+            "hash": "ba93aff140323fa5",
             "tick": 360
         },
         {
-            "hash": "c74ed9f0cff2c34d",
+            "hash": "7a321403b4e98b43",
             "tick": 390
         },
         {
-            "hash": "62d798730a80c647",
+            "hash": "23bfbbd0861a61a9",
             "tick": 404
         }
     ],
     "commands": [
         {
             "result": "cellBlocked",
+            "rotation": 0,
             "tick": 0,
             "towerType": 0,
             "type": "buildTower",
@@ -72,6 +73,7 @@
         },
         {
             "result": "cellBlocked",
+            "rotation": 0,
             "tick": 0,
             "towerType": 0,
             "type": "buildTower",
@@ -80,6 +82,7 @@
         },
         {
             "result": "outsideMap",
+            "rotation": 0,
             "tick": 0,
             "towerType": 1,
             "type": "buildTower",
@@ -87,7 +90,17 @@
             "y": 5
         },
         {
+            "result": "outsideMap",
+            "rotation": 2,
+            "tick": 0,
+            "towerType": 1,
+            "type": "buildTower",
+            "x": 0,
+            "y": 4
+        },
+        {
             "result": "accepted",
+            "rotation": 1,
             "tick": 0,
             "towerType": 1,
             "type": "buildTower",
@@ -96,14 +109,16 @@
         },
         {
             "result": "cellOccupied",
+            "rotation": 0,
             "tick": 1,
             "towerType": 0,
             "type": "buildTower",
-            "x": 5,
-            "y": 3
+            "x": 4,
+            "y": 4
         },
         {
             "result": "notEnoughGold",
+            "rotation": 0,
             "tick": 1,
             "towerType": 2,
             "type": "buildTower",
@@ -112,6 +127,7 @@
         },
         {
             "result": "accepted",
+            "rotation": 0,
             "tick": 340,
             "towerType": 0,
             "type": "buildTower",
@@ -120,7 +136,7 @@
         }
     ],
     "content": "training_ground.json",
-    "contentHash": "5f4a0b0ef12c94d9",
+    "contentHash": "f9010ccb1b186ba4",
     "formatVersion": 1,
     "seed": "5"
 }

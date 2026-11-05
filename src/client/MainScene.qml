@@ -65,6 +65,10 @@ View3D {
         property point last: Qt.point(0, 0)
 
         target: null
+        // Handlers see every press, even on the HUD. A drag that began there is not for the map.
+        grabPermissions: PointerHandler.CanTakeOverFromHandlersOfSameType
+                         | PointerHandler.CanTakeOverFromHandlersOfDifferentType
+                         | PointerHandler.ApprovesTakeOverByAnything
         onActiveChanged: last = Qt.point(0, 0)
         onActiveTranslationChanged: {
             root.panBy(activeTranslation.x - last.x, activeTranslation.y - last.y);

@@ -6,6 +6,31 @@
 
 namespace qtd::core {
 
+namespace {
+
+/// Turns a cell around 0, 0. On the map, y grows towards the viewer, so x turns into y.
+Cell turned(Cell offset, Rotation rotation)
+{
+    switch (rotation) {
+    case Rotation::None:
+        break;
+    case Rotation::Quarter:
+        return {-offset.y, offset.x};
+    case Rotation::Half:
+        return {-offset.x, -offset.y};
+    case Rotation::ThreeQuarters:
+        return {offset.y, -offset.x};
+    }
+    return offset;
+}
+
+} // namespace
+
+Rotation nextRotation(Rotation rotation)
+{
+    return static_cast<Rotation>((static_cast<quint32>(rotation) + 1) % kRotations);
+}
+
 Point centreOf(Cell cell)
 {
     return {Fixed::fromInt(cell.x), Fixed::fromInt(cell.y)};
@@ -36,12 +61,13 @@ std::size_t Grid::indexOf(Cell cell) const
     return static_cast<std::size_t>(cell.y * width_ + cell.x);
 }
 
-std::vector<Cell> footprintAt(const TowerType &type, Cell cell)
+std::vector<Cell> footprintAt(const TowerType &type, Cell cell, Rotation rotation)
 {
     std::vector<Cell> cells;
     cells.reserve(type.footprint.size());
-    std::ranges::transform(type.footprint, std::back_inserter(cells), [cell](Cell offset) {
-        return Cell{cell.x + offset.x, cell.y + offset.y};
+    std::ranges::transform(type.footprint, std::back_inserter(cells), [=](Cell offset) {
+        const Cell place = turned(offset, rotation);
+        return Cell{cell.x + place.x, cell.y + place.y};
     });
     return cells;
 }

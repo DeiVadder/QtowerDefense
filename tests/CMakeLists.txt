@@ -99,7 +99,7 @@ add_test(NAME headless_golden_defence COMMAND qtd_headless
     --replay "${QTD_GOLDEN_DIR}/training_ground_defence.replay.json")
 set_tests_properties(headless_golden_defence PROPERTIES
     LABELS golden
-    PASS_REGULAR_EXPRESSION "\"hash\":\"2aa462d18aa4fe67\".*\"matches\":true")
+    PASS_REGULAR_EXPRESSION "\"hash\":\"e3cdb35e8056035c\".*\"matches\":true")
 
 if(NOT QTD_ENABLE_UBSAN)
     # Needs the GPU: renders the real main window once, without real-time waits of its own.

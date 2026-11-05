@@ -241,7 +241,7 @@ private slots:
         const QJsonObject report =
             parsed(runHeadless(game).json)["games"_L1].toArray().first().toObject();
         QCOMPARE(report["seed"_L1].toString(), u"20261104"_s);
-        QCOMPARE(report["hash"_L1].toString(), u"2aa462d18aa4fe67"_s);
+        QCOMPARE(report["hash"_L1].toString(), u"e3cdb35e8056035c"_s);
     }
 
     void theSeedOptionBeatsTheScript()

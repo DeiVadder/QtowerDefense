@@ -45,6 +45,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `EnemyType` | struct | `content.h` |  |
 | `Grid` | class | `content.h` | The chessboard of a map, row by row. |
 | `Path` | class | `content.h` | A fixed route for enemies: straight segments through at least two different points. |
+| `Rotation` | enum class | `content.h` | How far a tower is turned clockwise, around the cell it stands on. |
 | `SpawnGroup` | struct | `content.h` | Enemies of one type that enter the path one after the other. |
 | `Terrain` | enum class | `content.h` | What lies on a cell. |
 | `TowerType` | struct | `content.h` |  |

@@ -188,3 +188,13 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Bildrate:** Gemessen wird ohne Vsync (`QSG_NO_VSYNC`) mit allen 200 Gegnern auf der Karte, sonst setzt der Bildschirm die Zahl. Unter 60 Bildern je Sekunde scheitert die Stufe.
 - **Mobile:** Der Auftrag verlangt, dass die Steuerung dort abschaltbar ist. Sie ist nur eine Startoption; ein Schalter für den Build kommt mit der ersten Mobile-Etappe.
 - **Verworfen:** Screenshots per Betriebssystem von außen: Sie wären plattformabhängig und zeigten auch fremde Fenster. Eine Messung über `grabWindow`: Sie rendert anders als der normale Frame.
+
+## E-27 Türme drehen
+
+- **Was:** Wunsch des Menschen vom 2026-11-05, vor Etappe 6. `BuildTowerCommand` und `Tower` tragen eine `Rotation` in Vierteldrehungen im Uhrzeigersinn um das Standfeld. Auf der Karte wächst `y` zum Betrachter, deshalb dreht `(x, y)` zu `(-y, x)`.
+- **Standfeld:** Es bleibt beim Drehen liegen. Von dort schießt der Turm, und dorthin zielt der Tipp.
+- **Formate:** In Replays und Anfragen ist `rotation` eine Zahl von 0 bis 3 und darf fehlen, dann steht der Turm ungedreht. Andere Werte sind ein Formfehler, kein abgelehnter Befehl, weil die Menge fest ist. Der Fuzz-Bot dreht zufällig.
+- **Client:** Ein Knopf dreht die Auswahl, daneben zeigt das HUD die Form, wie sie stehen wird, das Standfeld dunkel. Ohne diese Vorschau wäre Drehen im Blindflug. Die Drehung bleibt beim Wechsel des Turmtyps, ein neues Spiel setzt sie zurück.
+- **Inhalt:** `horseshoe` in `training_ground` zeigt eine U-Form.
+- **Formatversion:** Bleibt 1, wie in E-25. Der Hash nimmt die Drehung auf, alte Replays mit Türmen passen also nicht mehr, ausgeliefert ist noch keins.
+- **Turmliste:** Sie scrollt einzeilig, statt umzubrechen, und deckt so nie mehr von der Karte zu. Damit das geht, darf der `DragHandler` der Karte Items die Geste nicht mehr wegnehmen: Handler sehen jeden Druck, auch auf dem HUD. Ein Ziehen, das auf dem HUD beginnt, verschiebt die Karte deshalb nicht mehr.

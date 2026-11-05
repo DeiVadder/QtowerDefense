@@ -1,65 +1,66 @@
 {
     "checkpoints": [
         {
-            "hash": "16178752c77d8368",
+            "hash": "b0e128c315476d2b",
             "tick": 0
         },
         {
-            "hash": "32da98943a26664c",
+            "hash": "91324019ff5c792f",
             "tick": 30
         },
         {
-            "hash": "9b87c9ee8b5dd268",
+            "hash": "f315a3a988e428b3",
             "tick": 60
         },
         {
-            "hash": "a315cc665d62ce87",
+            "hash": "cc9ac5053684ac84",
             "tick": 90
         },
         {
-            "hash": "f5f673ba2065b468",
+            "hash": "f7984448a694d65f",
             "tick": 120
         },
         {
-            "hash": "5ef9714f79e34404",
+            "hash": "326e5c3a05146eeb",
             "tick": 150
         },
         {
-            "hash": "53f18e1c1333c43e",
+            "hash": "5c13d74286e42629",
             "tick": 180
         },
         {
-            "hash": "cc376c92ea5fd0fc",
+            "hash": "cecc4d8d10abd9e7",
             "tick": 210
         },
         {
-            "hash": "3faf0880062a5482",
+            "hash": "c4882de646487961",
             "tick": 240
         },
         {
-            "hash": "da837c4df64251ec",
+            "hash": "fea9ea04b93603d7",
             "tick": 270
         },
         {
-            "hash": "c16721db2b674cef",
+            "hash": "fb13ce071958a3e0",
             "tick": 300
         },
         {
-            "hash": "945104f23329a865",
+            "hash": "3661db5c92e2bf7e",
             "tick": 330
         },
         {
-            "hash": "c7209b751e9ff89c",
+            "hash": "f482732639be9c27",
             "tick": 360
         },
         {
-            "hash": "2aa462d18aa4fe67",
+            "hash": "e3cdb35e8056035c",
             "tick": 379
         }
     ],
     "commands": [
         {
             "result": "accepted",
+            "rotation": 0,
             "tick": 0,
             "towerType": 0,
             "type": "buildTower",
@@ -68,6 +69,7 @@
         },
         {
             "result": "accepted",
+            "rotation": 0,
             "tick": 0,
             "towerType": 0,
             "type": "buildTower",
@@ -76,6 +78,7 @@
         },
         {
             "result": "notEnoughGold",
+            "rotation": 0,
             "tick": 240,
             "towerType": 0,
             "type": "buildTower",
@@ -84,6 +87,7 @@
         },
         {
             "result": "gameOver",
+            "rotation": 0,
             "tick": 379,
             "towerType": 0,
             "type": "buildTower",
@@ -92,7 +96,7 @@
         }
     ],
     "content": "training_ground.json",
-    "contentHash": "5f4a0b0ef12c94d9",
+    "contentHash": "f9010ccb1b186ba4",
     "formatVersion": 1,
     "seed": "20261104"
 }

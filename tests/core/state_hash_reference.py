@@ -47,7 +47,7 @@ def handmade_state():
         random_state, increment,
         9, 1, 2, 4,                                 # next id, spawn group, spawned, countdown
         1, 3, 0, 15000, 25000,                      # enemies
-        1, 5, 1, 2, 3, 6,                           # towers
+        1, 5, 1, 2, 3, 6, 3,                        # towers, turned three quarters
     ]  # fmt: skip
 
 

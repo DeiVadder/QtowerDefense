@@ -49,7 +49,8 @@ QString checkTowers(const core::Content &content, const core::SimulationState &s
         if (tower.type >= content.towers.size()) {
             return u"tower %1: unknown type"_s.arg(tower.id);
         }
-        for (const core::Cell cell : core::footprintAt(content.towers[tower.type], tower.cell)) {
+        for (const core::Cell cell :
+             core::footprintAt(content.towers[tower.type], tower.cell, tower.rotation)) {
             if (!content.grid.contains(cell)) {
                 return u"tower %1: outside the map"_s.arg(tower.id);
             }

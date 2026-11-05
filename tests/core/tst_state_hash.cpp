@@ -53,7 +53,7 @@ SimulationState handmadeState()
     state.spawnedInGroup = 2;
     state.spawnCountdownTicks = 4;
     state.enemies.push_back({3, 0, Fixed::fromRaw(15000), Fixed::fromRaw(25000)});
-    state.towers.push_back({5, 1, {2, 3}, 6});
+    state.towers.push_back({5, 1, {2, 3}, 6, qtd::core::Rotation::ThreeQuarters});
     return state;
 }
 
@@ -104,6 +104,7 @@ NamedChanges entityChanges()
         {"tower x", [](auto &s) { ++s.towers[0].cell.x; }},
         {"tower y", [](auto &s) { ++s.towers[0].cell.y; }},
         {"tower cooldown", [](auto &s) { ++s.towers[0].cooldownTicks; }},
+        {"tower rotation", [](auto &s) { s.towers[0].rotation = qtd::core::Rotation::Half; }},
     };
 }
 
@@ -118,7 +119,7 @@ private slots:
     /// the project. They hold on every compiler and in every process.
     void theStateHashIsPinned()
     {
-        QCOMPARE(stateHash(handmadeState()), 0x1109AD7A5261B20EULL);
+        QCOMPARE(stateHash(handmadeState()), 0xF858D0339832B5ADULL);
     }
 
     void theContentHashIsPinned()

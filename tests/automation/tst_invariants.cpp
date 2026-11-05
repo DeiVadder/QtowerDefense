@@ -1,9 +1,15 @@
 #include "../core/scenario.h"
+#include "automation/bot.h"
 #include "automation/invariants.h"
 
 #include <QTest>
 
+#include <cstddef>
 #include <functional>
+#include <memory>
+#include <optional>
+#include <set>
+#include <variant>
 
 using qtd::automation::checkInvariants;
 using qtd::core::BuildTowerCommand;
@@ -152,6 +158,34 @@ private slots:
         const QString problem = qtd::automation::checkInvariants(content, state);
         QVERIFY2(expected.isEmpty() ? problem.isEmpty() : problem.contains(expected),
                  qPrintable(problem));
+    }
+
+    // On (0, 5), the second cell lies off the map unless the tower is turned half round.
+    static void theCellsOfATurnedTowerAreChecked()
+    {
+        const Content content = contentOf(editedJson(R"("footprint": [{"x": 0, "y": 0}])",
+                                                     R"("footprint": [{"x": 0, "y": 0},
+                                                                      {"x": -1, "y": 0}])"));
+        SimulationState state = healthyState(content);
+        state.towers.push_back({state.nextEntityId++, 0, {0, 5}, 0, qtd::core::Rotation::Half});
+        QCOMPARE(checkInvariants(content, state), QString());
+        state.towers.back().rotation = qtd::core::Rotation::None;
+        QVERIFY(checkInvariants(content, state).contains(u"outside the map"_s));
+    }
+
+    static void theFuzzBotTriesEveryRotation()
+    {
+        Simulation game(contentOf(scenarioJson()), 1);
+        const std::unique_ptr<qtd::automation::Bot> bot =
+            qtd::automation::makeBot(qtd::automation::BotKind::Fuzz, 3);
+        std::set<qtd::core::Rotation> seen;
+        while (game.state().status == qtd::core::GameStatus::Running) {
+            while (const std::optional<qtd::core::Command> command = bot->nextCommand(game)) {
+                seen.insert(std::get<qtd::core::BuildTowerCommand>(*command).rotation);
+            }
+            game.tick();
+        }
+        QCOMPARE(seen.size(), std::size_t{qtd::core::kRotations});
     }
 
     void damageIsFound()

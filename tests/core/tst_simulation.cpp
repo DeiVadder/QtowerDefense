@@ -273,6 +273,47 @@ private slots:
         QVERIFY(game.execute(BuildTowerCommand{{x, y}, 0}) == result);
     }
 
+    static void aTurnedTowerTakesTheCellsItTurnedTo_data()
+    {
+        using qtd::core::Rotation;
+        QTest::addColumn<qint64>("x");
+        QTest::addColumn<qint64>("y");
+        QTest::addColumn<Rotation>("rotation");
+        QTest::addColumn<CommandResult>("result");
+        QTest::newRow("beside it, where it would reach unturned")
+            << qint64{6} << qint64{5} << Rotation::None << CommandResult::Accepted;
+        QTest::newRow("onto its second cell")
+            << qint64{4} << qint64{6} << Rotation::None << CommandResult::CellOccupied;
+        QTest::newRow("turned onto its second cell")
+            << qint64{5} << qint64{7} << Rotation::ThreeQuarters << CommandResult::CellOccupied;
+        QTest::newRow("over the edge unturned")
+            << qint64{10} << qint64{8} << Rotation::None << CommandResult::OutsideMap;
+        QTest::newRow("turned away from the edge")
+            << qint64{10} << qint64{8} << Rotation::Half << CommandResult::Accepted;
+        QTest::newRow("beside the path")
+            << qint64{3} << qint64{1} << Rotation::None << CommandResult::Accepted;
+        QTest::newRow("turned onto the path")
+            << qint64{3} << qint64{1} << Rotation::ThreeQuarters << CommandResult::CellBlocked;
+    }
+
+    // A tower of two cells stands on (5, 5) and (5, 6).
+    static void aTurnedTowerTakesTheCellsItTurnedTo()
+    {
+        using qtd::core::Rotation;
+        QFETCH(const qint64, x);
+        QFETCH(const qint64, y);
+        QFETCH(const Rotation, rotation);
+        QFETCH(const CommandResult, result);
+        Simulation game(
+            contentOf(editedJson(R"("footprint": [{"x": 0, "y": 0}])",
+                                 R"("footprint": [{"x": 0, "y": 0}, {"x": 1, "y": 0}])")),
+            1);
+        QVERIFY(game.execute(BuildTowerCommand{{5, 5}, 0, Rotation::Quarter}) ==
+                CommandResult::Accepted);
+        QVERIFY(game.state().towers.front().rotation == Rotation::Quarter);
+        QVERIFY(game.check(BuildTowerCommand{{x, y}, 0, rotation}) == result);
+    }
+
     // The shape takes (x, y), (x, y - 1) and (x + 1, y). The first problem found is the answer.
     static void problemsComeInTheirOrder()
     {

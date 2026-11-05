@@ -14,6 +14,8 @@
 
 namespace qtd::core {
 
+class ObjectReader;
+
 /// Ticks between two checkpoints of a recording, one second of game time.
 constexpr qint64 kCheckpointIntervalTicks = kTicksPerSecond;
 
@@ -60,6 +62,10 @@ QString toString(GameStatus status);
 
 /// A seed from its decimal text, the only form it has outside. Signs and spaces do not count.
 std::optional<quint64> seedFromText(const QString &text);
+
+/// The optional key "rotation" of a build command: quarter turns from 0 to 3, none if it is
+/// missing.
+Rotation readRotation(ObjectReader &item);
 
 /// The file format, stable for equal replays. See docs/Architektur.md.
 QByteArray toJson(const Replay &replay);
