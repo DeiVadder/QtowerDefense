@@ -28,6 +28,8 @@ class GameSession : public QObject
     Q_PROPERTY(QString error READ error NOTIFY mapChanged)
     Q_PROPERTY(QSize gridSize READ gridSize NOTIFY mapChanged)
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
+    Q_PROPERTY(QStringList towerModels READ towerModels NOTIFY mapChanged)
+    Q_PROPERTY(QStringList enemyModels READ enemyModels NOTIFY mapChanged)
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
     Q_PROPERTY(QStringList spellNames READ spellNames NOTIFY mapChanged)
@@ -55,6 +57,18 @@ class GameSession : public QObject
     Q_PROPERTY(int maxSpeed READ maxSpeed CONSTANT)
 
 public:
+    /// Something a player should hear.
+    enum class Cue : quint8 {
+        Build,
+        Upgrade,
+        Sell,
+        Spell,
+        Wave,
+        Won,
+        Lost,
+    };
+    Q_ENUM(Cue)
+
     explicit GameSession(QObject *parent = nullptr);
     ~GameSession() override;
 
@@ -97,6 +111,9 @@ public:
     QString resumeGame(const QString &fileName, const QString &saveFile);
 
     [[nodiscard]] const QString &error() const;
+    /// By type: the name of a model in the resources of the client, empty if it has none.
+    [[nodiscard]] QStringList towerModels() const;
+    [[nodiscard]] QStringList enemyModels() const;
     [[nodiscard]] bool canCallWave() const;
     [[nodiscard]] qint64 waveCallBonus() const;
     [[nodiscard]] const QString &saveFile() const;
@@ -163,6 +180,9 @@ signals:
     void stateChanged();
     void clockChanged();
     void saveChanged();
+    void cue(qtd::client::GameSession::Cue what);
+    /// A spell has hit this cell, in map units around it.
+    void spellCast(int x, int y, double radius, int spell);
     /// Time went on, enemies are somewhere else on the screen.
     void frameChanged();
 

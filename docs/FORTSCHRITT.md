@@ -2,8 +2,9 @@
 
 ## Stand
 
-- **Etappe:** 0 bis 9 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus Etappe 10:** Türme, Hindernisse und Gegner als Modelle (Kenney, CC0), Schüsse, Einschlag der Zauber, Sound für Bauen, Upgrade, Verkauf, Zauber, Welle und Spielende (E-33). Hintergrundmusik fehlt.
 - **Dazu aus Etappe 9:** Wellen vorziehen gegen Bonusgold, Speichern und Laden eines laufenden Spiels als Replay, von Hand in der Pause und beim Gang in den Hintergrund, auch über die Steuerschnittstelle (E-31).
 - **Dazu aus Etappe 8:** Zauber `meteor` und `deep_freeze` mit Abklingzeit, im HUD wählbar, auf Bots und Steuerschnittstelle (E-30).
 - **Dazu aus Etappe 7:** Sieben Turmtypen mit je zwei Upgrades, Verkauf, Flächenschaden (`catapult`), acht Gegnertypen und zwei Bosse, Regeneration, neue Karte `mire_siege`, Upgrade und Verkauf im HUD (E-29).
@@ -22,9 +23,9 @@
 
 ## Nächster Schritt
 
-1. Etappe 10, die Assets gleich je Landschaft für Level und Weltkarte (E-32).
+1. Etappe 11, zuvor das UI-Thema. Geländekacheln und Landschaften je Abschnitt kommen dort dazu (E-32, E-33).
 2. Vor Etappe 11 (Wunsch des Menschen, 2026-11-05): das UI-Thema aus dem Auftrag, also Neon `#2CDE85` als Akzent und ein QML-Theme-Singleton für alle Farben, Abstände und Schriften. Das HUD hat bisher feste Farben.
-3. In Etappe 11: Weltkarte im Nebel mit sechs Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
+3. In Etappe 11: Weltkarte im Nebel mit neun Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
 
 ## Bekannte Mängel und offene Punkte
 
@@ -75,7 +76,7 @@
 | 7 | Inhalte Türme und Gegner | fertig, in `dev` |
 | 8 | Zauber und Helden | fertig, in `dev` |
 | 9 | Spielfluss | fertig, in `dev` |
-| 10 | Assets | offen |
+| 10 | Assets | fertig bis auf Musik und Geländekacheln, in `dev` |
 | 11 | Modi | offen |
 | 12 | Balancing | offen |
 | 13 | Feinschliff | offen |

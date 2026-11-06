@@ -33,6 +33,10 @@ Window {
         game: session
     }
 
+    GameSounds {
+        game: session
+    }
+
     // Last, as objects go in the order of their creation: the views must not outlive their game.
     GameSession {
         id: session

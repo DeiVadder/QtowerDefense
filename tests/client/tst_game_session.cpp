@@ -1,5 +1,6 @@
 #include "client/game_session.h"
 #include "client/map_instances.h"
+#include "open_instances.h"
 
 #include <QDir>
 #include <QFile>
@@ -10,7 +11,6 @@
 #include <QTest>
 
 #include <cstddef>
-#include <cstring>
 #include <vector>
 
 using qtd::client::GameSession;
@@ -39,32 +39,6 @@ void runTicks(GameSession &game, qint64 ticks)
         game.advanceTime(kTickMicroseconds);
     }
 }
-
-/// Reaches the protected buffer of the instancing.
-class OpenInstances : public MapInstances
-{
-public:
-    int count()
-    {
-        int instances = -1;
-        getInstanceBuffer(&instances);
-        return instances;
-    }
-
-    InstanceTableEntry entry(int index)
-    {
-        int instances = 0;
-        const QByteArray buffer = getInstanceBuffer(&instances);
-        InstanceTableEntry found{};
-        std::memcpy(&found, buffer.constData() + index * qsizetype{sizeof(found)}, sizeof(found));
-        return found;
-    }
-
-    InstanceTableEntry first()
-    {
-        return entry(0);
-    }
-};
 
 /// Where the first boss walks among the enemies, -1 if none does.
 int indexOfBoss(const qtd::core::Simulation &game)
@@ -492,7 +466,7 @@ private slots:
         board.setLayer(MapInstances::Layer::Board);
         board.setFieldSize(50);
         board.setGame(&game);
-        QCOMPARE(board.count(), 17 * 11);
+        QVERIFY(board.count() > 17 * 11); // the ground under the obstacles comes after the cells
         const auto at = [&board](int x, int y) {
             return board.entry(y * 17 + x);
         };
@@ -504,7 +478,8 @@ private slots:
         QVERIFY(at(3, 2).getColor() != open && at(6, 5).getColor() != at(3, 2).getColor()); // path
         QVERIFY(at(2, 9).getColor() != open);                                               // water
         QVERIFY(at(2, 5).getScale().y() > at(5, 5).getScale().y());                         // rock
-        QVERIFY(at(13, 2).getScale().y() > at(2, 5).getScale().y());                        // tree
+        QVERIFY(at(13, 2).getScale().y() <
+                at(2, 5).getScale().y()); // the model of a tree takes taps
     }
 
     void aHigherLevelStandsTaller()
@@ -550,28 +525,15 @@ private slots:
             boss = indexOfBoss(simulation);
         }
         QVERIFY(boss >= 0);
-        game.refresh();
-        QCOMPARE(enemies.count(), static_cast<int>(simulation.state().enemies.size()));
-        QVERIFY(enemies.entry(boss).getScale().y() > 1.0F);
         QVERIFY(boss > 0); // the wave leaves others before it on the path
-        QCOMPARE(enemies.entry(0).getScale().y(), 1.0F);
-    }
-
-    void towersShowWithAllTheirCells()
-    {
-        GameSession game;
-        game.startGame(mapFile(), 7);
-        OpenInstances towers;
-        towers.setLayer(MapInstances::Layer::Towers);
-        towers.setFieldSize(50);
-        towers.setGame(&game);
-        QCOMPARE(towers.count(), 0);
-        game.setSelectedTower(1);
-        QVERIFY(game.buildTower(10, 6));
-        QCOMPARE(towers.count(), 2);
-        QCOMPARE(towers.entry(1).getPosition().x(), 11 * 50.0F);
-        QCOMPARE(towers.entry(1).getPosition().z(), 6 * 50.0F);
-        QVERIFY(towers.entry(1).getPosition().y() > 0);
+        const std::vector<qtd::core::Enemy> &all = simulation.state().enemies;
+        enemies.setTypeIndex(static_cast<int>(all[static_cast<std::size_t>(boss)].type));
+        game.refresh();
+        QCOMPARE(enemies.count(), 1); // a layer shows one type
+        QVERIFY(enemies.first().getScale().y() > 1.0F);
+        enemies.setTypeIndex(static_cast<int>(all.front().type));
+        QVERIFY(enemies.count() > 0);
+        QCOMPARE(enemies.first().getScale().y(), 1.0F);
     }
 
     void instancesFollowTheEnemies()
@@ -587,8 +549,9 @@ private slots:
         runTicks(game, 61);
         QCOMPARE(instances.count(), 1);
         const QQuick3DInstancing::InstanceTableEntry entry = instances.first();
-        QCOMPARE(entry.getPosition(), QVector3D(0, 0, 100));
-        QCOMPARE(entry.getScale(), QVector3D(0.25F, 0.25F, 0.25F));
+        QCOMPARE(entry.getPosition().x(), 0.0F);
+        QCOMPARE(entry.getPosition().z(), 100.0F);
+        QCOMPARE(entry.getScale().y(), 0.25F);
     }
 };
 

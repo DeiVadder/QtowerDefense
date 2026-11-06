@@ -187,6 +187,47 @@ private slots:
         QCOMPARE(game.saveError(), QString());
     }
 
+    void everyActionIsHeard()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        const QSignalSpy cues(&game, &GameSession::cue);
+        const QSignalSpy blasts(&game, &GameSession::spellCast);
+        QVERIFY(game.buildTower(4, 4));
+        QVERIFY(game.chooseTowerAt(4, 4));
+        QVERIFY(game.upgradeChosenTower());
+        QVERIFY(game.sellChosenTower());
+        game.selectSpell(0);
+        QVERIFY(game.castSpellAt(3, 2));
+        QVERIFY(game.callWave());
+        const QList<GameSession::Cue> expected{GameSession::Cue::Build,
+                                               GameSession::Cue::Upgrade,
+                                               GameSession::Cue::Sell,
+                                               GameSession::Cue::Spell,
+                                               GameSession::Cue::Wave};
+        QCOMPARE(cues.size(), expected.size());
+        for (qsizetype index = 0; index < expected.size(); ++index) {
+            QCOMPARE(cues.at(index).at(0).value<GameSession::Cue>(), expected.at(index));
+        }
+        QCOMPARE(blasts.size(), 1);
+        QCOMPARE(blasts.at(0).at(0).toInt(), 3);
+        QCOMPARE(blasts.at(0).at(2).toDouble(), 2.0);
+    }
+
+    void theEndOfAGameIsHeard()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        const QSignalSpy cues(&game, &GameSession::cue);
+        game.setSpeed(3);
+        for (int frame = 0; frame < 1000; ++frame) {
+            game.advanceTime(100'000);
+        }
+        QVERIFY(game.lost());
+        QCOMPARE(cues.size(), 1);
+        QCOMPARE(cues.at(0).at(0).value<GameSession::Cue>(), GameSession::Cue::Lost);
+    }
+
     void aWaveIsCalledForItsBonus()
     {
         GameSession game;

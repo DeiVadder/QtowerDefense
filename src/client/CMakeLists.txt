@@ -3,15 +3,15 @@ qt_add_qml_module(qtd_client
     URI QtowerDefense.Client
     VERSION 1.0
     CLASS_NAME QtowerDefenseClientPlugin
-    DEPENDENCIES QtQuick3D
+    DEPENDENCIES QtQuick3D QtMultimedia
     SOURCES
         app_info.cpp app_info.h
-        game_session.cpp game_session.h
+        game_session.cpp game_session_save.cpp game_session.h
         graphics.cpp graphics.h
         map_instances.cpp map_instances.h
         screen_control.cpp screen_control.h
-    QML_FILES Hud.qml HudButton.qml Main.qml MainScene.qml)
-target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D)
+    QML_FILES AssetModel.qml GameSounds.qml Hud.qml HudButton.qml Main.qml MainScene.qml)
+target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
 # rhi/qrhi.h, only for the GPU time of a frame.
 target_link_libraries(qtd_client PRIVATE Qt6::GuiPrivate)
 qtd_set_strict_warnings(qtd_client)
@@ -23,6 +23,12 @@ qt_add_resources(qtd_client "qtd_content"
     FILES
         "${PROJECT_SOURCE_DIR}/content/training_ground.json"
         "${PROJECT_SOURCE_DIR}/content/mire_siege.json")
+
+file(GLOB qtd_assets CONFIGURE_DEPENDS "assets/*.mesh" "assets/*.png" "assets/*.ogg")
+qt_add_resources(qtd_client "qtd_assets"
+    PREFIX "/assets"
+    BASE "assets"
+    FILES ${qtd_assets})
 
 # Generated code of qmlcachegen is third-party code in the sense of the warning rule: C4702 comes
 # from Qt templates that it instantiates, not from anything in this project.

@@ -45,8 +45,22 @@ View3D {
         panZ = Math.min(limitZ, Math.max(-limitZ, panZ - pixelsY * unitsPerPixel));
     }
 
-    // The cell under a hit of the board or of a tower, nothing beside the map.
+    // Towers and trees reach higher than their blocks, so their models take taps.
+    function lookOf(hit: var): AssetModel {
+        return hit.objectHit as AssetModel;
+    }
+
+    function isTower(hit: var): bool {
+        const look = lookOf(hit);
+        return hit.objectHit === towers || (look !== null && look.tower);
+    }
+
+    // The cell under a hit of the map, nothing beside it.
     function cellOf(hit: var): var {
+        if (lookOf(hit) !== null) {
+            const place = map.mapPositionFromScene(hit.scenePosition);
+            return Qt.point(Math.round(place.x / fieldSize), Math.round(place.z / fieldSize));
+        }
         if (hit.objectHit === towers) {
             return game.towerCells[hit.instanceIndex];
         }
@@ -63,8 +77,8 @@ View3D {
             const target = cellOf(hit);
             return target !== undefined && game.castSpellAt(target.x, target.y);
         }
-        if (hit.objectHit === towers) {
-            const cell = game.towerCells[hit.instanceIndex];
+        if (isTower(hit)) {
+            const cell = cellOf(hit);
             // Right after a restart, the picture may still show towers of the last game.
             return cell !== undefined && game.chooseTowerAt(cell.x, cell.y);
         }
@@ -134,6 +148,7 @@ View3D {
     DirectionalLight {
         eulerRotation.x: -50
         eulerRotation.y: -30
+        ambientColor: "#505a60" // the far side of a model stays visible
     }
 
     Model {
@@ -164,6 +179,7 @@ View3D {
             }
             materials: PrincipledMaterial {
                 baseColor: "white"
+                alphaMode: PrincipledMaterial.Blend // obstacles are seen through their block
             }
         }
 
@@ -180,23 +196,137 @@ View3D {
             }
             materials: PrincipledMaterial {
                 baseColor: "white"
+                alphaMode: PrincipledMaterial.Blend // only takes taps, TowerLooks shows the towers
+            }
+        }
+
+        Repeater3D {
+            model: root.game.towerModels
+
+            delegate: AssetModel {
+                id: towerLook
+
+                required property int index
+                required property string modelData
+
+                name: towerLook.modelData
+                fallback: "#Cube"
+                tower: true
+                pickable: true
+                y: found ? 0 : root.fieldSize / 2 // a plain cube has its middle at its place
+                instancing: MapInstances {
+                    game: root.game
+                    layer: MapInstances.TowerLooks
+                    typeIndex: towerLook.index
+                    fieldSize: root.fieldSize
+                    modelSize: towerLook.size
+                }
+            }
+        }
+
+        Repeater3D {
+            model: root.game.enemyModels
+
+            delegate: AssetModel {
+                id: enemyLook
+
+                required property int index
+                required property string modelData
+
+                name: enemyLook.modelData
+                fallback: "#Sphere"
+                y: enemyLook.modelData.length > 0 ? 0 : root.enemyHeight
+                instancing: MapInstances {
+                    game: root.game
+                    layer: MapInstances.Enemies
+                    typeIndex: enemyLook.index
+                    fieldSize: root.fieldSize
+                    enemyScale: root.fieldSize * (enemyLook.modelData.length > 0 ? 1.1 : 1 / 120)
+                }
             }
         }
 
         Model {
-            id: enemies
+            id: shots
 
             source: "#Sphere"
-            y: root.enemyHeight
-            instanceRoot: enemies // without it, instances ignore the place of the map
+            instanceRoot: shots
             instancing: MapInstances {
                 game: root.game
-                layer: MapInstances.Enemies
+                layer: MapInstances.Shots
                 fieldSize: root.fieldSize
-                enemyScale: root.fieldSize / 120
             }
             materials: PrincipledMaterial {
-                baseColor: "white" // the instances bring their colour, it shows status effects
+                baseColor: "white"
+                lighting: PrincipledMaterial.NoLighting
+            }
+        }
+
+        // A spell where it lands: it swells to its radius and fades. It has no say in the game.
+        Model {
+            id: blast
+
+            source: "#Sphere"
+            visible: blastAnimation.running
+            materials: PrincipledMaterial {
+                id: blastMaterial
+
+                alphaMode: PrincipledMaterial.Blend
+                lighting: PrincipledMaterial.NoLighting
+            }
+
+            ParallelAnimation {
+                id: blastAnimation
+
+                NumberAnimation {
+                    id: blastGrowth
+
+                    target: blast
+                    properties: "scale.x,scale.y,scale.z"
+                    from: 0
+                    duration: 450
+                    easing.type: Easing.OutQuad
+                }
+                NumberAnimation {
+                    target: blastMaterial
+                    property: "opacity"
+                    from: 0.7
+                    to: 0
+                    duration: 450
+                }
+            }
+        }
+
+        Connections {
+            target: root.game
+
+            function onSpellCast(x: int, y: int, radius: real, spell: int) {
+                blast.x = x * root.fieldSize;
+                blast.z = y * root.fieldSize;
+                blastMaterial.baseColor = spell === 0 ? "#e8702a" : "#7fd4f5";
+                blastGrowth.to = 2 * radius * root.fieldSize / 100;
+                blastAnimation.restart();
+            }
+        }
+
+        AssetModel {
+            name: "rock"
+            fallback: "#Cube"
+            instancing: MapInstances {
+                game: root.game
+                layer: MapInstances.Rocks
+                fieldSize: root.fieldSize
+            }
+        }
+
+        AssetModel {
+            name: "tree"
+            fallback: "#Cube"
+            pickable: true
+            instancing: MapInstances {
+                game: root.game
+                layer: MapInstances.Trees
+                fieldSize: root.fieldSize
             }
         }
     }
@@ -213,7 +343,7 @@ View3D {
     }
 
     // The middle of the top of a block on a cell, its height in shares of a field.
-    function blockTopOnScreen(cellX: int, cellY: int, height: real): vector3d {
+    function blockTopOnScreen(cellX: real, cellY: real, height: real): vector3d {
         return mapFrom3DScene(map.mapPositionToScene(Qt.vector3d(cellX * fieldSize, height
                                                                  * fieldSize, cellY * fieldSize)));
     }

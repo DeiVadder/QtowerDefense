@@ -28,6 +28,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 |---|---|---|---|
 | `AppInfo` | class | `app_info.h` | Build information for the QML side. |
 | `GameSession` | class | `game_session.h` | The running game for the QML side. |
+| `GameSession::Cue` | enum class | `game_session.h` | Something a player should hear. |
 | `Look` | struct | `map_instances.cpp` |  |
 | `Piece` | struct | `map_instances.cpp` |  |
 | `MapInstances` | class | `map_instances.h` | Draws one layer of a game with a single model: a map has hundreds of cells, and the number of enemies changes with every wave. |

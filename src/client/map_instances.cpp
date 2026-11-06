@@ -7,10 +7,14 @@
 #include <QPointF>
 #include <QVector3D>
 #include <QVector4D>
+#include <QtMath>
 
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <cstring>
 #include <iterator>
+#include <utility>
 #include <vector>
 
 namespace qtd::client {
@@ -25,17 +29,25 @@ constexpr float kTowerShare = 0.9F;
 /// Heights in shares of a field.
 constexpr float kFlatHeight = 0.04F;
 constexpr float kRockHeight = 0.5F;
-constexpr float kTreeHeight = 0.9F;
+constexpr float kTreeHeight = 0.06F; // the model takes the taps, the block hides no other cell
 constexpr float kTowerHeight = 0.7F;
 constexpr float kTowerHeightPerLevel = 0.25F;
 constexpr float kBossScale = 1.8F;
 constexpr int kChosenLight = 150; // percent, how much brighter the chosen tower is
+
+constexpr float kHopHeight = 0.08F; // of a field, how far a walking enemy leaves the ground
+constexpr float kHopsPerField = 2.5F;
+constexpr qint64 kShotTicks = 6;     // how long a shot is seen after the tower fired
+constexpr float kShotSize = 0.0015F; // of a field per unit of the sphere
+constexpr float kShotHeight = 0.6F;  // of a field, where it leaves the tower
+constexpr int kAheadRaw = 1000;      // how far along the path an enemy looks to see where it goes
 
 struct Piece
 {
     QVector3D position;
     QVector3D scale;
     QColor color;
+    QVector3D angles = {};
 };
 
 struct Look
@@ -52,9 +64,9 @@ Look lookOf(core::Terrain terrain, core::Cell cell)
     case core::Terrain::Path:
         return {QColor((cell.x + cell.y) % 2 == 0 ? 0x8a6f4d : 0x96795a)};
     case core::Terrain::Rock:
-        return {QColor(0x80817f), kRockHeight};
+        return {Qt::transparent, kRockHeight}; // the block takes the taps, Rocks shows the rock
     case core::Terrain::Tree:
-        return {QColor(0x2f5d34), kTreeHeight};
+        return {Qt::transparent, kTreeHeight};
     case core::Terrain::Water:
         return {QColor(0x3b6ea5)};
     }
@@ -91,6 +103,20 @@ std::vector<Piece> boardPieces(const GameSession &game, float fieldSize)
                                      look.height));
         }
     }
+    // After all cells, so that a tap still names its cell: the ground under the obstacles. The
+    // block of a cell is higher and takes the tap first.
+    for (qint64 y = 0; y < grid->height(); ++y) {
+        for (qint64 x = 0; x < grid->width(); ++x) {
+            const core::Cell cell{x, y};
+            if (lookOf(grid->terrainAt(cell), cell).color.alpha() == 0) {
+                pieces.push_back(blockOn(QPoint(static_cast<int>(x), static_cast<int>(y)),
+                                         fieldSize,
+                                         kBoardShare,
+                                         lookOf(core::Terrain::Open, cell).color,
+                                         kFlatHeight));
+            }
+        }
+    }
     return pieces;
 }
 
@@ -109,6 +135,28 @@ QColor colorOf(core::DamageType damage)
     return QColor(0xc9a227);
 }
 
+/// What stands on the cells of one terrain.
+std::vector<Piece> decorPieces(const GameSession &game, float fieldSize, core::Terrain terrain)
+{
+    std::vector<Piece> pieces;
+    const core::Grid *grid = game.grid();
+    if (grid == nullptr) {
+        return pieces;
+    }
+    for (qint64 y = 0; y < grid->height(); ++y) {
+        for (qint64 x = 0; x < grid->width(); ++x) {
+            if (grid->terrainAt({x, y}) == terrain) {
+                pieces.push_back({QVector3D(static_cast<float>(x) * fieldSize,
+                                            0,
+                                            static_cast<float>(y) * fieldSize),
+                                  QVector3D(1, 1, 1) * fieldSize,
+                                  Qt::white});
+            }
+        }
+    }
+    return pieces;
+}
+
 QColor colorOf(const core::Enemy &enemy)
 {
     const bool slowed = enemy.slow.ticks > 0;
@@ -119,7 +167,18 @@ QColor colorOf(const core::Enemy &enemy)
     if (slowed) {
         return QColor(0x5b8fd9);
     }
-    return poisoned ? QColor(0x4fa84a) : QColor(0xb5372e);
+    return poisoned ? QColor(0x4fa84a) : QColor(Qt::white);
+}
+
+/// The way along the path, around the y axis.
+float headingOf(const core::Simulation &game, const core::Enemy &enemy)
+{
+    core::Enemy ahead = enemy;
+    ahead.travelled = enemy.travelled + core::Fixed::fromRaw(kAheadRaw);
+    const core::Point from = game.position(enemy);
+    const core::Point to = game.position(ahead);
+    return qRadiansToDegrees(std::atan2(static_cast<float>(to.x.raw() - from.x.raw()),
+                                        static_cast<float>(to.y.raw() - from.y.raw())));
 }
 
 /// In the order of GameSession::towerCells(), a tap on a piece names the cell that way.
@@ -132,8 +191,6 @@ std::vector<Piece> towerPieces(const GameSession &game, float fieldSize)
     }
     for (const core::Tower &tower : simulation->state().towers) {
         const core::TowerType &type = simulation->content().towers[tower.type];
-        const QColor color = colorOf(type.damageType);
-        const QColor shown = tower.id == game.chosenTower() ? color.lighter(kChosenLight) : color;
         std::ranges::transform(core::footprintAt(type, tower.cell, tower.rotation),
                                std::back_inserter(pieces),
                                [&](core::Cell cell) {
@@ -141,7 +198,7 @@ std::vector<Piece> towerPieces(const GameSession &game, float fieldSize)
                                        QPoint(static_cast<int>(cell.x), static_cast<int>(cell.y)),
                                        fieldSize,
                                        kTowerShare,
-                                       shown,
+                                       Qt::transparent,
                                        kTowerHeight +
                                            kTowerHeightPerLevel * static_cast<float>(tower.level));
                                });
@@ -149,25 +206,98 @@ std::vector<Piece> towerPieces(const GameSession &game, float fieldSize)
     return pieces;
 }
 
-std::vector<Piece> enemyPieces(const GameSession &game, float fieldSize, float enemyScale)
+/// The towers of one type: a model on each cell, higher with each level, the chosen one bright.
+std::vector<Piece>
+towerLooks(const GameSession &game, float fieldSize, float modelSize, int typeIndex)
+{
+    std::vector<Piece> pieces;
+    const core::Simulation *simulation = game.simulation();
+    if (simulation == nullptr) {
+        return pieces;
+    }
+    const float width = fieldSize * kTowerShare / modelSize;
+    for (const core::Tower &tower : simulation->state().towers) {
+        if (std::cmp_not_equal(tower.type, typeIndex)) {
+            continue;
+        }
+        const core::TowerType &type = simulation->content().towers[tower.type];
+        const QColor color = tower.id == game.chosenTower()
+                                 ? QColor(Qt::white)
+                                 : QColor(Qt::white).darker(kChosenLight);
+        const float height = width * (1 + kTowerHeightPerLevel * static_cast<float>(tower.level));
+        std::ranges::transform(core::footprintAt(type, tower.cell, tower.rotation),
+                               std::back_inserter(pieces),
+                               [&](core::Cell cell) {
+                                   return Piece{QVector3D(static_cast<float>(cell.x) * fieldSize,
+                                                          kFlatHeight * fieldSize,
+                                                          static_cast<float>(cell.y) * fieldSize),
+                                                QVector3D(width, height, width),
+                                                color};
+                               });
+    }
+    return pieces;
+}
+
+/// A picture only: the simulation hits at once, and it does not tell the target. A shot flies to
+/// the nearest enemy, which most of the time is the target.
+std::vector<Piece> shotPieces(const GameSession &game, float fieldSize)
 {
     std::vector<Piece> pieces;
     const std::vector<QPointF> places = game.enemyPlaces();
     if (places.empty()) {
         return pieces;
     }
-    const std::vector<core::Enemy> &enemies = game.simulation()->state().enemies;
-    const std::vector<core::EnemyType> &types = game.simulation()->content().enemies;
-    pieces.reserve(places.size());
-    std::ranges::transform(
-        places, enemies, std::back_inserter(pieces), [&](QPointF place, const core::Enemy &enemy) {
-            return Piece{QVector3D(static_cast<float>(place.x()) * fieldSize,
-                                   0,
-                                   static_cast<float>(place.y()) * fieldSize),
-                         QVector3D(1, 1, 1) * enemyScale *
-                             (types[enemy.type].boss ? kBossScale : 1.0F),
-                         colorOf(enemy)};
-        });
+    const core::Simulation &simulation = *game.simulation();
+    for (const core::Tower &tower : simulation.state().towers) {
+        const core::TowerType &type = simulation.content().towers[tower.type];
+        const qint64 flown =
+            type.levels[static_cast<std::size_t>(tower.level)].cooldownTicks - tower.cooldownTicks;
+        // An upgrade may shorten the cooldown below what is left of it.
+        if (tower.cooldownTicks == 0 || flown < 0 || flown >= kShotTicks) {
+            continue;
+        }
+        const QPointF from(static_cast<double>(tower.cell.x), static_cast<double>(tower.cell.y));
+        const std::vector<QPointF>::const_iterator nearest =
+            std::ranges::min_element(places, {}, [from](QPointF place) {
+                const QPointF away = place - from;
+                return QPointF::dotProduct(away, away);
+            });
+        const QPointF place =
+            from + (*nearest - from) * static_cast<double>(flown) / static_cast<double>(kShotTicks);
+        pieces.push_back({QVector3D(static_cast<float>(place.x()) * fieldSize,
+                                    kShotHeight * fieldSize,
+                                    static_cast<float>(place.y()) * fieldSize),
+                          QVector3D(1, 1, 1) * kShotSize * fieldSize,
+                          colorOf(type.damageType)});
+    }
+    return pieces;
+}
+
+std::vector<Piece>
+enemyPieces(const GameSession &game, float fieldSize, float enemyScale, int typeIndex)
+{
+    std::vector<Piece> pieces;
+    const std::vector<QPointF> places = game.enemyPlaces();
+    if (places.empty()) {
+        return pieces;
+    }
+    const core::Simulation &simulation = *game.simulation();
+    const std::vector<core::Enemy> &enemies = simulation.state().enemies;
+    const std::vector<core::EnemyType> &types = simulation.content().enemies;
+    for (std::size_t index = 0; index < places.size(); ++index) {
+        const core::Enemy &enemy = enemies[index];
+        if (std::cmp_not_equal(enemy.type, typeIndex)) {
+            continue;
+        }
+        const auto x = static_cast<float>(places[index].x());
+        const auto z = static_cast<float>(places[index].y());
+        const float hop = std::abs(std::sin((x + z) * kHopsPerField)) * kHopHeight * fieldSize;
+        pieces.push_back(
+            {QVector3D(x * fieldSize, hop, z * fieldSize),
+             QVector3D(1, 1, 1) * enemyScale * (types[enemy.type].boss ? kBossScale : 1.0F),
+             colorOf(enemy),
+             QVector3D(0, headingOf(simulation, enemy), 0)});
+    }
     return pieces;
 }
 
@@ -190,9 +320,19 @@ float MapInstances::fieldSize() const
     return fieldSize_;
 }
 
+float MapInstances::modelSize() const
+{
+    return modelSize_;
+}
+
 float MapInstances::enemyScale() const
 {
     return enemyScale_;
+}
+
+int MapInstances::typeIndex() const
+{
+    return typeIndex_;
 }
 
 void MapInstances::setGame(GameSession *game)
@@ -205,13 +345,17 @@ void MapInstances::setGame(GameSession *game)
     }
     game_ = game;
     if (game_) {
-        connect(game_, &GameSession::mapChanged, this, [this] { markLayerDirty(Layer::Board); });
+        connect(game_, &GameSession::mapChanged, this, [this] {
+            markDirtyFor({Layer::Board, Layer::Rocks, Layer::Trees});
+        });
+        connect(game_, &GameSession::towersChanged, this, [this] {
+            markDirtyFor({Layer::Towers, Layer::TowerLooks, Layer::Shots});
+        });
+        connect(game_, &GameSession::stateChanged, this, [this] {
+            markDirtyFor({Layer::Enemies, Layer::Shots});
+        });
         connect(
-            game_, &GameSession::towersChanged, this, [this] { markLayerDirty(Layer::Towers); });
-        connect(
-            game_, &GameSession::stateChanged, this, [this] { markLayerDirty(Layer::Enemies); });
-        connect(
-            game_, &GameSession::frameChanged, this, [this] { markLayerDirty(Layer::Enemies); });
+            game_, &GameSession::frameChanged, this, [this] { markDirtyFor({Layer::Enemies}); });
     }
     markDirty();
     emit gameChanged();
@@ -223,6 +367,15 @@ void MapInstances::setLayer(Layer layer)
         layer_ = layer;
         markDirty();
         emit layerChanged();
+    }
+}
+
+void MapInstances::setModelSize(float size)
+{
+    if (!qFuzzyCompare(modelSize_, size)) {
+        modelSize_ = size;
+        markDirtyFor({Layer::TowerLooks});
+        emit modelSizeChanged();
     }
 }
 
@@ -244,9 +397,18 @@ void MapInstances::setEnemyScale(float scale)
     }
 }
 
-void MapInstances::markLayerDirty(Layer layer)
+void MapInstances::setTypeIndex(int index)
 {
-    if (layer_ == layer) {
+    if (typeIndex_ != index) {
+        typeIndex_ = index;
+        markDirty();
+        emit typeIndexChanged();
+    }
+}
+
+void MapInstances::markDirtyFor(std::initializer_list<Layer> layers)
+{
+    if (std::ranges::find(layers, layer_) != layers.end()) {
         markDirty();
     }
 }
@@ -262,8 +424,20 @@ QByteArray MapInstances::getInstanceBuffer(int *instanceCount)
         case Layer::Towers:
             pieces = towerPieces(*game_, fieldSize_);
             break;
+        case Layer::TowerLooks:
+            pieces = towerLooks(*game_, fieldSize_, modelSize_, typeIndex_);
+            break;
         case Layer::Enemies:
-            pieces = enemyPieces(*game_, fieldSize_, enemyScale_);
+            pieces = enemyPieces(*game_, fieldSize_, enemyScale_, typeIndex_);
+            break;
+        case Layer::Shots:
+            pieces = shotPieces(*game_, fieldSize_);
+            break;
+        case Layer::Rocks:
+            pieces = decorPieces(*game_, fieldSize_, core::Terrain::Rock);
+            break;
+        case Layer::Trees:
+            pieces = decorPieces(*game_, fieldSize_, core::Terrain::Tree);
             break;
         }
     }
@@ -271,8 +445,8 @@ QByteArray MapInstances::getInstanceBuffer(int *instanceCount)
     QByteArray buffer(static_cast<qsizetype>(pieces.size()) * entrySize, Qt::Uninitialized);
     char *next = buffer.data();
     for (const Piece &piece : pieces) {
-        const InstanceTableEntry entry =
-            calculateTableEntry(piece.position, piece.scale, QVector3D(), piece.color, QVector4D());
+        const InstanceTableEntry entry = calculateTableEntry(
+            piece.position, piece.scale, piece.angles, piece.color, QVector4D());
         std::memcpy(next, &entry, entrySize);
         next += entrySize;
     }

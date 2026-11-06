@@ -11,6 +11,12 @@ Item {
     width: 640
     height: 360
 
+    Component {
+        id: soundsComponent
+
+        GameSounds {}
+    }
+
     TestCase {
         id: testCase
 
@@ -248,6 +254,70 @@ Item {
             compare(scene.game.gold, 70);
         }
 
+        function test_aTapOnTheTopOfATallModelStaysOnIt() {
+            const scene = createScene();
+            scene.game.selectedTower = scene.game.towerModels.indexOf("venom_spire");
+            verify(scene.game.buildTower(12, 5));
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(12, 5, 1.5);
+            mouseClick(scene, place.x, place.y);
+            compare(scene.game.towerCount, 1);
+            compare(scene.game.chosenPriority >= 0, true);
+        }
+
+        function test_aTreeTakesATapOnItsTop() {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(13, 2, 1.45);
+            mouseClick(scene, place.x, place.y);
+            compare(scene.game.towerCount, 0);
+        }
+
+        function test_theCellBehindATreeTakesATap() {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(12.7, 1, 0.04);
+            mouseClick(scene, place.x, place.y);
+            verify(scene.game.chooseTowerAt(13, 1));
+        }
+
+        function test_aSpellIsSeenWhereItLands_data() {
+            return [
+                        {
+                            tag: "near",
+                            x: 3,
+                            y: 9
+                        },
+                        {
+                            tag: "far",
+                            x: 16,
+                            y: 2
+                        }
+                    ];
+        }
+
+        function test_aSpellIsSeenWhereItLands(data) {
+            const scene = createScene();
+            waitForRendering(scene);
+            const place = scene.blockTopOnScreen(data.x, data.y, 0.05);
+            const ground = grabImage(scene).pixel(place.x, place.y);
+            scene.game.spellCast(data.x, data.y, 2, 0);
+            tryVerify(() => !Qt.colorEqual(grabImage(scene).pixel(place.x, place.y), ground), 400,
+            "the spell does not show");
+        }
+
+        function test_everyCueHasASound() {
+            const scene = createScene();
+            const sounds = createTemporaryObject(soundsComponent, stage, {
+                                                     game: scene.game
+                                                 });
+            failOnWarning(/./);
+            for (let cue = GameSession.Build; cue <= GameSession.Lost; ++cue) {
+                scene.game.cue(cue);
+            }
+            verify(sounds !== null);
+        }
+
         function test_aBuiltTowerIsDrawn() {
             const scene = createScene();
             waitForRendering(scene);
@@ -272,14 +342,15 @@ Item {
             waitForRendering(scene);
             const empty = grabImage(scene);
             const origin = scene.enemyOnScreen(0, 0);
-            verify(empty.red(origin.x, origin.y) < 2 * empty.green(origin.x, origin.y));
             runUntil(scene.game, () => scene.game.enemyCount > 0);
             scene.game.paused = true;
             const place = scene.enemyOnScreen(0, 2);
-            tryVerify(() => {
-                const image = grabImage(scene);
-                return image.red(place.x, place.y) > 2 * image.green(place.x, place.y);
-            }, 3000, "no red enemy at the start of the path");
+            const ground = empty.pixel(place.x, place.y);
+            const sameGround = scene.enemyOnScreen(2, 0);
+            verify(Qt.colorEqual(empty.pixel(origin.x, origin.y), empty.pixel(sameGround.x,
+                                                                              sameGround.y)));
+            tryVerify(() => !Qt.colorEqual(grabImage(scene).pixel(place.x, place.y), ground), 3000,
+            "no enemy at the start of the path");
         }
 
         function test_theWholeGroundFitsTheView_data() {

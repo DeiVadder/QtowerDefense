@@ -1,10 +1,9 @@
 #include "client/game_session.h"
 
-#include "automation/report.h"
 #include "core/content_loader.h"
 
 #include <QCoreApplication>
-#include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QRandomGenerator>
@@ -23,6 +22,16 @@ namespace {
 constexpr qint64 kMaxFrameMicroseconds = 250'000;
 constexpr int kMaxSpeed = 3;
 constexpr double kMillionthsPerTick = 1'000'000;
+
+/// A model has the name of its type in the content, an empty name means there is none.
+QStringList modelsOf(const auto &types)
+{
+    QStringList models;
+    for (const auto &type : types) {
+        models.append(QFile::exists(u":/assets/%1.mesh"_s.arg(type.id)) ? type.id : QString());
+    }
+    return models;
+}
 
 double mapUnits(core::Fixed value)
 {
@@ -115,6 +124,7 @@ bool GameSession::buildTower(int x, int y)
     }
     emit towersChanged();
     emit stateChanged();
+    emit cue(Cue::Build);
     return true;
 }
 
@@ -157,7 +167,11 @@ void GameSession::setChosenPriority(int priority)
 
 bool GameSession::upgradeChosenTower()
 {
-    return chosen() != nullptr && executeOnChosen(core::UpgradeTowerCommand{chosenTower_});
+    if (chosen() == nullptr || !executeOnChosen(core::UpgradeTowerCommand{chosenTower_})) {
+        return false;
+    }
+    emit cue(Cue::Upgrade);
+    return true;
 }
 
 bool GameSession::sellChosenTower()
@@ -166,6 +180,7 @@ bool GameSession::sellChosenTower()
         return false;
     }
     clearChosenTower();
+    emit cue(Cue::Sell);
     return true;
 }
 
@@ -199,11 +214,24 @@ bool GameSession::castSpellAt(int x, int y)
             core::CommandResult::Accepted) {
         return false;
     }
+    const int spell = selectedSpell_;
     selectedSpell_ = -1;
     emit selectionChanged();
     emit stateChanged();
     emit frameChanged();
+    emit cue(Cue::Spell);
+    emit spellCast(x, y, mapUnits(game_->simulation().content().spells[spell].radius), spell);
     return true;
+}
+
+QStringList GameSession::towerModels() const
+{
+    return game_ ? modelsOf(game_->simulation().content().towers) : QStringList();
+}
+
+QStringList GameSession::enemyModels() const
+{
+    return game_ ? modelsOf(game_->simulation().content().enemies) : QStringList();
 }
 
 bool GameSession::callWave()
@@ -212,6 +240,7 @@ bool GameSession::callWave()
         return false;
     }
     emit stateChanged();
+    emit cue(Cue::Wave);
     return true;
 }
 
@@ -224,60 +253,6 @@ bool GameSession::canCallWave() const
 qint64 GameSession::waveCallBonus() const
 {
     return game_ ? game_->simulation().waveCallBonus() : 0;
-}
-
-bool GameSession::saveGame()
-{
-    if (!canSave()) {
-        return false;
-    }
-    saveError_.clear();
-    QDir().mkpath(QFileInfo(saveFile_).path());
-    const bool saved = automation::writeFile(saveFile_, core::toJson(game_->replay()), &saveError_);
-    saveIsOurs_ = saveIsOurs_ || saved;
-    emit saveChanged();
-    return saved;
-}
-
-bool GameSession::loadGame()
-{
-    const core::ReplayLoadResult saved = core::loadReplayFile(saveFile_);
-    saveError_ = saved.error;
-    if (saved.replay) {
-        const QString map = QFileInfo(saved.replay->content).fileName();
-        saveError_ = resumeGame(QFileInfo(fileName_).dir().filePath(map), saveFile_);
-        saveIsOurs_ = saveError_.isEmpty();
-    }
-    emit saveChanged();
-    return saveError_.isEmpty();
-}
-
-const QString &GameSession::saveFile() const
-{
-    return saveFile_;
-}
-
-void GameSession::setSaveFile(const QString &fileName)
-{
-    saveFile_ = fileName;
-    emit saveChanged();
-    emit stateChanged();
-}
-
-bool GameSession::canSave() const
-{
-    return game_ && !saveFile_.isEmpty() &&
-           game_->simulation().state().status == core::GameStatus::Running;
-}
-
-bool GameSession::hasSave() const
-{
-    return !saveFile_.isEmpty() && QFileInfo::exists(saveFile_);
-}
-
-const QString &GameSession::saveError() const
-{
-    return saveError_;
 }
 
 void GameSession::rotateSelection()
@@ -317,6 +292,11 @@ void GameSession::advanceTime(qint64 microseconds)
     }
     if (game_->simulation().state().tick != before) {
         emit stateChanged();
+        if (won()) {
+            emit cue(Cue::Won);
+        } else if (lost()) {
+            emit cue(Cue::Lost);
+        }
     }
     emit frameChanged();
 }
