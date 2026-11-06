@@ -4,6 +4,8 @@ import QtQuick
 import QtTest
 import QtowerDefense.Client
 
+import "../../src/client/IconPaths.js" as IconPaths
+
 // TestCase itself is invisible: what should render or take input needs a visible parent.
 Item {
     id: stage
@@ -354,6 +356,33 @@ Item {
             "the tower does not show");
         }
 
+        function test_allContentHasAnIcon() {
+            const game = createHud().game;
+            const names = game.towerTypes.map(type => type.name).concat(game.spellNames);
+            verify(names.length > 2);
+            for (const name of names) {
+                verify(IconPaths.known(name), name);
+            }
+            compare(new Set(names.map(IconPaths.pathOf)).size, names.length);
+        }
+
+        function test_aFrameGoesWithItsGroup() {
+            const hud = createHud();
+            const actions = findChild(hud, "towerActions");
+            verify(!actions.visible);
+            const frames = hud.children.filter(child => child.around === actions);
+            compare(frames.length, 1);
+            verify(!frames[0].visible);
+        }
+
+        function test_aChosenButtonShowsTheAccent() {
+            const hud = createHud();
+            const button = findChild(hud, "pauseButton");
+            verify(!Qt.colorEqual(button.border.color, Theme.accent));
+            hud.game.paused = true;
+            verify(Qt.colorEqual(button.border.color, Theme.accent));
+        }
+
         function test_zoomStaysInItsRange() {
             const scene = createScene();
             scene.zoomBy(0.001);
@@ -533,10 +562,10 @@ Item {
 
         function test_theHudShowsTheGame() {
             const hud = createHud();
-            compare(findChild(hud, "goldLabel").text, "Gold: 120");
-            compare(findChild(hud, "livesLabel").text, "Lives: 5");
+            compare(findChild(hud, "goldLabel").text, "120");
+            compare(findChild(hud, "livesLabel").text, "5");
             hud.game.buildTower(4, 4);
-            compare(findChild(hud, "goldLabel").text, "Gold: 70");
+            compare(findChild(hud, "goldLabel").text, "70");
         }
 
         function test_theButtonPauses() {

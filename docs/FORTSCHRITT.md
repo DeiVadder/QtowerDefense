@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/11-theme`:** `Theme.qml` mit Neon als Akzent, HUD mit Icons und Rahmen aus Holz und Eisen (E-34). Ein Menü gibt es noch nicht.
 - **Dazu aus `feature/11-spielwelt`:** Gelände, Nebel, Schatten, Pflanzen und Wege statt Schachbrett, Landschaften Wiese und Sumpf (E-34). Die übrigen sieben Landschaften kommen mit ihren Karten.
 - **Dazu aus Etappe 10:** Türme, Hindernisse und Gegner als Modelle (Kenney, CC0), Schüsse, Einschlag der Zauber, Sound für Bauen, Upgrade, Verkauf, Zauber, Welle und Spielende (E-33). Hintergrundmusik fehlt.
 - **Dazu aus Etappe 9:** Wellen vorziehen gegen Bonusgold, Speichern und Laden eines laufenden Spiels als Replay, von Hand in der Pause und beim Gang in den Hintergrund, auch über die Steuerschnittstelle (E-31).
@@ -25,7 +26,7 @@
 ## Nächster Schritt
 
 1. Etappe 11, zuvor das UI-Thema. Die übrigen Landschaften kommen mit ihren Abschnitten dazu (E-32, E-34).
-2. Vor Etappe 11: das UI-Thema nach E-34, je Schritt ein Branch: Theme-Singleton und Rahmen, Held, Karten, Würfeln und Münzen in Core, zuletzt die Weltkarte. Das HUD hat bisher feste Farben.
+2. Vor Etappe 11: das UI-Thema nach E-34, je Schritt ein Branch: Held, Karten, Würfeln und Münzen in Core, zuletzt die Weltkarte.
 3. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro.
 4. In Etappe 11: Weltkarte im Nebel mit neun Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
 

@@ -87,9 +87,12 @@ def stage_source_rules(log):
 
 def stage_qmllint(log):
     files = project_files(".qml")
+    # Without the resource files, a source file finds its neighbours by folder and misses singletons.
+    resources = (REPO / "build" / "debug" / "src" / "client" / ".qt" / "rcc").glob("*.qrc")
     return run(
         log, QT_DIR / "bin" / "qmllint.exe", "--max-warnings", "0",
-        "-I", REPO / "build" / "debug" / "qml", *files,
+        "-I", REPO / "build" / "debug" / "qml",
+        *[arg for qrc in sorted(resources) for arg in ("--resource", qrc)], *files,
     )  # fmt: skip
 
 

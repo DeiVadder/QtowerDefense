@@ -13,29 +13,109 @@ Item {
     required property GameSession game
 
     property real density: Screen.pixelDensity
-    readonly property real unit: Math.min(Math.max(40, density * 9), width / 14)
+    readonly property real unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
+                                          / Theme.unitsAcross)
     readonly property bool gameOver: game.won || game.lost
     readonly property bool failed: game.error.length > 0
 
-    Column {
+    FramedPanel {
         objectName: "stats"
         anchors.left: parent.left
         anchors.top: parent.top
-        anchors.margins: root.unit / 4
+        anchors.margins: root.unit * Theme.inset
+        unit: root.unit
+        width: statsRow.implicitWidth + root.unit * Theme.statsPadding
+        height: root.unit * Theme.statsHeight
 
-        Text {
-            objectName: "goldLabel"
-            text: qsTr("Gold: %1").arg(root.game.gold)
-            color: "#f0d97a"
-            font.pixelSize: root.unit * 0.45
-        }
+        Row {
+            id: statsRow
 
-        Text {
-            objectName: "livesLabel"
-            text: qsTr("Lives: %1").arg(root.game.lives)
-            color: "#f0f4f8"
-            font.pixelSize: root.unit * 0.45
+            anchors.centerIn: parent
+            spacing: root.unit * Theme.inset
+
+            GameIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.unit * Theme.iconSize
+                height: width
+                name: "coin"
+                fill: Theme.gold
+            }
+
+            Text {
+                objectName: "goldLabel"
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.game.gold
+                color: Theme.gold
+                font.family: Theme.face
+                font.bold: true
+                font.pixelSize: root.unit * Theme.statText
+                Accessible.name: qsTr("Gold: %1").arg(root.game.gold)
+            }
+
+            Item {
+                width: root.unit * Theme.gap
+                height: 1
+            }
+
+            GameIcon {
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.unit * Theme.iconSize
+                height: width
+                name: "heart"
+                fill: Theme.heart
+            }
+
+            Text {
+                objectName: "livesLabel"
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.game.lives
+                color: Theme.text
+                font.family: Theme.face
+                font.bold: true
+                font.pixelSize: root.unit * Theme.statText
+                Accessible.name: qsTr("Lives: %1").arg(root.game.lives)
+            }
         }
+    }
+
+    HudFrame {
+        around: topButtons
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: towerActions
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: priorityButtons
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: towerList
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: savePanel
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: waveButton
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: spellButtons
+        unit: root.unit
+    }
+
+    HudFrame {
+        around: placement
+        unit: root.unit
     }
 
     Row {
@@ -44,12 +124,13 @@ Item {
         objectName: "buttons"
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: root.unit / 4
-        spacing: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
 
         HudButton {
             objectName: "pauseButton"
             unit: root.unit
+            icon: root.game.paused ? "play" : "pause"
             text: root.game.paused ? qsTr("Resume") : qsTr("Pause")
             highlighted: root.game.paused
             onClicked: root.game.paused = !root.game.paused
@@ -63,6 +144,8 @@ Item {
                 readonly property int speed: index + 1
 
                 unit: root.unit
+                icon: "fast"
+                caption: speed
                 text: qsTr("%1x").arg(speed)
                 highlighted: root.game.speed === speed
                 onClicked: root.game.speed = speed
@@ -72,11 +155,13 @@ Item {
 
     // What can be done with the chosen tower.
     Row {
+        id: towerActions
+
         objectName: "towerActions"
         anchors.left: parent.left
         anchors.bottom: priorityButtons.top
-        anchors.margins: root.unit / 4
-        spacing: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
         visible: root.game.chosenSellValue >= 0
 
         // First in the row: at the highest level the upgrade goes away, and one tap too many on it
@@ -84,6 +169,9 @@ Item {
         HudButton {
             objectName: "sellButton"
             unit: root.unit
+            icon: "trash"
+            caption: root.game.chosenSellValue
+            captionColor: Theme.gold
             text: qsTr("Sell: %1 gold").arg(root.game.chosenSellValue)
             onClicked: root.game.sellChosenTower()
         }
@@ -92,6 +180,9 @@ Item {
             objectName: "upgradeButton"
             unit: root.unit
             visible: root.game.chosenUpgradeCost >= 0
+            icon: "up"
+            caption: root.game.chosenUpgradeCost
+            captionColor: Theme.gold
             text: qsTr("Upgrade: %1 gold").arg(root.game.chosenUpgradeCost)
             onClicked: root.game.upgradeChosenTower()
         }
@@ -104,8 +195,8 @@ Item {
         objectName: "priorityButtons"
         anchors.left: parent.left
         anchors.bottom: towerList.top
-        anchors.margins: root.unit / 4
-        spacing: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
         visible: root.game.chosenPriority >= 0
 
         Repeater {
@@ -116,6 +207,7 @@ Item {
                 required property string modelData
 
                 unit: root.unit
+                icon: ["flag", "hourglass", "skull", "target"][index]
                 text: modelData
                 highlighted: root.game.chosenPriority === index
                 onClicked: root.game.setChosenPriority(index)
@@ -130,8 +222,9 @@ Item {
         objectName: "towerList"
         anchors.left: parent.left
         anchors.bottom: parent.bottom
-        anchors.margins: root.unit / 4
-        width: Math.min(towerButtons.width, parent.width - placement.width - root.unit * 3 / 4)
+        anchors.margins: root.unit * Theme.gap
+        width: Math.min(towerButtons.width, parent.width - placement.width - root.unit * Theme.gap
+                        * 3)
         height: root.unit
         contentWidth: towerButtons.width
         flickableDirection: Flickable.HorizontalFlick
@@ -142,7 +235,7 @@ Item {
             id: towerButtons
 
             objectName: "towerButtons"
-            spacing: root.unit / 4
+            spacing: root.unit * Theme.gap
 
             Repeater {
                 model: root.game.towerTypes
@@ -152,6 +245,9 @@ Item {
                     required property var modelData
 
                     unit: root.unit
+                    icon: modelData.name
+                    caption: modelData.cost
+                    captionColor: Theme.gold
                     text: qsTr("%1: %2 gold").arg(modelData.name).arg(modelData.cost)
                     highlighted: root.game.selectedTower === index
                     onClicked: root.game.selectedTower = index
@@ -162,21 +258,24 @@ Item {
 
     // A paused game can be put away, or be replaced by the one that was put away.
     Column {
+        id: savePanel
+
         objectName: "savePanel"
         visible: root.game.paused
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: topButtons.bottom
-        anchors.margins: root.unit / 4
-        spacing: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
 
         Row {
             anchors.horizontalCenter: parent.horizontalCenter
-            spacing: root.unit / 4
+            spacing: root.unit * Theme.gap
 
             HudButton {
                 objectName: "saveButton"
                 unit: root.unit
                 available: root.game.canSave
+                icon: "save"
                 text: qsTr("Save")
                 onClicked: root.game.saveGame()
             }
@@ -185,6 +284,7 @@ Item {
                 objectName: "loadButton"
                 unit: root.unit
                 available: root.game.hasSave
+                icon: "load"
                 text: qsTr("Load")
                 onClicked: root.game.loadGame()
             }
@@ -197,8 +297,9 @@ Item {
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
             text: root.game.saveError
-            color: "#ff8a80"
-            font.pixelSize: root.unit * 0.3
+            color: Theme.danger
+            font.family: Theme.face
+            font.pixelSize: root.unit * Theme.smallText
         }
     }
 
@@ -208,20 +309,25 @@ Item {
         objectName: "waveButton"
         anchors.right: parent.right
         anchors.top: topButtons.bottom
-        anchors.margins: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
         unit: root.unit
         available: root.game.canCallWave
+        icon: "flag"
+        caption: "+" + root.game.waveCallBonus
+        captionColor: Theme.gold
         text: qsTr("Next wave +%1").arg(root.game.waveCallBonus)
         onClicked: root.game.callWave()
     }
 
     // What the next tap casts, and when each spell is ready again.
     Column {
+        id: spellButtons
+
         objectName: "spellButtons"
         anchors.right: parent.right
         anchors.top: waveButton.bottom
-        anchors.margins: root.unit / 4
-        spacing: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
 
         Repeater {
             model: root.game.spellNames
@@ -232,6 +338,8 @@ Item {
                 readonly property int seconds: root.game.spellSeconds[index] ?? 0
 
                 unit: root.unit
+                icon: modelData
+                caption: seconds > 0 ? seconds : ""
                 text: seconds > 0 ? qsTr("%1: %2 s").arg(modelData).arg(seconds) : modelData
                 highlighted: root.game.selectedSpell === index
                 onClicked: root.game.selectSpell(index)
@@ -246,8 +354,8 @@ Item {
         objectName: "rotation"
         anchors.right: parent.right
         anchors.bottom: parent.bottom
-        anchors.margins: root.unit / 4
-        spacing: root.unit / 4
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
 
         Item {
             id: shape
@@ -262,11 +370,6 @@ Item {
             width: root.unit
             height: root.unit
 
-            // The shape lies over the map, a tap on it builds nothing there.
-            MouseArea {
-                anchors.fill: parent
-            }
-
             Repeater {
                 model: root.game.selectedShape
 
@@ -277,7 +380,8 @@ Item {
                     y: modelData.y * shape.cellSize
                     width: shape.cellSize - 1
                     height: shape.cellSize - 1
-                    color: modelData.anchor ? "#8a6d12" : "#c9a227"
+                    color: modelData.anchor ? Theme.ironDark : Theme.accent
+                    border.color: Theme.accent
                 }
             }
         }
@@ -285,45 +389,42 @@ Item {
         HudButton {
             objectName: "rotateButton"
             unit: root.unit
+            icon: "rotate"
             text: qsTr("Rotate")
             onClicked: root.game.rotateSelection()
         }
     }
 
-    Rectangle {
+    FramedPanel {
         objectName: "endPanel"
         anchors.centerIn: parent
         visible: root.gameOver || root.failed
-        width: Math.min(parent.width - root.unit, Math.max(root.unit * 8, message.implicitWidth
+        width: Math.min(parent.width - root.unit, Math.max(root.unit * Theme.endWidth, message.implicitWidth
                                                            + root.unit))
-        height: root.unit * 3.5
-        radius: root.unit / 4
-        color: "#dd1d2733"
-
-        // The panel lies over the map, a click on it means nothing there.
-        MouseArea {
-            anchors.fill: parent
-        }
+        height: root.unit * Theme.endHeight
+        unit: root.unit
 
         Text {
             id: message
 
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
-            anchors.topMargin: root.unit / 2
+            anchors.topMargin: root.unit * Theme.endMargin
             width: parent.width - root.unit
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.Wrap
             text: root.failed ? root.game.error : root.game.won ? qsTr("Victory") : qsTr("Defeat")
-            color: "#f0f4f8"
-            font.pixelSize: root.unit * 0.6
+            color: Theme.text
+            font.family: Theme.face
+            font.bold: true
+            font.pixelSize: root.unit * Theme.titleText
         }
 
         HudButton {
             objectName: "restartButton"
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.unit / 2
+            anchors.bottomMargin: root.unit * Theme.endMargin
             visible: !root.failed
             unit: root.unit
             text: qsTr("Play again")

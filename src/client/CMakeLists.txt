@@ -1,4 +1,5 @@
 qt_add_library(qtd_client STATIC)
+set_source_files_properties(Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(qtd_client
     URI QtowerDefense.Client
     VERSION 1.0
@@ -16,7 +17,8 @@ qt_add_qml_module(qtd_client
         screen_control.cpp screen_control.h
         terrain_mesh.cpp terrain_mesh.h
         terrain_picture.cpp terrain_picture.h
-    QML_FILES AssetModel.qml GameSounds.qml Ground.qml Hud.qml HudButton.qml Main.qml MainScene.qml)
+    QML_FILES AssetModel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hud.qml HudButton.qml HudFrame.qml
+        IconPaths.js Main.qml MainScene.qml Theme.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
 # rhi/qrhi.h, only for the GPU time of a frame.
 target_link_libraries(qtd_client PRIVATE Qt6::GuiPrivate)
