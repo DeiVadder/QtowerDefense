@@ -31,6 +31,7 @@ def scenario_content():
     terrain[22] = 2                                 # a rock at (0, 2)
     return [
         100, 3, 70,                                 # start gold, start lives, sell percent
+        0,                                          # no bonus for an early wave
         2, 0, 0, 100000, 0,                         # path
         11, 11, *terrain,                           # grid
         1, 0,                                       # towers: damage type physical

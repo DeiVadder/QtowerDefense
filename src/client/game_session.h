@@ -33,6 +33,12 @@ class GameSession : public QObject
     Q_PROPERTY(QStringList spellNames READ spellNames NOTIFY mapChanged)
     Q_PROPERTY(QVariantList spellSeconds READ spellSeconds NOTIFY stateChanged)
     Q_PROPERTY(int selectedSpell READ selectedSpell NOTIFY selectionChanged)
+    Q_PROPERTY(bool canCallWave READ canCallWave NOTIFY stateChanged)
+    Q_PROPERTY(qint64 waveCallBonus READ waveCallBonus NOTIFY stateChanged)
+    Q_PROPERTY(QString saveFile READ saveFile WRITE setSaveFile NOTIFY saveChanged)
+    Q_PROPERTY(bool canSave READ canSave NOTIFY stateChanged)
+    Q_PROPERTY(bool hasSave READ hasSave NOTIFY saveChanged)
+    Q_PROPERTY(QString saveError READ saveError NOTIFY saveChanged)
     Q_PROPERTY(int chosenPriority READ chosenPriority NOTIFY towersChanged)
     Q_PROPERTY(qint64 chosenUpgradeCost READ chosenUpgradeCost NOTIFY towersChanged)
     Q_PROPERTY(qint64 chosenSellValue READ chosenSellValue NOTIFY towersChanged)
@@ -74,14 +80,30 @@ public:
     /// Casts the selected spell at a cell, true if the game took the command. The next tap is a
     /// tap as usual again.
     Q_INVOKABLE bool castSpellAt(int x, int y);
+    /// Lets the next wave come now, for gold. True if the game took the command.
+    Q_INVOKABLE bool callWave();
+    /// Writes the running game to the save file. A failure shows in saveError.
+    Q_INVOKABLE bool saveGame();
+    /// Goes on with the save file, paused, on the map it names. The maps lie side by side. A
+    /// failure shows in saveError and keeps the current game.
+    Q_INVOKABLE bool loadGame();
     /// Turns what a tap on the map builds by a quarter, clockwise.
     Q_INVOKABLE void rotateSelection();
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
     Q_INVOKABLE void advanceTime(qint64 microseconds);
 
     void startGame(const QString &fileName, quint64 seed);
+    /// Goes on with a saved game, paused. Gives the reason if it cannot and keeps the current game.
+    QString resumeGame(const QString &fileName, const QString &saveFile);
 
     [[nodiscard]] const QString &error() const;
+    [[nodiscard]] bool canCallWave() const;
+    [[nodiscard]] qint64 waveCallBonus() const;
+    [[nodiscard]] const QString &saveFile() const;
+    void setSaveFile(const QString &fileName);
+    [[nodiscard]] bool canSave() const;
+    [[nodiscard]] bool hasSave() const;
+    [[nodiscard]] const QString &saveError() const;
     [[nodiscard]] QSize gridSize() const;
     /// What can be built, as maps with the name and the cost of each type.
     [[nodiscard]] QVariantList towerTypes() const;
@@ -140,10 +162,13 @@ signals:
     void towersChanged();
     void stateChanged();
     void clockChanged();
+    void saveChanged();
     /// Time went on, enemies are somewhere else on the screen.
     void frameChanged();
 
 private:
+    /// Starts to show the game that was just put in place.
+    void showNewGame();
     /// The tower that is chosen, nothing if there is none, or no longer.
     [[nodiscard]] const core::Tower *chosen() const;
     /// Gives a command on the chosen tower and shows what it changed.
@@ -154,6 +179,9 @@ private:
     std::map<qint64, core::Point> lastPlaces_; // of the enemies, by id, one tick ago
     QString fileName_;
     QString error_;
+    QString saveFile_;
+    QString saveError_;
+    bool saveIsOurs_ = false; // the save file holds this game, not one the player may want back
     qint64 chosenTower_ = 0;
     int selectedTower_ = 0;
     int selectedSpell_ = -1;

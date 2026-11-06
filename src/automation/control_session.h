@@ -26,6 +26,8 @@ public:
 
     /// Starts a game. A failure gives its text and keeps the current game.
     virtual QString start(const QString &map, quint64 seed) = 0;
+    /// Goes on with a saved game on a map. A failure gives its text and keeps the current game.
+    virtual QString loadSaved(const QString &map, const QString &file) = 0;
     /// The current game, nothing before the first start.
     virtual core::ReplayRecorder *recorder() = 0;
     /// A request has changed the game.
@@ -64,6 +66,8 @@ private:
     QByteArray buildTower(core::ObjectReader &request);
     QByteArray setTargetPriority(core::ObjectReader &request);
     QByteArray castSpell(core::ObjectReader &request);
+    QByteArray callWave(const core::ObjectReader &request);
+    QByteArray loadGame(core::ObjectReader &request);
     template <typename TowerCommand>
     QByteArray commandOnTower(core::ObjectReader &request);
     /// Runs a command that passed its checks of form and reports what the game made of it.

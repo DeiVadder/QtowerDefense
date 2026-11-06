@@ -1,5 +1,7 @@
 #include "core/replay.h"
 
+#include "core/content_loader.h"
+
 #include "core/json_reader.h"
 
 #include <QFile>
@@ -23,7 +25,7 @@ namespace {
 constexpr qint64 kFormatVersion = 1;
 constexpr qsizetype kHashDigits = 16;
 
-using ResultNames = std::array<QLatin1StringView, 11>;
+using ResultNames = std::array<QLatin1StringView, 12>;
 constexpr ResultNames kResultNames{"accepted"_L1,
                                    "gameOver"_L1,
                                    "unknownTowerType"_L1,
@@ -34,8 +36,9 @@ constexpr ResultNames kResultNames{"accepted"_L1,
                                    "unknownTower"_L1,
                                    "highestLevel"_L1,
                                    "unknownSpell"_L1,
-                                   "spellCooling"_L1};
-static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::SpellCooling) + 1);
+                                   "spellCooling"_L1,
+                                   "noWaveWaiting"_L1};
+static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::NoWaveWaiting) + 1);
 
 enum class Kind : quint8 {
     Replay,
@@ -109,6 +112,9 @@ Command readCommand(ObjectReader &item)
         const qint64 x = item.integer("x"_L1, -kMaxExactInteger, kMaxExactInteger);
         return CastSpellCommand{spell,
                                 {x, item.integer("y"_L1, -kMaxExactInteger, kMaxExactInteger)}};
+    }
+    if (type == "callWave"_L1) {
+        return CallWaveCommand{};
     }
     if (type != "buildTower"_L1) {
         item.fail(u"type"_s, u"unknown command \"%1\""_s.arg(type));
@@ -231,6 +237,11 @@ QJsonObject fieldsOf(const CastSpellCommand &command)
             {"spell"_L1, command.spell},
             {"x"_L1, command.cell.x},
             {"y"_L1, command.cell.y}};
+}
+
+QJsonObject fieldsOf(const CallWaveCommand & /*command*/)
+{
+    return {{"type"_L1, "callWave"_L1}};
 }
 
 QJsonObject commandToJson(const RecordedCommand &recorded)
@@ -362,6 +373,46 @@ Replay ReplayRecorder::replay() const
     Replay replay = replay_;
     replay.checkpoints.push_back({game_.state().tick, game_.hash()});
     return replay;
+}
+
+ResumeResult resumeGame(Content content, const Replay &saved)
+{
+    std::unique_ptr<ReplayRecorder> game =
+        std::make_unique<ReplayRecorder>(std::move(content), saved.content, saved.seed);
+    const Simulation &simulation = game->simulation();
+    if (simulation.state().contentHash != saved.contentHash) {
+        return {nullptr, u"the game was saved with other content"_s};
+    }
+    const QString differs = u"the game does not repeat under the current rules"_s;
+    for (const RecordedCommand &recorded : saved.commands) {
+        game->advance(recorded.tick - simulation.state().tick);
+        if (game->execute(recorded.command) != recorded.result) {
+            return {nullptr, differs};
+        }
+    }
+    const Checkpoint &end = saved.checkpoints.back();
+    game->advance(end.tick - simulation.state().tick);
+    if (simulation.state().tick != end.tick || simulation.hash() != end.hash) {
+        return {nullptr, differs};
+    }
+    return {std::move(game), {}};
+}
+
+ResumeResult resumeGame(const QString &mapFile, const QString &saveFile)
+{
+    ContentLoadResult content = loadContentFile(mapFile);
+    if (!content.content) {
+        return {nullptr, content.error};
+    }
+    const ReplayLoadResult saved = loadReplayFile(saveFile);
+    if (!saved.replay) {
+        return {nullptr, saved.error};
+    }
+    ResumeResult resumed = resumeGame(*std::move(content.content), *saved.replay);
+    if (!resumed.game) {
+        resumed.error.prepend(saveFile + u": "_s);
+    }
+    return resumed;
 }
 
 ReplayPlayer::ReplayPlayer(Content content, Replay replay)

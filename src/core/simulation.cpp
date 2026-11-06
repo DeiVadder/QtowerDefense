@@ -146,6 +146,25 @@ CommandResult Simulation::check(const CastSpellCommand &command) const
                : CommandResult::Accepted;
 }
 
+CommandResult Simulation::check(const CallWaveCommand & /*command*/) const
+{
+    if (state_.status != GameStatus::Running) {
+        return CommandResult::GameOver;
+    }
+    const bool waiting = state_.spawnGroup < content_.wave.size() && state_.spawnedInGroup == 0 &&
+                         state_.spawnCountdownTicks > 0;
+    return waiting ? CommandResult::Accepted : CommandResult::NoWaveWaiting;
+}
+
+qint64 Simulation::waveCallBonus() const
+{
+    if (content_.earlyCallTicksPerGold == 0 ||
+        check(CallWaveCommand{}) != CommandResult::Accepted) {
+        return 0;
+    }
+    return state_.spawnCountdownTicks / content_.earlyCallTicksPerGold;
+}
+
 CommandResult Simulation::run(const SetTargetPriorityCommand &command)
 {
     const CommandResult result = check(command);
@@ -213,6 +232,16 @@ CommandResult Simulation::run(const CastSpellCommand &command)
     }
     removeDeadEnemies();
     state_.spellCooldowns[index] = spell.cooldownTicks;
+    return result;
+}
+
+CommandResult Simulation::run(const CallWaveCommand &command)
+{
+    const CommandResult result = check(command);
+    if (result == CommandResult::Accepted) {
+        state_.gold += waveCallBonus();
+        state_.spawnCountdownTicks = 0;
+    }
     return result;
 }
 

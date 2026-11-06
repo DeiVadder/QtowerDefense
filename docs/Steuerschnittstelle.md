@@ -18,12 +18,14 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | `castSpell` | `spell` (an index into the spells of the map), `x`, `y` (the cell at the centre) | Runs the command. The answer adds `result`, `spellCooling` while the spell is not ready |
 | `advance` | `ticks` (0 to 1000000) | Runs that many ticks, it stops at the end of the game |
 | `observe` | none | Reports the state, changes nothing |
-| `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay |
+| `callWave` | none | Runs the command: the next wave comes at the next tick, for gold. The answer adds `result`, `noWaveWaiting` while no wave waits |
+| `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay. This is also how a game is saved |
+| `loadGame` | `map` (file), `file` | Goes on with a saved game and drops the current one. Needs no running game. If it fails, the current game stays |
 | `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points |
 | `pause`, `resume` | none | Real game only. Stops or starts real time |
 | `quit` | none | Real game only. Ends the program after the answer |
 
-Everything but `startMap` and `quit` needs a game, which may have ended.
+Everything but `startMap`, `loadGame` and `quit` needs a game, which may have ended.
 
 A rejected command is not an error: the answer has `"ok": true`, a `result` such as `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold` or `unknownTower`, and the state stays as it was.
 
@@ -33,7 +35,7 @@ All answers with `"ok": true` report the state:
 
 ```json
 {"ok": true, "status": "running", "tick": 61, "gold": 70, "lives": 5, "hash": "00ab...",
- "wave": {"group": 0, "spawnedInGroup": 1, "countdownTicks": 45},
+ "wave": {"group": 0, "spawnedInGroup": 1, "countdownTicks": 45, "callBonus": 0},
  "towers": [{"id": 1, "type": 0, "x": 4, "y": 4, "cooldownTicks": 0, "rotation": 0, "priority": "first", "level": 0, "sellValue": 35}],
  "spells": [{"cooldownTicks": 0}, {"cooldownTicks": 0}],
  "enemies": [{"id": 2, "type": 0, "health": "12", "travelled": "0", "x": "0", "y": "2",

@@ -1,8 +1,10 @@
 #include "client/game_session.h"
 
+#include "automation/report.h"
 #include "core/content_loader.h"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QRandomGenerator>
@@ -60,15 +62,37 @@ void GameSession::restart()
 void GameSession::startGame(const QString &fileName, quint64 seed)
 {
     fileName_ = fileName;
+    saveIsOurs_ = false;
+    saveError_.clear();
+    emit saveChanged();
     core::ContentLoadResult loaded = core::loadContentFile(fileName);
     error_ = loaded.error;
     game_.reset();
-    lastPlaces_.clear();
-    selectedSpell_ = -1;
     if (loaded.content) {
         game_ = std::make_unique<core::ReplayRecorder>(
             *std::move(loaded.content), QFileInfo(fileName).fileName(), seed);
     }
+    showNewGame();
+}
+
+QString GameSession::resumeGame(const QString &fileName, const QString &saveFile)
+{
+    core::ResumeResult resumed = core::resumeGame(fileName, saveFile);
+    if (!resumed.game) {
+        return resumed.error;
+    }
+    fileName_ = fileName;
+    error_.clear();
+    game_ = std::move(resumed.game);
+    showNewGame();
+    setPaused(true);
+    return {};
+}
+
+void GameSession::showNewGame()
+{
+    lastPlaces_.clear();
+    selectedSpell_ = -1;
     clock_ = core::TickClock();
     clock_.setSpeed(speed_);
     paused_ = false;
@@ -180,6 +204,80 @@ bool GameSession::castSpellAt(int x, int y)
     emit stateChanged();
     emit frameChanged();
     return true;
+}
+
+bool GameSession::callWave()
+{
+    if (!game_ || game_->execute(core::CallWaveCommand{}) != core::CommandResult::Accepted) {
+        return false;
+    }
+    emit stateChanged();
+    return true;
+}
+
+bool GameSession::canCallWave() const
+{
+    return game_ &&
+           game_->simulation().check(core::CallWaveCommand{}) == core::CommandResult::Accepted;
+}
+
+qint64 GameSession::waveCallBonus() const
+{
+    return game_ ? game_->simulation().waveCallBonus() : 0;
+}
+
+bool GameSession::saveGame()
+{
+    if (!canSave()) {
+        return false;
+    }
+    saveError_.clear();
+    QDir().mkpath(QFileInfo(saveFile_).path());
+    const bool saved = automation::writeFile(saveFile_, core::toJson(game_->replay()), &saveError_);
+    saveIsOurs_ = saveIsOurs_ || saved;
+    emit saveChanged();
+    return saved;
+}
+
+bool GameSession::loadGame()
+{
+    const core::ReplayLoadResult saved = core::loadReplayFile(saveFile_);
+    saveError_ = saved.error;
+    if (saved.replay) {
+        const QString map = QFileInfo(saved.replay->content).fileName();
+        saveError_ = resumeGame(QFileInfo(fileName_).dir().filePath(map), saveFile_);
+        saveIsOurs_ = saveError_.isEmpty();
+    }
+    emit saveChanged();
+    return saveError_.isEmpty();
+}
+
+const QString &GameSession::saveFile() const
+{
+    return saveFile_;
+}
+
+void GameSession::setSaveFile(const QString &fileName)
+{
+    saveFile_ = fileName;
+    emit saveChanged();
+    emit stateChanged();
+}
+
+bool GameSession::canSave() const
+{
+    return game_ && !saveFile_.isEmpty() &&
+           game_->simulation().state().status == core::GameStatus::Running;
+}
+
+bool GameSession::hasSave() const
+{
+    return !saveFile_.isEmpty() && QFileInfo::exists(saveFile_);
+}
+
+const QString &GameSession::saveError() const
+{
+    return saveError_;
 }
 
 void GameSession::rotateSelection()
@@ -430,6 +528,9 @@ void GameSession::applicationStateChanged(Qt::ApplicationState state)
 {
     if (state == Qt::ApplicationSuspended || state == Qt::ApplicationHidden) {
         setPaused(true);
+        if (saveIsOurs_ || !hasSave()) {
+            saveGame();
+        }
     }
 }
 

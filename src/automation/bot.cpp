@@ -18,6 +18,7 @@ constexpr quint32 kMaxFuzzCommandsPerTick = 3;
 constexpr quint32 kCommandValues = 3; // x, y and the tower type
 constexpr quint32 kTowerCommandOneIn = 10;
 constexpr quint32 kSpellCommandOneIn = 30;
+constexpr quint32 kWaveCommandOneIn = 60;
 constexpr quint32 kTowerCommands = 8; // upgrade, sell, and six times the target priority
 
 /// A game draws how often a command is well-formed, one in so many. 0 means never: such a game
@@ -115,6 +116,9 @@ public:
         const bool wellFormed = validOneIn_ != 0 && random_.nextBelow(validOneIn_) == 0;
         if (random_.nextBelow(kTowerCommandOneIn) == 0) {
             return towerCommand(game.state(), wellFormed);
+        }
+        if (random_.nextBelow(kWaveCommandOneIn) == 0) {
+            return core::CallWaveCommand{};
         }
         const core::Content &content = game.content();
         if (random_.nextBelow(kSpellCommandOneIn) == 0) {

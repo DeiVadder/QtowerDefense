@@ -128,6 +128,13 @@ public:
         return {};
     }
 
+    QString loadSaved(const QString &map, const QString &file) override
+    {
+        const QString error = game_->resumeGame(map, file);
+        started_ = started_ || error.isEmpty();
+        return error;
+    }
+
     core::ReplayRecorder *recorder() override
     {
         return started_ ? game_->recorder() : nullptr;

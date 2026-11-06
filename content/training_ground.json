@@ -2,6 +2,7 @@
     "formatVersion": 1,
     "startGold": 120,
     "startLives": 5,
+    "earlyCallTicksPerGold": 15,
     "gridWidth": 17,
     "gridHeight": 11,
     "path": [

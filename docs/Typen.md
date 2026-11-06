@@ -71,8 +71,10 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `ReplayLoadResult` | struct | `replay.h` | Holds the replay, or an error text that names the place of the problem. |
 | `ReplayPlayer` | class | `replay.h` | Repeats a replay in steps of any size and compares results and checkpoints on the way. |
 | `ReplayRecorder` | class | `replay.h` | Plays a game and writes down all that is needed to repeat it, rejected commands too. |
+| `ResumeResult` | struct | `replay.h` | A game that goes on, or the reason why it cannot. |
 | `ActiveStatus` | struct | `simulation.h` | A status effect on an enemy, for the ticks that are left. |
 | `BuildTowerCommand` | struct | `simulation.h` |  |
+| `CallWaveCommand` | struct | `simulation.h` | Lets the next wave start at the next tick, for gold. |
 | `CastSpellCommand` | struct | `simulation.h` |  |
 | `Command` | using | `simulation.h` | What a player, human or bot, can ask for. |
 | `CommandResult` | enum class | `simulation.h` |  |

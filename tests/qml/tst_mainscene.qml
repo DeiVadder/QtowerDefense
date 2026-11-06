@@ -419,6 +419,9 @@ Item {
             const list = findChild(hud, "towerList");
             const rotation = findChild(hud, "rotation");
             verify(stats.y + stats.height <= list.y);
+            const spells = findChild(hud, "spellButtons");
+            tryVerify(() => spells.children.length > 1);
+            verify(spells.y + spells.height <= rotation.y, spells.y + " and " + rotation.y);
             verify(list.width >= towerButtons.children[0].width / 2, list.width);
             verify(list.x + list.width <= rotation.x);
             verify(rotation.x + rotation.width <= hud.width);

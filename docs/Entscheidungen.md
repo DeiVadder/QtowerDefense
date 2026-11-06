@@ -234,3 +234,16 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Inhalt:** `meteor` (Feuer, Fläche) und `deep_freeze` (Eis, 90 % langsamer) auf beiden Karten.
 - **Bots:** Der naive Bot wirkt jeden bereiten Zauber auf den vordersten Gegner. Der Fuzz-Bot verkauft selten, sonst gewinnt keine Partie mehr, und selbst so nur etwa jede fünfzigste.
 - **Formatversion:** Bleibt 1, `spells` ist optional.
+
+## E-31 Spielfluss
+
+- **Welle vorziehen:** `CallWaveCommand` setzt die Wartezeit vor der nächsten Gruppe auf null, sie kommt im nächsten Tick. Eine Welle ist hier eine Gruppe aus `wave`. Das geht nur, solange eine Gruppe wartet, nicht mitten in einer Gruppe.
+- **Bonus:** Je `earlyCallTicksPerGold` gesparte Ticks ein Gold, abgerundet. Die Karten zahlen eines je 15 Ticks, also 10 Gold für eine Pause von 150 Ticks. Der Wert ist ein Startwert für Etappe 12.
+- **Ein Spielstand ist ein Replay:** Ein laufendes Spiel wird als Replay gespeichert und beim Laden neu durchgerechnet (`resumeGame`). Ein eigenes Format für den Zustand hätte jedes Feld ein zweites Mal gebraucht, und der Mitschnitt ginge beim Laden verloren. Bei rund 4.400-facher Echtzeit kostet eine Stunde Spiel etwa eine Sekunde Laden.
+- **Grenze:** Ändern sich Regeln oder Inhalte, lässt sich ein alter Spielstand nicht mehr laden. Das Laden prüft Inhalts-Hash, jedes Befehlsergebnis und den letzten Zustands-Hash und meldet den Fehler. Ein Stand aus einer älteren Version geht also verloren, er spielt aber nie falsch weiter. Muss das einmal anders werden, bleibt ein Zustandsformat als spätere Ergänzung möglich.
+- **Ein Platz:** Der Client hat eine Datei `running_game.json` unter `QStandardPaths::AppDataLocation`. Der Spielstand nennt seine Karte, die Karten liegen nebeneinander im selben Ordner. Geladen wird pausiert.
+- **Wann:** Von Hand in der Pause, von selbst, wenn die App in den Hintergrund geht. Von selbst nur, wenn es noch keinen Spielstand gibt oder die Datei dieses Spiel hält, denn das Programm startet immer ein neues Spiel und darf den gespeicherten Stand beim Weggehen nicht überschreiben. Windows sendet diese Zustände nach bisheriger Kenntnis nicht, und beim Schließen wird nicht gespeichert: Auf dem Desktop speichert nur der Spieler. Ein beendetes Spiel wird nicht gespeichert. Mit `--control` hat der Client keinen Platz, die Steuerung nennt ihre Dateien selbst und die Tests fassen nichts außerhalb des Projekts an.
+- **Knöpfe:** Speichern und Laden stehen nur in der Pause da, denn am Rand verdecken sie Felder und den Anfang des Pfades. Ein Menü kommt mit Etappe 11.
+- **Bots:** Der Fuzz-Bot ruft Wellen, der naive nicht. Ihn mutiger zu machen, gehört zum guten Bot aus Etappe 12.
+- **Noch offen:** Kampagnenfortschritt, Highscores und Einstellungen aus dem Auftrag kommen mit Etappe 11, denn es gibt sie noch nicht. Das Spieltempo merkt sich der Spielstand nicht.
+- **Formatversion:** Bleibt 1, der neue Schlüssel ist optional.

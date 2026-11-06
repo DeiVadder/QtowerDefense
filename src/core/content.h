@@ -211,7 +211,8 @@ struct Content
 {
     qint64 startGold = 0;
     qint64 startLives = 1;
-    qint64 sellPercent = 70; // of all the gold a tower cost, rounded down
+    qint64 sellPercent = 70;          // of all the gold a tower cost, rounded down
+    qint64 earlyCallTicksPerGold = 0; // a wave called early pays per so many ticks, 0 pays nothing
     Grid grid;
     Path path;
     std::vector<TowerType> towers;

@@ -53,6 +53,11 @@ QJsonObject advance(ControlSession &session, qint64 ticks)
 class CountingGame : public qtd::automation::ControlledGame
 {
 public:
+    QString loadSaved(const QString & /*map*/, const QString & /*file*/) override
+    {
+        return {};
+    }
+
     QString start(const QString &map, quint64 seed) override
     {
         qtd::core::ContentLoadResult loaded = qtd::core::loadContentFile(map);
@@ -149,6 +154,48 @@ private slots:
                                          {"priority"_L1, "last"_L1}});
         QVERIFY(missing["ok"_L1].toBool());
         QCOMPARE(missing["result"_L1].toString(), u"unknownTower"_s);
+    }
+
+    void aWaveIsCalled()
+    {
+        ControlSession session;
+        start(session);
+        const QJsonObject before = advance(session, 0);
+        QCOMPARE(before["wave"_L1].toObject()["callBonus"_L1].toInteger(), 4);
+        const QJsonObject called = ask(session, {{"action"_L1, "callWave"_L1}});
+        QCOMPARE(called["result"_L1].toString(), u"accepted"_s);
+        QCOMPARE(called["gold"_L1].toInteger(), 124);
+        QCOMPARE(called["wave"_L1].toObject()["callBonus"_L1].toInteger(), 0);
+        const QJsonObject again = ask(session, {{"action"_L1, "callWave"_L1}});
+        QCOMPARE(again["result"_L1].toString(), u"noWaveWaiting"_s);
+    }
+
+    void aSavedGameGoesOn()
+    {
+        const QTemporaryDir folder;
+        const QString file = folder.filePath(u"save.json"_s);
+        ControlSession session;
+        start(session);
+        advance(session, 40);
+        const QJsonObject end = advance(session, 0);
+        ask(session, {{"action"_L1, "saveReplay"_L1}, {"file"_L1, file}});
+
+        ControlSession other; // needs no game before
+        const QJsonObject loaded =
+            ask(other, {{"action"_L1, "loadGame"_L1}, {"map"_L1, mapFile()}, {"file"_L1, file}});
+        QCOMPARE(loaded["tick"_L1].toInteger(), 40);
+        QCOMPARE(loaded["hash"_L1].toString(), end["hash"_L1].toString());
+    }
+
+    void aSaveThatDoesNotLoadKeepsTheGame()
+    {
+        ControlSession session;
+        start(session);
+        advance(session, 3);
+        const QJsonObject answer = ask(
+            session, {{"action"_L1, "loadGame"_L1}, {"map"_L1, mapFile()}, {"file"_L1, "none"_L1}});
+        QVERIFY(answer.contains("error"_L1));
+        QCOMPARE(advance(session, 0)["tick"_L1].toInteger(), 3);
     }
 
     void spellsAreCastAndCoolDown()
@@ -359,6 +406,12 @@ private slots:
         QTest::newRow("no ticks") << QByteArray(R"({"action":"advance"})") << u"ticks"_s;
         QTest::newRow("text as cell")
             << QByteArray(R"({"action":"buildTower","x":"1","y":0,"towerType":0})") << u"x"_s;
+        QTest::newRow("wave with a wrong key")
+            << QByteArray(R"({"action":"callWave","z":1})") << u"z"_s;
+        QTest::newRow("load without a file")
+            << QByteArray(R"({"action":"loadGame","map":"m"})") << u"file"_s;
+        QTest::newRow("load with a wrong key")
+            << QByteArray(R"({"action":"loadGame","map":"m","file":"f","z":1})") << u"z"_s;
         QTest::newRow("spell without a place")
             << QByteArray(R"({"action":"castSpell","spell":0,"x":1})") << u"y"_s;
         QTest::newRow("spell with a wrong key")

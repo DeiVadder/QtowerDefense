@@ -27,6 +27,8 @@ enum class Action : quint8 {
     UpgradeTower,
     SellTower,
     CastSpell,
+    CallWave,
+    LoadGame,
     Advance,
     Observe,
     SaveReplay,
@@ -55,6 +57,12 @@ std::optional<Action> actionFromName(const QString &name)
     }
     if (name == "castSpell"_L1) {
         return Action::CastSpell;
+    }
+    if (name == "callWave"_L1) {
+        return Action::CallWave;
+    }
+    if (name == "loadGame"_L1) {
+        return Action::LoadGame;
     }
     if (name == "advance"_L1) {
         return Action::Advance;
@@ -127,7 +135,8 @@ QJsonObject observationOf(const core::Simulation &game)
     answer.insert("wave"_L1,
                   QJsonObject{{"group"_L1, static_cast<qint64>(state.spawnGroup)},
                               {"spawnedInGroup"_L1, state.spawnedInGroup},
-                              {"countdownTicks"_L1, state.spawnCountdownTicks}});
+                              {"countdownTicks"_L1, state.spawnCountdownTicks},
+                              {"callBonus"_L1, game.waveCallBonus()}});
     answer.insert("towers"_L1, towers);
     answer.insert("enemies"_L1, enemies);
     return answer;
@@ -146,6 +155,15 @@ public:
         recorder_ = std::make_unique<core::ReplayRecorder>(
             *std::move(loaded.content), QFileInfo(map).fileName(), seed);
         return {};
+    }
+
+    QString loadSaved(const QString &map, const QString &file) override
+    {
+        core::ResumeResult resumed = core::resumeGame(map, file);
+        if (resumed.game) {
+            recorder_ = std::move(resumed.game);
+        }
+        return resumed.error;
     }
 
     core::ReplayRecorder *recorder() override
@@ -207,7 +225,9 @@ QByteArray ControlSession::handle(QByteArrayView request)
     if (!action) {
         return failure(u"unknown action \"%1\""_s.arg(name));
     }
-    if (*action != Action::StartMap && *action != Action::Quit && game_->recorder() == nullptr) {
+    const bool needsNoGame =
+        *action == Action::StartMap || *action == Action::LoadGame || *action == Action::Quit;
+    if (!needsNoGame && game_->recorder() == nullptr) {
         return failure(u"no game, use startMap first"_s);
     }
     switch (*action) {
@@ -223,6 +243,10 @@ QByteArray ControlSession::handle(QByteArrayView request)
         return commandOnTower<core::SellTowerCommand>(reader);
     case Action::CastSpell:
         return castSpell(reader);
+    case Action::CallWave:
+        return callWave(reader);
+    case Action::LoadGame:
+        return loadGame(reader);
     case Action::Advance:
         return advance(reader);
     case Action::SaveReplay:
@@ -344,6 +368,31 @@ QByteArray ControlSession::execute(const core::Command &command)
     QJsonObject answer = observation();
     answer.insert("result"_L1, core::toString(result));
     return compact(answer);
+}
+
+QByteArray ControlSession::callWave(const core::ObjectReader &request)
+{
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    return execute(core::CallWaveCommand{});
+}
+
+QByteArray ControlSession::loadGame(core::ObjectReader &request)
+{
+    const QString map = request.text("map"_L1);
+    const QString file = request.text("file"_L1);
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    const QString error = game_->loadSaved(map, file);
+    if (!error.isEmpty()) {
+        return failure(error);
+    }
+    game_->changed();
+    return compact(observation());
 }
 
 QByteArray ControlSession::advance(core::ObjectReader &request)

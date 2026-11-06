@@ -2,8 +2,9 @@
 
 ## Stand
 
-- **Etappe:** 0 bis 8 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
-- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Acht Golden Replays. Keine Anbindung an den Client.
+- **Etappe:** 0 bis 9 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus Etappe 9:** Wellen vorziehen gegen Bonusgold, Speichern und Laden eines laufenden Spiels als Replay, von Hand in der Pause und beim Gang in den Hintergrund, auch über die Steuerschnittstelle (E-31).
 - **Dazu aus Etappe 8:** Zauber `meteor` und `deep_freeze` mit Abklingzeit, im HUD wählbar, auf Bots und Steuerschnittstelle (E-30).
 - **Dazu aus Etappe 7:** Sieben Turmtypen mit je zwei Upgrades, Verkauf, Flächenschaden (`catapult`), acht Gegnertypen und zwei Bosse, Regeneration, neue Karte `mire_siege`, Upgrade und Verkauf im HUD (E-29).
 - **Dazu aus `feature/bildzeit`:** Der Smoke-Test misst die Kosten je Bild auf CPU und GPU, die 167 Bilder je Sekunde sind als Takt von Qt erklärt (`docs/Performance-Verlauf.md`).
@@ -21,7 +22,7 @@
 
 ## Nächster Schritt
 
-1. Etappe 9.
+1. Etappe 10.
 2. Vor Etappe 11 (Wunsch des Menschen, 2026-11-05): das UI-Thema aus dem Auftrag, also Neon `#2CDE85` als Akzent und ein QML-Theme-Singleton für alle Farben, Abstände und Schriften. Das HUD hat bisher feste Farben.
 
 ## Bekannte Mängel und offene Punkte
@@ -30,6 +31,7 @@
 - **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Schadensarten, Effekte und Resistenzen stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
 - **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `MapInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende.
 - **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Die Form ist nur im HUD zu sehen, nicht auf der Karte, ein abgelehnter Tipp bleibt stumm, das HUD nennt die rohe ID statt eines übersetzbaren Namens, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
+- **Aus dem Review von Etappe 9, nicht behoben:** Fehlertexte beim Laden kommen aus Core und erscheinen englisch im HUD, wie die Fehler einer Karte. Übersetzbar werden sie mit Etappe 13. `resumeGame` vergleicht ähnlich wie `ReplayPlayer`, `loadGame` liest die Datei zweimal.
 - **Aus dem Review von Etappe 8, nicht behoben:** Das HUD zeigt die rohen IDs der Zauber (`deep_freeze`), wie bei den Türmen. Anzeigenamen gehören zum UI-Thema vor Etappe 11.
 - **Aus dem Review von Etappe 7, nicht behoben:** `mire_siege` ist zu leicht, der naive Bot gewinnt ohne Upgrades (Etappe 12). Über die Steuerschnittstelle verkauft, bleibt die ID des gewählten Turms in `GameSession` stehen. Das ist harmlos, weil alles über `chosen()` geht.
 - **Aus dem Review von `feature/bildzeit`, nicht behoben:** Die Arbeit des GUI-Threads (`GameSession::refresh`, `MapInstances`, QML-Bindings) misst nichts, sie fällt erst auf, wenn die Bildrate unter 60 sinkt. Die GPU-Zeit prüft nur der Smoke-Test in der Vollprüfung, nicht `tst_client_screen_control`.
@@ -50,7 +52,7 @@
   - Falscher Alarm bei `__has_include(<foo/1.2/bar.h>)` und bei auskommentierten Link-Zeilen.
   - Eine getestete Datei mit Nicht-ASCII-Namen sprengt den OpenCppCoverage-Export (`scripts/coverage.py`).
   - Ohne lokalen Branch `dev` scheitert `check_length` laut, der Hook blockiert dann. `BASELINE_NAME` steht in `scripts/check_length.py` doppelt.
-- **MSVC-Absturz C1001, ungeklärt, zweimal gesehen:** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen.
+- **MSVC-Absturz C1001, ungeklärt, dreimal gesehen (zuletzt in Etappe 9 in `tst_game_session.cpp`, ein zweiter Build lief durch):** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen.
 - **Auftrag, Sache des Menschen:** `QtowerDefense-Agent-Auftrag.md` nennt für `clang-tidy` und `clang-format` noch den Pfad der VS Build Tools. Gültig ist jetzt E-22.
 - **Plugin `qtd-lsp`:** Am 2026-11-04 vom Menschen in einer neuen Sitzung geprüft: Es lädt, `clangd` fand bei fertigem Index alle Verwendungen von `projectVersion`. Bei laufendem Index fehlten Treffer ohne Warnung (Regel in `CLAUDE.md`). `qmlls` wurde dort nicht abgefragt, nur seine LSP-Initialisierung ist geprüft. clangds Hinweis auf ein unbenutztes `<compare>` in `version.h` ist ein Fehlalarm (`operator<=>`).
 - **OpenCppCoverage-Setup** hat einen HKLM-Uninstall-Schlüssel und einen Benutzer-`PATH`-Eintrag außerhalb von `C:\dev` hinterlassen (`docs/Building.md`).
@@ -71,7 +73,7 @@
 | 6 | Kampfsystem | fertig, in `dev` |
 | 7 | Inhalte Türme und Gegner | fertig, in `dev` |
 | 8 | Zauber und Helden | fertig, in `dev` |
-| 9 | Spielfluss | offen |
+| 9 | Spielfluss | fertig, in `dev` |
 | 10 | Assets | offen |
 | 11 | Modi | offen |
 | 12 | Balancing | offen |

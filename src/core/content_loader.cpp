@@ -331,6 +331,9 @@ ContentLoadResult parseContent(QByteArrayView json)
     if (root.has("sellPercent"_L1)) {
         content.sellPercent = root.integer("sellPercent"_L1, 0, kMaxPercent);
     }
+    if (root.has("earlyCallTicksPerGold"_L1)) {
+        content.earlyCallTicksPerGold = root.integer("earlyCallTicksPerGold"_L1, 1, kMaxInteger);
+    }
     readGrid(root, &content);
     if (!root.failed()) {
         readPath(root, &content);

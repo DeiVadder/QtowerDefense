@@ -98,12 +98,18 @@ struct CastSpellCommand
     Cell cell;        // the centre of the spell
 };
 
+/// Lets the next wave start at the next tick, for gold.
+struct CallWaveCommand
+{
+};
+
 /// What a player, human or bot, can ask for. New commands join this list.
 using Command = std::variant<BuildTowerCommand,
                              SetTargetPriorityCommand,
                              UpgradeTowerCommand,
                              SellTowerCommand,
-                             CastSpellCommand>;
+                             CastSpellCommand,
+                             CallWaveCommand>;
 
 enum class CommandResult : quint8 {
     Accepted,
@@ -117,6 +123,7 @@ enum class CommandResult : quint8 {
     HighestLevel,
     UnknownSpell,
     SpellCooling,
+    NoWaveWaiting,
 };
 
 /// One game. Same content, seed and commands at the same ticks give the same states, bit by bit.
@@ -141,6 +148,10 @@ public:
     CommandResult check(const UpgradeTowerCommand &command) const;
     CommandResult check(const SellTowerCommand &command) const;
     CommandResult check(const CastSpellCommand &command) const;
+    CommandResult check(const CallWaveCommand &command) const;
+
+    /// The gold for calling the next wave right now: the ticks it would still wait, in gold.
+    qint64 waveCallBonus() const;
 
     /// Applies a command between two ticks. Anything but Accepted leaves the state untouched.
     CommandResult execute(const Command &command);
@@ -176,6 +187,7 @@ private:
     CommandResult run(const UpgradeTowerCommand &command);
     CommandResult run(const SellTowerCommand &command);
     CommandResult run(const CastSpellCommand &command);
+    CommandResult run(const CallWaveCommand &command);
     /// GameOver, UnknownTower or Accepted, what all commands on a tower check first.
     CommandResult checkTowerCommand(qint64 id) const;
     bool hasTowerAt(Cell cell) const;

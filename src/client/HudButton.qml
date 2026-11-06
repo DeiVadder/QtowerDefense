@@ -7,6 +7,8 @@ Rectangle {
     required property string text
     required property real unit
     property bool highlighted: false
+    // Not enabled: a disabled MouseArea lets the tap through to the map below.
+    property bool available: true
 
     signal clicked
 
@@ -14,6 +16,7 @@ Rectangle {
     implicitHeight: unit
     radius: unit / 6
     color: highlighted ? "#c9a227" : "#2f3e4e"
+    opacity: available ? 1 : 0.5
     border.color: "#8fa3b5"
 
     Text {
@@ -28,6 +31,10 @@ Rectangle {
     // Not a TapHandler: it only watches, and the map below would take the same click.
     MouseArea {
         anchors.fill: parent
-        onClicked: root.clicked()
+        onClicked: {
+            if (root.available) {
+                root.clicked();
+            }
+        }
     }
 }

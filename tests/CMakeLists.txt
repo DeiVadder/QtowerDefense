@@ -38,6 +38,16 @@ qtd_add_test(tst_core_spells
     LIBS qtd_core
     LABELS core)
 
+qtd_add_test(tst_core_waves
+    SOURCES core/scenario.h core/tst_waves.cpp
+    LIBS qtd_core
+    LABELS core)
+
+qtd_add_test(tst_core_resume
+    SOURCES core/scenario.h core/tst_resume.cpp
+    LIBS qtd_core
+    LABELS core)
+
 qtd_add_test(tst_core_state_hash
     SOURCES core/scenario.h core/tst_state_hash.cpp
     LIBS qtd_core
@@ -119,7 +129,7 @@ add_test(NAME headless_golden_defence COMMAND qtd_headless
     --replay "${QTD_GOLDEN_DIR}/training_ground_defence.replay.json")
 set_tests_properties(headless_golden_defence PROPERTIES
     LABELS golden
-    PASS_REGULAR_EXPRESSION "\"hash\":\"f3184baa9835f170\".*\"matches\":true")
+    PASS_REGULAR_EXPRESSION "\"hash\":\"7571d7019530e009\".*\"matches\":true")
 
 if(NOT QTD_ENABLE_UBSAN)
     # Needs the GPU: renders the real main window once, without real-time waits of its own.
@@ -141,6 +151,13 @@ if(NOT QTD_ENABLE_UBSAN)
         LIBS qtd_client
         LABELS client)
     target_compile_definitions(tst_client_game_session PRIVATE
+        QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
+    qtd_add_test(tst_client_save_game
+        SOURCES client/tst_save_game.cpp
+        LIBS qtd_client
+        LABELS client)
+    target_compile_definitions(tst_client_save_game PRIVATE
         QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
     qt_add_executable(tst_qml qml/tst_qml.cpp)

@@ -99,6 +99,7 @@ struct FuzzRecord
     std::set<CommandResult> upgradeResults;
     std::set<CommandResult> sellResults;
     std::set<CommandResult> spellResults;
+    std::set<CommandResult> waveResults;
 
     void note(const qtd::core::Command &command, CommandResult result)
     {
@@ -111,6 +112,8 @@ struct FuzzRecord
             upgradeResults.insert(result);
         } else if (std::holds_alternative<qtd::core::CastSpellCommand>(command)) {
             spellResults.insert(result);
+        } else if (std::holds_alternative<qtd::core::CallWaveCommand>(command)) {
+            waveResults.insert(result);
         } else {
             sellResults.insert(result);
         }
@@ -123,6 +126,7 @@ void playFuzzGame(quint64 seed, FuzzRecord *record)
         "damageMin": "1", "damageMax": "1", "damageType": "ice"}], "wave")";
     QByteArray json = editedJson(R"("wave")", spell);
     json.replace(R"("count": 2)", R"("count": 30)"); // long enough to meet a spell that cools down
+    json.replace(R"("delayTicks": 0)", R"("delayTicks": 3)"); // a wave to call
     Simulation game(contentOf(json), seed);
     const std::unique_ptr<qtd::automation::Bot> bot =
         qtd::automation::makeBot(qtd::automation::BotKind::Fuzz, seed);
@@ -297,6 +301,8 @@ private slots:
         QVERIFY(record.spellResults.contains(CommandResult::Accepted));
         QVERIFY(record.spellResults.contains(CommandResult::SpellCooling));
         QVERIFY(record.spellResults.contains(CommandResult::UnknownSpell));
+        QVERIFY(record.waveResults.contains(CommandResult::Accepted));
+        QVERIFY(record.waveResults.contains(CommandResult::NoWaveWaiting));
     }
 
     void damageIsFound()

@@ -9,6 +9,7 @@
 #include <QtTypes>
 
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -104,6 +105,19 @@ private:
     Simulation game_;
     Replay replay_;
 };
+
+/// A game that goes on, or the reason why it cannot.
+struct ResumeResult
+{
+    std::unique_ptr<ReplayRecorder> game;
+    QString error;
+};
+
+/// A saved game is a replay of a running game (E-31): this repeats it to its last tick and records
+/// on from there. It fails if the commands or the last hash come out differently.
+ResumeResult resumeGame(Content content, const Replay &saved);
+/// The same from two files. The error text starts with the name of the file.
+ResumeResult resumeGame(const QString &mapFile, const QString &saveFile);
 
 /// Repeats a replay in steps of any size and compares results and checkpoints on the way. The first
 /// difference ends the run.

@@ -180,6 +180,38 @@ private slots:
         QCOMPARE(window.game()->tick(), 5);
     }
 
+    static void aSavedGameComesBackOnTheScreen()
+    {
+        const QTemporaryDir folder;
+        const QString file = folder.filePath(u"game.json"_s);
+        const ControlledWindow window;
+        start(window.control());
+        const QJsonObject end =
+            ask(window.control(), {{"action"_L1, "advance"_L1}, {"ticks"_L1, 20}});
+        ask(window.control(), {{"action"_L1, "saveReplay"_L1}, {"file"_L1, file}});
+
+        const ControlledWindow other; // no startMap before
+        const QJsonObject request{
+            {"action"_L1, "loadGame"_L1},
+            {"map"_L1, QStringLiteral(QTD_CONTENT_DIR "/training_ground.json")},
+            {"file"_L1, file}};
+        const QJsonObject loaded = ask(other.control(), request);
+        QVERIFY(loaded["ok"_L1].toBool());
+        QCOMPARE(loaded["hash"_L1].toString(), end["hash"_L1].toString());
+        QVERIFY(other.game()->paused());
+        QCOMPARE(other.game()->tick(), 20);
+    }
+
+    static void aFailedLoadWithoutAGameLeavesNone()
+    {
+        const ControlledWindow window;
+        const QJsonObject request{
+            {"action"_L1, "loadGame"_L1}, {"map"_L1, "none.json"_L1}, {"file"_L1, "none.json"_L1}};
+        QVERIFY(!ask(window.control(), request)["ok"_L1].toBool());
+        const QJsonObject observe = ask(window.control(), {{"action"_L1, "observe"_L1}});
+        QVERIFY(!observe["ok"_L1].toBool());
+    }
+
     static void theRecordingIsTheGameOfTheRequests()
     {
         const QTemporaryDir folder;

@@ -4,9 +4,11 @@
 
 #include <QCommandLineParser>
 #include <QCoreApplication>
+#include <QDir>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
+#include <QStandardPaths>
 #include <QtQml/qqmlextensionplugin.h>
 
 #include <cstdio>
@@ -30,6 +32,19 @@ std::unique_ptr<qtd::client::ScreenControl> controlOf(const QQmlApplicationEngin
     return game != nullptr ? std::make_unique<qtd::client::ScreenControl>(game, window) : nullptr;
 }
 
+/// Only a game for people saves on its own: a controlled one names its files itself.
+void useSaveFile(const QQmlApplicationEngine &engine)
+{
+    if (engine.rootObjects().isEmpty()) {
+        return;
+    }
+    auto *game = engine.rootObjects().constFirst()->findChild<qtd::client::GameSession *>();
+    if (game != nullptr) {
+        const QDir folder(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+        game->setSaveFile(folder.filePath(u"running_game.json"_s));
+    }
+}
+
 /// The whole program. Everything of Qt is gone when it returns.
 int run(int argc, char *argv[], bool *controlled)
 {
@@ -51,6 +66,7 @@ int run(int argc, char *argv[], bool *controlled)
 
     *controlled = parser.isSet(u"control"_s);
     if (!*controlled) {
+        useSaveFile(engine);
         return QGuiApplication::exec();
     }
     const std::unique_ptr<qtd::client::ScreenControl> control = controlOf(engine);

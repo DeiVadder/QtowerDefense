@@ -18,6 +18,26 @@ Item {
         when: windowShown
 
         Component {
+            id: buttonOverAnArea
+
+            MouseArea {
+                property int taps: 0
+                property int clicks: 0
+
+                anchors.fill: parent
+                onClicked: ++taps
+
+                HudButton {
+                    objectName: "button"
+                    unit: 40
+                    text: "x"
+                    available: false
+                    onClicked: ++parent.clicks
+                }
+            }
+        }
+
+        Component {
             id: gameComponent
 
             Item {
@@ -80,6 +100,60 @@ Item {
             verify(!buttons.visible);
             mouseClick(game.scene, place.x, place.y);
             compare(session.towerCount, 2);
+        }
+
+        function test_aButtonThatIsNotAvailableKeepsItsTap() {
+            const area = createTemporaryObject(buttonOverAnArea, stage);
+            const button = findChild(area, "button");
+            waitForRendering(area);
+            mouseClick(button);
+            compare(area.clicks, 0);
+            compare(area.taps, 0);
+            button.available = true;
+            mouseClick(button);
+            compare(area.clicks, 1);
+            compare(area.taps, 0);
+        }
+
+        function test_theHudCallsTheNextWave() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            const button = findChild(game.hud, "waveButton");
+            verify(button.text.indexOf("+4") >= 0);
+            mouseClick(button);
+            compare(session.gold, 124);
+            verify(!button.available);
+            mouseClick(button);
+            compare(session.gold, 124);
+        }
+
+        function test_theHudSavesAndLoads() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            const load = findChild(game.hud, "loadButton");
+            const save = findChild(game.hud, "saveButton");
+            verify(!findChild(game.hud, "savePanel").visible);
+            session.paused = true;
+            verify(findChild(game.hud, "savePanel").visible);
+            verify(!save.available);
+            // qmllint disable unqualified
+            // A folder of tst_qml.cpp that goes away with the test.
+            session.saveFile = saveFolder + "/hud.json";
+            // qmllint enable unqualified
+            verify(save.available);
+            verify(!load.available);
+            verify(session.buildTower(4, 4));
+            mouseClick(save);
+            verify(load.available);
+            session.restart();
+            compare(session.towerCount, 0);
+            session.paused = true;
+            mouseClick(load);
+            compare(session.towerCount, 1);
+            verify(session.paused);
+            compare(findChild(game.hud, "saveError").visible, false);
         }
 
         function test_aSpellIsCastWithATap() {

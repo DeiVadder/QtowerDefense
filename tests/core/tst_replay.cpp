@@ -427,6 +427,21 @@ private slots:
         QVERIFY(read.commands.at(1).result == CommandResult::UnknownSpell);
     }
 
+    void aCalledWaveSurvivesARoundTrip()
+    {
+        Replay replay;
+        replay.content = u"map.json"_s;
+        replay.seed = 7;
+        replay.contentHash = 255;
+        replay.commands.push_back({3, qtd::core::CallWaveCommand{}, CommandResult::NoWaveWaiting});
+        replay.checkpoints.push_back({3, 16});
+        const ReplayLoadResult result = parseReplay(toJson(replay));
+        QCOMPARE(result.error, QString());
+        const Replay read = required(result.replay);
+        QVERIFY(std::holds_alternative<qtd::core::CallWaveCommand>(read.commands.at(0).command));
+        QVERIFY(read.commands.at(0).result == CommandResult::NoWaveWaiting);
+    }
+
     void aCommandWithoutRotationStandsUnturned()
     {
         const ReplayLoadResult result = parseReplay(editedReplay("", ""));

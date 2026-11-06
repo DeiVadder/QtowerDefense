@@ -59,6 +59,7 @@ quint64 contentHash(const Content &content)
 {
     Fields fields;
     fields.add(content.startGold, content.startLives, content.sellPercent);
+    fields.add(content.earlyCallTicksPerGold);
     fields.addPoints(content.path.points());
     fields.add(content.grid.width(), content.grid.height());
     for (const Terrain terrain : content.grid.cells()) {

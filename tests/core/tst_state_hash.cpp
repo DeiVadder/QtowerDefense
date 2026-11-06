@@ -147,7 +147,7 @@ private slots:
 
     void theContentHashIsPinned()
     {
-        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x831533BC132D9081ULL);
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0xA33437FFBAE4C701ULL);
     }
 
     // The test vectors of the FNV authors.
@@ -238,6 +238,7 @@ private slots:
         row(R"("delayTicks": 0)", R"("delayTicks": 1)");
         row(R"("intervalTicks": 4)", R"("intervalTicks": 5)");
         row(R"("startLives": 3)", R"("startLives": 3, "sellPercent": 50)");
+        row(R"("startLives": 3)", R"("startLives": 3, "earlyCallTicksPerGold": 5)");
         row(R"("cooldownTicks": 4)", R"("cooldownTicks": 4, "splashRadius": "1")");
         row(R"("cost": 40)", R"("cost": 40, "upgrades": [{"cost": 1}])");
         row(R"("lifeCost": 1)", R"("lifeCost": 1, "regeneration": "1")");

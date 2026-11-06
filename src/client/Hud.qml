@@ -160,11 +160,66 @@ Item {
         }
     }
 
+    // A paused game can be put away, or be replaced by the one that was put away.
+    Column {
+        objectName: "savePanel"
+        visible: root.game.paused
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: topButtons.bottom
+        anchors.margins: root.unit / 4
+        spacing: root.unit / 4
+
+        Row {
+            anchors.horizontalCenter: parent.horizontalCenter
+            spacing: root.unit / 4
+
+            HudButton {
+                objectName: "saveButton"
+                unit: root.unit
+                available: root.game.canSave
+                text: qsTr("Save")
+                onClicked: root.game.saveGame()
+            }
+
+            HudButton {
+                objectName: "loadButton"
+                unit: root.unit
+                available: root.game.hasSave
+                text: qsTr("Load")
+                onClicked: root.game.loadGame()
+            }
+        }
+
+        Text {
+            objectName: "saveError"
+            visible: text.length > 0
+            width: root.width / 2
+            wrapMode: Text.Wrap
+            horizontalAlignment: Text.AlignHCenter
+            text: root.game.saveError
+            color: "#ff8a80"
+            font.pixelSize: root.unit * 0.3
+        }
+    }
+
+    HudButton {
+        id: waveButton
+
+        objectName: "waveButton"
+        anchors.right: parent.right
+        anchors.top: topButtons.bottom
+        anchors.margins: root.unit / 4
+        unit: root.unit
+        available: root.game.canCallWave
+        text: qsTr("Next wave +%1").arg(root.game.waveCallBonus)
+        onClicked: root.game.callWave()
+    }
+
     // What the next tap casts, and when each spell is ready again.
     Column {
         objectName: "spellButtons"
         anchors.right: parent.right
-        anchors.top: topButtons.bottom
+        anchors.top: waveButton.bottom
         anchors.margins: root.unit / 4
         spacing: root.unit / 4
 

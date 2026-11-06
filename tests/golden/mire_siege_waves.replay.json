@@ -1,0 +1,167 @@
+{
+    "checkpoints": [
+        {
+            "hash": "e59e59cc2856b498",
+            "tick": 0
+        },
+        {
+            "hash": "043055eab8458ff3",
+            "tick": 30
+        },
+        {
+            "hash": "86e31565897b3492",
+            "tick": 60
+        },
+        {
+            "hash": "5902279bf69a9265",
+            "tick": 90
+        },
+        {
+            "hash": "c1bb85d67549c061",
+            "tick": 120
+        },
+        {
+            "hash": "4aafec8e1ca7600e",
+            "tick": 150
+        },
+        {
+            "hash": "63ed8c1f10b1706f",
+            "tick": 180
+        },
+        {
+            "hash": "95570e06d5941e41",
+            "tick": 210
+        },
+        {
+            "hash": "7e367cd8a0391b39",
+            "tick": 240
+        },
+        {
+            "hash": "7420d8fb991738e2",
+            "tick": 270
+        },
+        {
+            "hash": "a38de44489f1d99e",
+            "tick": 300
+        },
+        {
+            "hash": "fad52c3e71bfe4ca",
+            "tick": 330
+        },
+        {
+            "hash": "601abcc87addb770",
+            "tick": 360
+        },
+        {
+            "hash": "43522bae3e9213be",
+            "tick": 390
+        },
+        {
+            "hash": "8ef14a9f1f1aade6",
+            "tick": 420
+        },
+        {
+            "hash": "a80c3dc928586910",
+            "tick": 450
+        },
+        {
+            "hash": "20ec7e9269dfe693",
+            "tick": 480
+        },
+        {
+            "hash": "4254ef8c7e415397",
+            "tick": 510
+        },
+        {
+            "hash": "32f5e8188e1132d0",
+            "tick": 540
+        },
+        {
+            "hash": "1cd5838322333e35",
+            "tick": 570
+        },
+        {
+            "hash": "6fd8bed1a7222a9b",
+            "tick": 600
+        },
+        {
+            "hash": "d48257e906d5b497",
+            "tick": 630
+        },
+        {
+            "hash": "d5e6af57b3db84d8",
+            "tick": 660
+        },
+        {
+            "hash": "4004c8d28bebe50f",
+            "tick": 690
+        },
+        {
+            "hash": "fe960ce94d54609c",
+            "tick": 720
+        },
+        {
+            "hash": "8f1d8dcb7e60902e",
+            "tick": 750
+        },
+        {
+            "hash": "56fce1dec3969340",
+            "tick": 780
+        },
+        {
+            "hash": "28bc04a22a5e90e2",
+            "tick": 810
+        },
+        {
+            "hash": "3dee1c39a793fa5d",
+            "tick": 840
+        },
+        {
+            "hash": "b9242b0dfa0540a9",
+            "tick": 870
+        },
+        {
+            "hash": "14de929a83881239",
+            "tick": 900
+        },
+        {
+            "hash": "09d159b0cd8d0364",
+            "tick": 930
+        }
+    ],
+    "commands": [
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 6,
+            "y": 3
+        },
+        {
+            "result": "accepted",
+            "tick": 0,
+            "type": "callWave"
+        },
+        {
+            "result": "noWaveWaiting",
+            "tick": 0,
+            "type": "callWave"
+        },
+        {
+            "result": "accepted",
+            "tick": 300,
+            "type": "callWave"
+        },
+        {
+            "result": "accepted",
+            "tick": 460,
+            "type": "callWave"
+        }
+    ],
+    "content": "mire_siege.json",
+    "contentHash": "ac00097bf3e719ef",
+    "formatVersion": 1,
+    "seed": "31"
+}
