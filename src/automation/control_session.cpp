@@ -26,6 +26,7 @@ enum class Action : quint8 {
     SetTargetPriority,
     UpgradeTower,
     SellTower,
+    CastSpell,
     Advance,
     Observe,
     SaveReplay,
@@ -51,6 +52,9 @@ std::optional<Action> actionFromName(const QString &name)
     }
     if (name == "sellTower"_L1) {
         return Action::SellTower;
+    }
+    if (name == "castSpell"_L1) {
+        return Action::CastSpell;
     }
     if (name == "advance"_L1) {
         return Action::Advance;
@@ -113,8 +117,13 @@ QJsonObject observationOf(const core::Simulation &game)
                                    {"slow"_L1, statusReport(enemy.slow)},
                                    {"poison"_L1, statusReport(enemy.poison)}});
     }
+    QJsonArray spells;
+    for (const qint64 cooldown : state.spellCooldowns) {
+        spells.append(QJsonObject{{"cooldownTicks"_L1, cooldown}});
+    }
     QJsonObject answer = stateReport(game);
     answer.insert("ok"_L1, true);
+    answer.insert("spells"_L1, spells);
     answer.insert("wave"_L1,
                   QJsonObject{{"group"_L1, static_cast<qint64>(state.spawnGroup)},
                               {"spawnedInGroup"_L1, state.spawnedInGroup},
@@ -212,6 +221,8 @@ QByteArray ControlSession::handle(QByteArrayView request)
         return commandOnTower<core::UpgradeTowerCommand>(reader);
     case Action::SellTower:
         return commandOnTower<core::SellTowerCommand>(reader);
+    case Action::CastSpell:
+        return castSpell(reader);
     case Action::Advance:
         return advance(reader);
     case Action::SaveReplay:
@@ -311,6 +322,19 @@ QByteArray ControlSession::commandOnTower(core::ObjectReader &request)
         return failure(request.error());
     }
     return execute(TowerCommand{tower});
+}
+
+QByteArray ControlSession::castSpell(core::ObjectReader &request)
+{
+    const qint64 spell =
+        request.integer("spell"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const qint64 x = request.integer("x"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const qint64 y = request.integer("y"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    request.rejectUnknownKeys();
+    if (request.failed()) {
+        return failure(request.error());
+    }
+    return execute(core::CastSpellCommand{spell, {x, y}});
 }
 
 QByteArray ControlSession::execute(const core::Command &command)

@@ -2,8 +2,9 @@
 
 ## Stand
 
-- **Etappe:** 0 bis 7 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
-- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Sieben Golden Replays. Keine Anbindung an den Client.
+- **Etappe:** 0 bis 8 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Acht Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus Etappe 8:** Zauber `meteor` und `deep_freeze` mit Abklingzeit, im HUD wählbar, auf Bots und Steuerschnittstelle (E-30).
 - **Dazu aus Etappe 7:** Sieben Turmtypen mit je zwei Upgrades, Verkauf, Flächenschaden (`catapult`), acht Gegnertypen und zwei Bosse, Regeneration, neue Karte `mire_siege`, Upgrade und Verkauf im HUD (E-29).
 - **Dazu aus `feature/bildzeit`:** Der Smoke-Test misst die Kosten je Bild auf CPU und GPU, die 167 Bilder je Sekunde sind als Takt von Qt erklärt (`docs/Performance-Verlauf.md`).
 - **Dazu aus Etappe 6:** Schadensarten, Resistenzen, Verlangsamung und Gift, Zielprioritäten je Turm, im Client wählbar (E-28).
@@ -20,7 +21,7 @@
 
 ## Nächster Schritt
 
-1. Etappe 8.
+1. Etappe 9.
 2. Vor Etappe 11 (Wunsch des Menschen, 2026-11-05): das UI-Thema aus dem Auftrag, also Neon `#2CDE85` als Akzent und ein QML-Theme-Singleton für alle Farben, Abstände und Schriften. Das HUD hat bisher feste Farben.
 
 ## Bekannte Mängel und offene Punkte
@@ -29,6 +30,7 @@
 - **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Schadensarten, Effekte und Resistenzen stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
 - **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `MapInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende.
 - **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Die Form ist nur im HUD zu sehen, nicht auf der Karte, ein abgelehnter Tipp bleibt stumm, das HUD nennt die rohe ID statt eines übersetzbaren Namens, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
+- **Aus dem Review von Etappe 8, nicht behoben:** Das HUD zeigt die rohen IDs der Zauber (`deep_freeze`), wie bei den Türmen. Anzeigenamen gehören zum UI-Thema vor Etappe 11.
 - **Aus dem Review von Etappe 7, nicht behoben:** `mire_siege` ist zu leicht, der naive Bot gewinnt ohne Upgrades (Etappe 12). Über die Steuerschnittstelle verkauft, bleibt die ID des gewählten Turms in `GameSession` stehen. Das ist harmlos, weil alles über `chosen()` geht.
 - **Aus dem Review von `feature/bildzeit`, nicht behoben:** Die Arbeit des GUI-Threads (`GameSession::refresh`, `MapInstances`, QML-Bindings) misst nichts, sie fällt erst auf, wenn die Bildrate unter 60 sinkt. Die GPU-Zeit prüft nur der Smoke-Test in der Vollprüfung, nicht `tst_client_screen_control`.
 - **Aus dem Review von Etappe 6, nicht behoben:** Die Farben von Schadensart, Status und gewähltem Turm prüft kein Test, nur der Blick auf die Screenshots.
@@ -68,7 +70,7 @@
 | 5 | Smoke-Test | fertig, in `dev` |
 | 6 | Kampfsystem | fertig, in `dev` |
 | 7 | Inhalte Türme und Gegner | fertig, in `dev` |
-| 8 | Zauber und Helden | offen |
+| 8 | Zauber und Helden | fertig, in `dev` |
 | 9 | Spielfluss | offen |
 | 10 | Assets | offen |
 | 11 | Modi | offen |

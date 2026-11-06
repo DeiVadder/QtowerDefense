@@ -40,6 +40,7 @@ def scenario_content():
         1, 40000, 5000, 7, 1, 0, 0,                 # enemies: no regeneration, no boss
         0, 0, 0, 0,                                 # four resistances
         1, 0, 2, 0, 4,                              # wave
+        0,                                          # no spells
     ]  # fmt: skip
 
 
@@ -52,6 +53,7 @@ def handmade_state():
         9, 1, 2, 4,                                 # next id, spawn group, spawned, countdown
         1, 3, 0, 15000, 25000, 4, 5000, 6, 2500,    # enemies with slow and poison
         1, 5, 1, 2, 3, 6, 3, 2, 1, 70,              # towers: turned, aiming at the last, upgraded
+        1, 11,                                      # one spell cooling down
     ]  # fmt: skip
 
 

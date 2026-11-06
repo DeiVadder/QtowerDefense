@@ -112,6 +112,15 @@ QString checkInvariants(const core::Content &content, const core::SimulationStat
     if (state.lives < 0) {
         return u"lives are negative: %1"_s.arg(state.lives);
     }
+    if (state.spellCooldowns.size() != content.spells.size()) {
+        return u"the spells do not match the content"_s;
+    }
+    for (std::size_t index = 0; index < content.spells.size(); ++index) {
+        const qint64 cooldown = state.spellCooldowns[index];
+        if (cooldown < 0 || cooldown > content.spells[index].cooldownTicks) {
+            return u"spell %1: impossible cooldown"_s.arg(index);
+        }
+    }
     const QString enemies = checkEnemies(content, state);
     return enemies.isEmpty() ? checkTowers(content, state) : enemies;
 }

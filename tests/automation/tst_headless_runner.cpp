@@ -241,7 +241,7 @@ private slots:
         const QJsonObject report =
             parsed(runHeadless(game).json)["games"_L1].toArray().first().toObject();
         QCOMPARE(report["seed"_L1].toString(), u"20261104"_s);
-        QCOMPARE(report["hash"_L1].toString(), u"3b29eb36983d8bd9"_s);
+        QCOMPARE(report["hash"_L1].toString(), u"f3184baa9835f170"_s);
     }
 
     void theSeedOptionBeatsTheScript()
@@ -368,7 +368,7 @@ private slots:
         HeadlessOptions game = options();
         game.bot = qtd::automation::BotKind::Fuzz;
         game.seed = 1;
-        game.runs = 40;
+        game.runs = 120; // only about one fuzz game in fifty wins
         const HeadlessOutcome outcome = runHeadless(game);
         QCOMPARE(outcome.exitCode, 0);
         std::set<QString> ends;

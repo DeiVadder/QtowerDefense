@@ -63,6 +63,7 @@ private:
     QByteArray startMap(core::ObjectReader &request);
     QByteArray buildTower(core::ObjectReader &request);
     QByteArray setTargetPriority(core::ObjectReader &request);
+    QByteArray castSpell(core::ObjectReader &request);
     template <typename TowerCommand>
     QByteArray commandOnTower(core::ObjectReader &request);
     /// Runs a command that passed its checks of form and reports what the game made of it.

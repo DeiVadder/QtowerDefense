@@ -64,6 +64,7 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
     error_ = loaded.error;
     game_.reset();
     lastPlaces_.clear();
+    selectedSpell_ = -1;
     if (loaded.content) {
         game_ = std::make_unique<core::ReplayRecorder>(
             *std::move(loaded.content), QFileInfo(fileName).fileName(), seed);
@@ -154,6 +155,33 @@ bool GameSession::executeOnChosen(const core::Command &command)
     return true;
 }
 
+void GameSession::selectSpell(int index)
+{
+    const QVariantList seconds = spellSeconds();
+    if (index == selectedSpell_) {
+        selectedSpell_ = -1;
+    } else if (index >= 0 && index < seconds.size() && seconds[index].toLongLong() == 0) {
+        selectedSpell_ = index;
+    } else {
+        return;
+    }
+    emit selectionChanged();
+}
+
+bool GameSession::castSpellAt(int x, int y)
+{
+    if (!game_ || selectedSpell_ < 0 ||
+        game_->execute(core::CastSpellCommand{selectedSpell_, {x, y}}) !=
+            core::CommandResult::Accepted) {
+        return false;
+    }
+    selectedSpell_ = -1;
+    emit selectionChanged();
+    emit stateChanged();
+    emit frameChanged();
+    return true;
+}
+
 void GameSession::rotateSelection()
 {
     selectedRotation_ = core::nextRotation(selectedRotation_);
@@ -216,6 +244,32 @@ QVariantList GameSession::towerTypes() const
         }
     }
     return types;
+}
+
+QStringList GameSession::spellNames() const
+{
+    QStringList names;
+    if (game_) {
+        std::ranges::transform(
+            game_->simulation().content().spells, std::back_inserter(names), &core::SpellType::id);
+    }
+    return names;
+}
+
+QVariantList GameSession::spellSeconds() const
+{
+    QVariantList seconds;
+    if (game_) {
+        for (const qint64 cooldown : game_->simulation().state().spellCooldowns) {
+            seconds.append((cooldown + core::kTicksPerSecond - 1) / core::kTicksPerSecond);
+        }
+    }
+    return seconds;
+}
+
+int GameSession::selectedSpell() const
+{
+    return selectedSpell_;
 }
 
 int GameSession::selectedTower() const
@@ -383,8 +437,9 @@ void GameSession::setSelectedTower(int index)
 {
     const int last = game_ ? static_cast<int>(game_->simulation().content().towers.size()) - 1 : 0;
     const int limited = std::clamp(index, 0, last);
-    if (selectedTower_ != limited) {
+    if (selectedTower_ != limited || selectedSpell_ >= 0) {
         selectedTower_ = limited;
+        selectedSpell_ = -1; // whoever picks a tower wants to build
         emit selectionChanged();
     }
 }

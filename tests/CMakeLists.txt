@@ -33,6 +33,11 @@ qtd_add_test(tst_core_towers
     LIBS qtd_core
     LABELS core)
 
+qtd_add_test(tst_core_spells
+    SOURCES core/scenario.h core/tst_spells.cpp
+    LIBS qtd_core
+    LABELS core)
+
 qtd_add_test(tst_core_state_hash
     SOURCES core/scenario.h core/tst_state_hash.cpp
     LIBS qtd_core
@@ -78,6 +83,11 @@ qtd_add_test(tst_automation_invariants
     LIBS qtd_automation
     LABELS automation)
 
+qtd_add_test(tst_automation_bots
+    SOURCES automation/tst_bots.cpp
+    LIBS qtd_automation
+    LABELS automation)
+
 qtd_add_test(tst_automation_control_session
     SOURCES automation/tst_control_session.cpp
     LIBS qtd_automation
@@ -109,7 +119,7 @@ add_test(NAME headless_golden_defence COMMAND qtd_headless
     --replay "${QTD_GOLDEN_DIR}/training_ground_defence.replay.json")
 set_tests_properties(headless_golden_defence PROPERTIES
     LABELS golden
-    PASS_REGULAR_EXPRESSION "\"hash\":\"3b29eb36983d8bd9\".*\"matches\":true")
+    PASS_REGULAR_EXPRESSION "\"hash\":\"f3184baa9835f170\".*\"matches\":true")
 
 if(NOT QTD_ENABLE_UBSAN)
     # Needs the GPU: renders the real main window once, without real-time waits of its own.
@@ -141,6 +151,10 @@ if(NOT QTD_ENABLE_UBSAN)
     qtd_set_strict_warnings(tst_qml)
     add_test(NAME tst_qml COMMAND tst_qml)
     set_tests_properties(tst_qml PROPERTIES LABELS client TIMEOUT 60)
+
+    # Vsync depends on the display: on an idle machine a window got almost no frames.
+    set_tests_properties(tst_client_window tst_client_screen_control tst_qml PROPERTIES
+        ENVIRONMENT QSG_NO_VSYNC=1)
 endif()
 
 if(QTD_ENABLE_ASAN)

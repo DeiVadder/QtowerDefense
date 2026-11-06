@@ -49,6 +49,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Path` | class | `content.h` | A fixed route for enemies: straight segments through at least two different points. |
 | `Rotation` | enum class | `content.h` | How far a tower is turned clockwise, around the cell it stands on. |
 | `SpawnGroup` | struct | `content.h` | Enemies of one type that enter the path one after the other. |
+| `SpellType` | struct | `content.h` | What a player casts at a cell of the map, when it has cooled down. |
 | `StatusEffect` | struct | `content.h` | What a hit leaves behind, on top of its damage. |
 | `StatusKind` | enum class | `content.h` |  |
 | `TargetPriority` | enum class | `content.h` | Which enemy in range a tower fires at. |
@@ -72,6 +73,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `ReplayRecorder` | class | `replay.h` | Plays a game and writes down all that is needed to repeat it, rejected commands too. |
 | `ActiveStatus` | struct | `simulation.h` | A status effect on an enemy, for the ticks that are left. |
 | `BuildTowerCommand` | struct | `simulation.h` |  |
+| `CastSpellCommand` | struct | `simulation.h` |  |
 | `Command` | using | `simulation.h` | What a player, human or bot, can ask for. |
 | `CommandResult` | enum class | `simulation.h` |  |
 | `Enemy` | struct | `simulation.h` |  |

@@ -39,6 +39,8 @@ Item {
     }
 
     Row {
+        id: topButtons
+
         objectName: "buttons"
         anchors.right: parent.right
         anchors.top: parent.top
@@ -154,6 +156,30 @@ Item {
                     highlighted: root.game.selectedTower === index
                     onClicked: root.game.selectedTower = index
                 }
+            }
+        }
+    }
+
+    // What the next tap casts, and when each spell is ready again.
+    Column {
+        objectName: "spellButtons"
+        anchors.right: parent.right
+        anchors.top: topButtons.bottom
+        anchors.margins: root.unit / 4
+        spacing: root.unit / 4
+
+        Repeater {
+            model: root.game.spellNames
+
+            delegate: HudButton {
+                required property int index
+                required property string modelData
+                readonly property int seconds: root.game.spellSeconds[index] ?? 0
+
+                unit: root.unit
+                text: seconds > 0 ? qsTr("%1: %2 s").arg(modelData).arg(seconds) : modelData
+                highlighted: root.game.selectedSpell === index
+                onClicked: root.game.selectSpell(index)
             }
         }
     }

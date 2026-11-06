@@ -15,6 +15,7 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | `setTargetPriority` | `tower` (the id of a tower in the game), `priority` (`first`, `last`, `strongest` or `nearest`) | Runs the command. The answer adds `result` |
 | `upgradeTower` | `tower` (the id of a tower in the game) | Runs the command. The answer adds `result`, `highestLevel` if there is no further level |
 | `sellTower` | `tower` (the id of a tower in the game) | Runs the command. The answer adds `result` |
+| `castSpell` | `spell` (an index into the spells of the map), `x`, `y` (the cell at the centre) | Runs the command. The answer adds `result`, `spellCooling` while the spell is not ready |
 | `advance` | `ticks` (0 to 1000000) | Runs that many ticks, it stops at the end of the game |
 | `observe` | none | Reports the state, changes nothing |
 | `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay |
@@ -34,6 +35,7 @@ All answers with `"ok": true` report the state:
 {"ok": true, "status": "running", "tick": 61, "gold": 70, "lives": 5, "hash": "00ab...",
  "wave": {"group": 0, "spawnedInGroup": 1, "countdownTicks": 45},
  "towers": [{"id": 1, "type": 0, "x": 4, "y": 4, "cooldownTicks": 0, "rotation": 0, "priority": "first", "level": 0, "sellValue": 35}],
+ "spells": [{"cooldownTicks": 0}, {"cooldownTicks": 0}],
  "enemies": [{"id": 2, "type": 0, "health": "12", "travelled": "0", "x": "0", "y": "2",
               "slow": {"ticks": 0, "strength": "0"}, "poison": {"ticks": 0, "strength": "0"}}]}
 ```

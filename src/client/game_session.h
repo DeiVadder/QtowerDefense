@@ -9,6 +9,7 @@
 #include <QPointF>
 #include <QSize>
 #include <QString>
+#include <QStringList>
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
@@ -29,6 +30,9 @@ class GameSession : public QObject
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
+    Q_PROPERTY(QStringList spellNames READ spellNames NOTIFY mapChanged)
+    Q_PROPERTY(QVariantList spellSeconds READ spellSeconds NOTIFY stateChanged)
+    Q_PROPERTY(int selectedSpell READ selectedSpell NOTIFY selectionChanged)
     Q_PROPERTY(int chosenPriority READ chosenPriority NOTIFY towersChanged)
     Q_PROPERTY(qint64 chosenUpgradeCost READ chosenUpgradeCost NOTIFY towersChanged)
     Q_PROPERTY(qint64 chosenSellValue READ chosenSellValue NOTIFY towersChanged)
@@ -64,6 +68,12 @@ public:
     Q_INVOKABLE bool upgradeChosenTower();
     /// Sells the chosen tower, true if the game took the command. Then no tower is chosen.
     Q_INVOKABLE bool sellChosenTower();
+    /// Makes the next tap on the map cast this spell, once it has cooled down. Asking for the same
+    /// spell again takes that back.
+    Q_INVOKABLE void selectSpell(int index);
+    /// Casts the selected spell at a cell, true if the game took the command. The next tap is a
+    /// tap as usual again.
+    Q_INVOKABLE bool castSpellAt(int x, int y);
     /// Turns what a tap on the map builds by a quarter, clockwise.
     Q_INVOKABLE void rotateSelection();
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
@@ -76,6 +86,11 @@ public:
     /// What can be built, as maps with the name and the cost of each type.
     [[nodiscard]] QVariantList towerTypes() const;
     [[nodiscard]] int selectedTower() const;
+    [[nodiscard]] QStringList spellNames() const;
+    /// The seconds until each spell can be cast, rounded up, 0 for a spell that is ready.
+    [[nodiscard]] QVariantList spellSeconds() const;
+    /// The spell that the next tap casts, -1 if there is none.
+    [[nodiscard]] int selectedSpell() const;
     /// The cells of what a tap builds, turned as it would stand, as maps with x and y from 0 and
     /// anchor for the cell that the tap names.
     [[nodiscard]] QVariantList selectedShape() const;
@@ -141,6 +156,7 @@ private:
     QString error_;
     qint64 chosenTower_ = 0;
     int selectedTower_ = 0;
+    int selectedSpell_ = -1;
     core::Rotation selectedRotation_ = core::Rotation::None;
     bool paused_ = false;
     int speed_ = 1;

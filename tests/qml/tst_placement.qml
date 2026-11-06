@@ -82,6 +82,38 @@ Item {
             compare(session.towerCount, 2);
         }
 
+        function test_aSpellIsCastWithATap() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            const buttons = findChild(game.hud, "spellButtons");
+            tryVerify(() => buttons.children.length > 1);
+            mouseClick(buttons.children[0]);
+            compare(session.selectedSpell, 0);
+            verify(buttons.children[0].highlighted);
+            const place = game.scene.cellOnScreen(4, 4);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.towerCount, 0);
+            compare(session.selectedSpell, -1);
+            compare(session.spellSeconds[0], 20);
+            verify(buttons.children[0].text.indexOf("20") >= 0);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.towerCount, 1);
+        }
+
+        function test_aSpellGoesOnATowerToo() {
+            const game = createTemporaryObject(gameComponent, stage);
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            verify(session.buildTower(4, 4));
+            waitForRendering(game.scene);
+            session.selectSpell(1);
+            const place = game.scene.blockTopOnScreen(4, 4, 0.7);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.spellSeconds[1], 30);
+            compare(session.chosenPriority, -1);
+        }
+
         function test_theHudUpgradesAndSellsTheChosenTower() {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);

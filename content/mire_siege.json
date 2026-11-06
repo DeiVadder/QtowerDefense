@@ -258,6 +258,25 @@
             ]
         }
     ],
+    "spells": [
+        {
+            "id": "meteor",
+            "cooldownTicks": 600,
+            "radius": "2",
+            "damageMin": "15",
+            "damageMax": "25",
+            "damageType": "fire"
+        },
+        {
+            "id": "deep_freeze",
+            "cooldownTicks": 900,
+            "radius": "2.5",
+            "damageMin": "0",
+            "damageMax": "1",
+            "damageType": "ice",
+            "effects": [{ "kind": "slow", "strength": "0.9", "durationTicks": 90 }]
+        }
+    ],
     "wave": [
         { "enemy": "mire_goblin", "count": 6, "delayTicks": 60, "intervalTicks": 45 },
         { "enemy": "stone_troll", "count": 2, "delayTicks": 90, "intervalTicks": 90 },

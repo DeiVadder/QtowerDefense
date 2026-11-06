@@ -23,6 +23,9 @@ struct Cell
 
 Point centreOf(Cell cell);
 
+/// The cell that a point on the map lies on. The point must not lie left of or above the map.
+Cell cellAt(Point point);
+
 /// What lies on a cell. Towers only stand on open cells.
 enum class Terrain : quint8 {
     Open,
@@ -180,6 +183,19 @@ struct EnemyType
 /// What is left of a hit of this damage type on this enemy, from 0 to 2.
 Fixed hitShare(const EnemyType &enemy, DamageType damage);
 
+/// What a player casts at a cell of the map, when it has cooled down. Every enemy in the radius
+/// takes one roll of damage with its own resistance, and the effects.
+struct SpellType
+{
+    QString id;
+    qint64 cooldownTicks = 1;
+    Fixed radius;
+    Fixed damageMin; // may be 0, for a spell that only leaves its effects behind
+    Fixed damageMax;
+    DamageType damageType = DamageType::Physical;
+    std::vector<StatusEffect> effects; // at most one of each kind
+};
+
 /// Enemies of one type that enter the path one after the other.
 struct SpawnGroup
 {
@@ -201,6 +217,7 @@ struct Content
     std::vector<TowerType> towers;
     std::vector<EnemyType> enemies;
     std::vector<SpawnGroup> wave;
+    std::vector<SpellType> spells;
 };
 
 } // namespace qtd::core

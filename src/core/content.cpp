@@ -94,6 +94,12 @@ Point centreOf(Cell cell)
     return {Fixed::fromInt(cell.x), Fixed::fromInt(cell.y)};
 }
 
+Cell cellAt(Point point)
+{
+    constexpr qint64 half = Fixed::kScale / 2;
+    return {(point.x.raw() + half) / Fixed::kScale, (point.y.raw() + half) / Fixed::kScale};
+}
+
 Grid::Grid(qint64 width, qint64 height)
     : width_(width), height_(height), cells_(static_cast<std::size_t>(width * height))
 {

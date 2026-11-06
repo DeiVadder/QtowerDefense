@@ -214,7 +214,7 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 ## E-29 Inhalte: Stufen, Verkauf, Flächenschaden
 
 - **Stufen:** `TowerType::levels` hält alles, was sich beim Verbessern ändern kann, die erste Stufe ist der gebaute Turm. In der Datei stehen die Werte der ersten Stufe weiter direkt am Turm, `upgrades` nennt je Stufe die Kosten und nur das, was sich ändert. Effekte ersetzen die der Stufe davor. Form und Schadensart bleiben fest, sonst könnte ein Upgrade an einem belegten Feld scheitern.
-- **Verkauf:** Der Turm merkt sich in `spent`, was er gekostet hat. Heute ist das die Summe seiner Stufen, das prüfen die Invarianten. Das Feld bleibt, damit der Erlös nicht von den Inhalten abhängt, falls Helden aus Etappe 8 einmal Rabatte geben. `sellPercent` steht je Karte in der Datei, Standard 70, abgerundet. Der Verkauf gibt die Felder sofort frei und ist jederzeit möglich, auch während einer Welle.
+- **Verkauf:** Der Turm merkt sich in `spent`, was er gekostet hat. Heute ist das die Summe seiner Stufen, das prüfen die Invarianten. Das Feld bleibt, damit der Erlös nicht von den Inhalten abhängt, falls es einmal Rabatte gibt. `sellPercent` steht je Karte in der Datei, Standard 70, abgerundet. Der Verkauf gibt die Felder sofort frei und ist jederzeit möglich, auch während einer Welle.
 - **Flächenschaden:** `splashRadius` am Turm, um das Ziel gemessen, ohne Abfall zum Rand. Ein Schuss würfelt einmal, jeder Gegner im Radius nimmt den Wurf mit seiner Resistenz und bekommt auch die Effekte. Tote zahlen nur einmal. Die erste Quelle ist `catapult`, Zauber nutzen später dieselbe Regel.
 - **Regeneration:** Je Tick bis zum Startwert, nicht unter Gift. Damit hat Gift gegen Heiler eine zweite Wirkung.
 - **Bosse:** `boss` ändert nur das Aussehen, die Regeln kennen keine Bosse. Was einen Boss ausmacht, steht in seinen Werten. Eigene Fähigkeiten kommen erst, wenn ein Inhalt sie braucht.
@@ -222,3 +222,15 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **HUD:** Verkaufen steht links, Upgrade rechts daneben. Fällt Upgrade auf der höchsten Stufe weg, geht ein Tipp zu viel an die Karte und lässt den Turm höchstens los, statt ihn zu verkaufen.
 - **Balancing:** Die Zahlen sind Startwerte. Der naive Bot gewinnt `mire_siege` mit allen 15 Leben, mit jedem geprüften Seed und ohne Upgrades, die Karte ist also zu leicht. Das klärt Etappe 12.
 - **Formatversion:** Bleibt 1, alle neuen Schlüssel sind optional.
+
+## E-30 Zauber
+
+- **Zauber statt Helden:** Der Auftrag nennt „Helden/Zauber". Gebaut sind Zauber, ohne Helden, die auf der Karte stehen. Ein Held wäre ein Turm mit Bewegung und bräuchte eigene Regeln, der Spieler gewinnt damit aber keine Entscheidung, die ein Zauber nicht auch bietet.
+- **Regel:** Ein Zauber kostet kein Gold, nur Abklingzeit. Er wirkt sofort beim Befehl, zwischen zwei Ticks, um die Mitte eines Feldes. Ein Wurf für alle Gegner im Radius, jeder nimmt ihn mit seiner Resistenz und bekommt die Effekte, wie beim Flächenschaden (E-29). Ein Zauber ins Leere ist erlaubt und kostet die Abklingzeit.
+- **Felder statt Punkte:** Das Ziel ist ein Feld, denn so bleibt die Eingabe ganzzahlig, und Tippen auf der Karte kennt ohnehin Felder. Auch Felder mit Hindernis oder Turm sind erlaubt.
+- **Abklingzeit:** `spellCooldowns` steht im Zustand, je Zauber der Inhalte ein Wert, jeder Tick zieht eins ab. Zu Beginn sind alle Zauber bereit. Die Reihenfolge im Tick steht in `docs/Architektur.md`.
+- **Letzter Gegner:** Stirbt er durch einen Zauber, endet die Partie erst im nächsten Tick. Die Prüfung des Spielendes gehört zum Tick, ein Befehl beendet nichts.
+- **Client:** Ein Knopf wählt den Zauber, der nächste Tipp auf die Karte wirkt ihn, auch auf einen Turm. Die Knöpfe stehen rechts oben unter Pause und Tempo, unten rechts verdeckten sie Felder nahe der Kamera. Ein zweiter Druck auf den Knopf oder die Wahl eines Turms nimmt die Wahl zurück. Daneben steht die Restzeit in ganzen Sekunden. Einen sichtbaren Einschlag und die Vorschau des Radius gibt es erst mit den Effekten aus Etappe 10.
+- **Inhalt:** `meteor` (Feuer, Fläche) und `deep_freeze` (Eis, 90 % langsamer) auf beiden Karten.
+- **Bots:** Der naive Bot wirkt jeden bereiten Zauber auf den vordersten Gegner. Der Fuzz-Bot verkauft selten, sonst gewinnt keine Partie mehr, und selbst so nur etwa jede fünfzigste.
+- **Formatversion:** Bleibt 1, `spells` ist optional.

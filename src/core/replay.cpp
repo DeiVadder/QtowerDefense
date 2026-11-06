@@ -23,7 +23,7 @@ namespace {
 constexpr qint64 kFormatVersion = 1;
 constexpr qsizetype kHashDigits = 16;
 
-using ResultNames = std::array<QLatin1StringView, 9>;
+using ResultNames = std::array<QLatin1StringView, 11>;
 constexpr ResultNames kResultNames{"accepted"_L1,
                                    "gameOver"_L1,
                                    "unknownTowerType"_L1,
@@ -32,8 +32,10 @@ constexpr ResultNames kResultNames{"accepted"_L1,
                                    "cellOccupied"_L1,
                                    "notEnoughGold"_L1,
                                    "unknownTower"_L1,
-                                   "highestLevel"_L1};
-static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::HighestLevel) + 1);
+                                   "highestLevel"_L1,
+                                   "unknownSpell"_L1,
+                                   "spellCooling"_L1};
+static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::SpellCooling) + 1);
 
 enum class Kind : quint8 {
     Replay,
@@ -101,6 +103,12 @@ Command readCommand(ObjectReader &item)
     }
     if (type == "sellTower"_L1) {
         return SellTowerCommand{item.integer("tower"_L1, -kMaxExactInteger, kMaxExactInteger)};
+    }
+    if (type == "castSpell"_L1) {
+        const qint64 spell = item.integer("spell"_L1, -kMaxExactInteger, kMaxExactInteger);
+        const qint64 x = item.integer("x"_L1, -kMaxExactInteger, kMaxExactInteger);
+        return CastSpellCommand{spell,
+                                {x, item.integer("y"_L1, -kMaxExactInteger, kMaxExactInteger)}};
     }
     if (type != "buildTower"_L1) {
         item.fail(u"type"_s, u"unknown command \"%1\""_s.arg(type));
@@ -215,6 +223,14 @@ QJsonObject fieldsOf(const UpgradeTowerCommand &command)
 QJsonObject fieldsOf(const SellTowerCommand &command)
 {
     return {{"type"_L1, "sellTower"_L1}, {"tower"_L1, command.tower}};
+}
+
+QJsonObject fieldsOf(const CastSpellCommand &command)
+{
+    return {{"type"_L1, "castSpell"_L1},
+            {"spell"_L1, command.spell},
+            {"x"_L1, command.cell.x},
+            {"y"_L1, command.cell.y}};
 }
 
 QJsonObject commandToJson(const RecordedCommand &recorded)

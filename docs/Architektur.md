@@ -30,7 +30,7 @@ Alle Typen stehen im generierten Index `docs/Typen.md`. `scripts/check_layers.py
 
 Ablauf einer Partie: `parseContent` liefert `Content` oder einen Fehlertext mit Fundstelle, etwa `towers[0].cost: is missing`. `Simulation(content, seed)` startet die Partie. Der Treiber ruft `execute()` zwischen den Ticks und `tick()` im festen Takt, liest `state()` und `hash()`.
 
-Reihenfolge in einem Tick: Gegner laufen (wer das Pfadende erreicht, kostet Leben), die Welle erzeugt Gegner, Gift und Regeneration wirken, Türme zählen ihre Abklingzeit herunter und feuern, das Spielende wird geprüft. Ein neuer Gegner steht im Tick seiner Erzeugung auf Weg 0 und kann schon getroffen werden.
+Reihenfolge in einem Tick: Zauber kühlen ab, Gegner laufen (wer das Pfadende erreicht, kostet Leben), die Welle erzeugt Gegner, Gift und Regeneration wirken, Türme zählen ihre Abklingzeit herunter und feuern, das Spielende wird geprüft. Ein neuer Gegner steht im Tick seiner Erzeugung auf Weg 0 und kann schon getroffen werden.
 
 ## Inhalte
 
@@ -43,6 +43,7 @@ Reihenfolge in einem Tick: Gegner laufen (wer das Pfadende erreicht, kostet Lebe
 - `towers`: `id`, `cost`, `range`, `cooldownTicks`, `damageMin`, `damageMax`, `damageType` (`physical`, `magic`, `fire`, `ice`), optional `splashRadius` (um das Ziel), optional `effects` (je Art höchstens einmal: `kind` `slow` oder `poison`, `strength`, `durationTicks`), `footprint` (Felder `{x, y}` relativ zum Standfeld, mit `0, 0`, je Richtung höchstens 8; beim Bauen drehbar, E-27), optional `upgrades`: je Stufe `cost` und nur, was sich ändert, aus `range`, `cooldownTicks`, `damageMin`, `damageMax`, `splashRadius`, `effects` (E-29)
 - `enemies`: `id`, `health`, `speedPerTick`, `bounty`, `lifeCost`, optional `resistances` (`damageType`, `share` von -1 bis 1, E-28), `regeneration` (Leben je Tick), `boss` (`true` oder `false`, E-29)
 - `wave`: Gruppen aus `enemy`, `count`, `delayTicks` (Wartezeit vor dem ersten Gegner), `intervalTicks`
+- `spells`, optional: `id`, `cooldownTicks`, `radius`, `damageMin`, `damageMax` (dürfen 0 sein), `damageType`, optional `effects` wie bei Türmen (E-30)
 
 Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen (E-16). Befehle und der Zustand sprechen Typen über Indizes an, die IDs dienen nur den Verweisen in den Daten.
 
@@ -50,7 +51,7 @@ Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen 
 
 Eine Replay-Datei (`*.replay.json`) enthält `formatVersion` (1), `content` (Dateiname der Inhalte), `seed` (Dezimaltext, 64 Bit), `contentHash`, `commands` und `checkpoints`. Hashes sind 16 kleine Hex-Ziffern.
 
-- `commands`: `tick`, `type`, `result` (`accepted`, `gameOver`, `unknownTowerType`, `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold`, `unknownTower`, `highestLevel`). Zu `buildTower` gehören `x`, `y`, `towerType`, `rotation` (0 bis 3, darf fehlen), zu `setTargetPriority` `tower` (ID) und `priority` (`first`, `last`, `strongest`, `nearest`), zu `upgradeTower` und `sellTower` `tower` (ID). Auch abgelehnte Befehle stehen darin.
+- `commands`: `tick`, `type`, `result` (`accepted`, `gameOver`, `unknownTowerType`, `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold`, `unknownTower`, `highestLevel`, `unknownSpell`, `spellCooling`). Zu `buildTower` gehören `x`, `y`, `towerType`, `rotation` (0 bis 3, darf fehlen), zu `setTargetPriority` `tower` (ID) und `priority` (`first`, `last`, `strongest`, `nearest`), zu `upgradeTower` und `sellTower` `tower` (ID), zu `castSpell` `spell` (Index in `spells`), `x`, `y`. Auch abgelehnte Befehle stehen darin.
 - `checkpoints`: `tick`, `hash`: der Zustand nach allen Befehlen dieses Ticks. Einer je Sekunde Spielzeit ab Tick 0, der letzte ist das Ende der Aufzeichnung.
 
 Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` dürfen fehlen und bedeuten nichts. `seed` gilt, solange `--seed` ihn nicht ersetzt; `content` dient nur der Orientierung, gespielt wird `--map`. Jedes Replay ist auch ein Skript.

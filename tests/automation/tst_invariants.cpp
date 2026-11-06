@@ -77,6 +77,10 @@ void addTowerRows()
         u"healed beyond its health"_s);
     row("level", [](SimulationState &s) { s.towers.front().level = 1; }, u"unknown level"_s);
     row(
+        "spell that is not there",
+        [](SimulationState &s) { s.spellCooldowns.push_back(0); },
+        u"the spells do not match the content"_s);
+    row(
         "gold of a tower",
         [](SimulationState &s) { ++s.towers.front().spent; },
         u"its gold does not add up"_s);
@@ -94,6 +98,7 @@ struct FuzzRecord
     std::set<CommandResult> priorityResults;
     std::set<CommandResult> upgradeResults;
     std::set<CommandResult> sellResults;
+    std::set<CommandResult> spellResults;
 
     void note(const qtd::core::Command &command, CommandResult result)
     {
@@ -104,6 +109,8 @@ struct FuzzRecord
             priorityResults.insert(result);
         } else if (std::holds_alternative<qtd::core::UpgradeTowerCommand>(command)) {
             upgradeResults.insert(result);
+        } else if (std::holds_alternative<qtd::core::CastSpellCommand>(command)) {
+            spellResults.insert(result);
         } else {
             sellResults.insert(result);
         }
@@ -112,7 +119,11 @@ struct FuzzRecord
 
 void playFuzzGame(quint64 seed, FuzzRecord *record)
 {
-    Simulation game(contentOf(scenarioJson()), seed);
+    const QByteArray spell = R"("spells": [{"id": "s", "cooldownTicks": 100, "radius": "1",
+        "damageMin": "1", "damageMax": "1", "damageType": "ice"}], "wave")";
+    QByteArray json = editedJson(R"("wave")", spell);
+    json.replace(R"("count": 2)", R"("count": 30)"); // long enough to meet a spell that cools down
+    Simulation game(contentOf(json), seed);
     const std::unique_ptr<qtd::automation::Bot> bot =
         qtd::automation::makeBot(qtd::automation::BotKind::Fuzz, seed);
     while (game.state().status == qtd::core::GameStatus::Running) {
@@ -244,11 +255,35 @@ private slots:
         QVERIFY(checkInvariants(content, state).contains(u"outside the map"_s));
     }
 
+    static void spellCooldownsStayInTheirRange_data()
+    {
+        QTest::addColumn<qint64>("cooldown");
+        QTest::addColumn<bool>("sound");
+        QTest::newRow("ready") << qint64{0} << true;
+        QTest::newRow("just cast") << qint64{5} << true;
+        QTest::newRow("negative") << qint64{-1} << false;
+        QTest::newRow("too long") << qint64{6} << false;
+    }
+
+    static void spellCooldownsStayInTheirRange()
+    {
+        QFETCH(const qint64, cooldown);
+        QFETCH(const bool, sound);
+        Content content = contentOf(scenarioJson());
+        qtd::core::SpellType spell;
+        spell.cooldownTicks = 5;
+        content.spells.push_back(spell);
+        Simulation game(content, 1);
+        SimulationState state = game.state();
+        state.spellCooldowns.at(0) = cooldown;
+        QCOMPARE(checkInvariants(content, state).isEmpty(), sound);
+    }
+
     // Over a few games, as a game draws how often its commands are well-formed.
     static void theFuzzBotTriesEverything()
     {
         FuzzRecord record;
-        for (quint64 seed = 1; seed <= 8; ++seed) {
+        for (quint64 seed = 1; seed <= 40; ++seed) {
             playFuzzGame(seed, &record);
         }
         QCOMPARE(record.rotations.size(), std::size_t{qtd::core::kRotations});
@@ -259,6 +294,9 @@ private slots:
         QVERIFY(record.upgradeResults.contains(CommandResult::UnknownTower));
         QVERIFY(record.sellResults.contains(CommandResult::Accepted));
         QVERIFY(record.sellResults.contains(CommandResult::UnknownTower));
+        QVERIFY(record.spellResults.contains(CommandResult::Accepted));
+        QVERIFY(record.spellResults.contains(CommandResult::SpellCooling));
+        QVERIFY(record.spellResults.contains(CommandResult::UnknownSpell));
     }
 
     void damageIsFound()

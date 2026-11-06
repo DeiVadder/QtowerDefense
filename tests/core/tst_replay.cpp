@@ -405,6 +405,28 @@ private slots:
         QCOMPARE(std::get<qtd::core::SellTowerCommand>(read.commands.at(1).command).tower, 8);
     }
 
+    void aSpellSurvivesARoundTrip()
+    {
+        Replay replay;
+        replay.content = u"map.json"_s;
+        replay.seed = 7;
+        replay.contentHash = 255;
+        replay.commands.push_back(
+            {3, qtd::core::CastSpellCommand{1, {4, 5}}, CommandResult::SpellCooling});
+        replay.commands.push_back(
+            {3, qtd::core::CastSpellCommand{9, {4, 5}}, CommandResult::UnknownSpell});
+        replay.checkpoints.push_back({3, 16});
+        const ReplayLoadResult result = parseReplay(toJson(replay));
+        QCOMPARE(result.error, QString());
+        const Replay read = required(result.replay);
+        const auto &command = std::get<qtd::core::CastSpellCommand>(read.commands.at(0).command);
+        QCOMPARE(command.spell, 1);
+        QCOMPARE(command.cell.x, 4);
+        QCOMPARE(command.cell.y, 5);
+        QVERIFY(read.commands.at(0).result == CommandResult::SpellCooling);
+        QVERIFY(read.commands.at(1).result == CommandResult::UnknownSpell);
+    }
+
     void aCommandWithoutRotationStandsUnturned()
     {
         const ReplayLoadResult result = parseReplay(editedReplay("", ""));

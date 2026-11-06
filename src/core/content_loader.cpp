@@ -164,7 +164,7 @@ void readEffects(ObjectReader &tower, std::vector<StatusEffect> *effects)
             return;
         }
         if (std::ranges::contains(*effects, *kind, &StatusEffect::kind)) {
-            item.fail(u"kind"_s, u"repeats a status effect of this tower"_s);
+            item.fail(u"kind"_s, u"repeats a status effect"_s);
         }
         const Fixed strongest = *kind == StatusKind::Slow ? maxSlow() : Fixed::fromInt(kMaxDamage);
         const Fixed strength = item.fixed("strength"_L1, Fixed::fromRaw(1), strongest);
@@ -285,6 +285,30 @@ void readWave(ObjectReader &root, Content *content)
     });
 }
 
+void readSpells(ObjectReader &root, Content *content)
+{
+    if (!root.has("spells"_L1)) {
+        return;
+    }
+    const Fixed maxDamage = Fixed::fromInt(kMaxDamage);
+    const auto read = [&](ObjectReader &item) {
+        SpellType spell;
+        spell.id = item.text("id"_L1);
+        spell.cooldownTicks = item.integer("cooldownTicks"_L1, 1, kMaxInteger);
+        spell.radius = item.fixed("radius"_L1, Fixed::fromRaw(1), Fixed::fromInt(kMaxRange));
+        spell.damageMin = item.fixed("damageMin"_L1, Fixed(), maxDamage);
+        spell.damageMax = item.fixed("damageMax"_L1, Fixed(), maxDamage);
+        if (spell.damageMin > spell.damageMax) {
+            item.fail(u"damageMax"_s, u"must not be below damageMin"_s);
+        }
+        spell.damageType = readDamageType(item);
+        readEffects(item, &spell.effects);
+        content->spells.push_back(std::move(spell));
+    };
+    root.forEach("spells"_L1, read, ObjectReader::Items::MayBeEmpty);
+    rejectDuplicateIds(root, u"spells"_s, content->spells);
+}
+
 ContentLoadResult failure(QString error)
 {
     return {std::nullopt, std::move(error)};
@@ -317,6 +341,7 @@ ContentLoadResult parseContent(QByteArrayView json)
     readTowers(root, &content);
     readEnemies(root, &content);
     readWave(root, &content);
+    readSpells(root, &content);
     root.rejectUnknownKeys();
     if (!error.isEmpty()) {
         return failure(std::move(error));

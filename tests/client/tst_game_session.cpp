@@ -261,6 +261,61 @@ private slots:
         QVERIFY(!game.sellChosenTower());
     }
 
+    void aSelectedSpellIsCastOnce()
+    {
+        GameSession game;
+        game.selectSpell(0); // no game, nothing happens
+        QCOMPARE(game.selectedSpell(), -1);
+        QVERIFY(game.spellNames().isEmpty());
+        QVERIFY(game.spellSeconds().isEmpty());
+        QVERIFY(!game.castSpellAt(3, 2));
+        game.startGame(mapFile(), 7);
+        QCOMPARE(game.spellNames(), QStringList({u"meteor"_s, u"deep_freeze"_s}));
+        QVERIFY(!game.castSpellAt(3, 2)); // nothing selected
+        game.selectSpell(2);
+        game.selectSpell(-1);
+        QCOMPARE(game.selectedSpell(), -1);
+        game.selectSpell(1);
+        QCOMPARE(game.selectedSpell(), 1);
+        game.selectSpell(1); // the same again takes it back
+        QCOMPARE(game.selectedSpell(), -1);
+        game.selectSpell(0);
+        QVERIFY(!game.castSpellAt(99, 2)); // outside: the spell stays selected
+        QCOMPARE(game.selectedSpell(), 0);
+        const QSignalSpy state(&game, &GameSession::stateChanged);
+        QVERIFY(game.castSpellAt(3, 2));
+        QCOMPARE(state.size(), 1);
+        QCOMPARE(game.selectedSpell(), -1);
+        QCOMPARE(game.spellSeconds().at(0).toLongLong(), 20);
+        QCOMPARE(game.spellSeconds().at(1).toLongLong(), 0);
+        game.selectSpell(0); // not ready
+        QCOMPARE(game.selectedSpell(), -1);
+    }
+
+    void cooldownsAreRoundedUpToSeconds()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        game.selectSpell(0);
+        QVERIFY(game.castSpellAt(3, 2));
+        game.recorder()->advance(569);
+        QCOMPARE(game.spellSeconds().at(0).toLongLong(), 2);
+        game.recorder()->advance(1);
+        QCOMPARE(game.spellSeconds().at(0).toLongLong(), 1);
+    }
+
+    void aTowerOrARestartTakesTheSpellBack()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        game.selectSpell(0);
+        game.setSelectedTower(game.selectedTower());
+        QCOMPARE(game.selectedSpell(), -1);
+        game.selectSpell(1);
+        game.restart();
+        QCOMPARE(game.selectedSpell(), -1);
+    }
+
     void aRejectedCommandChangesNothing()
     {
         GameSession game;

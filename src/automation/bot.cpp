@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <utility>
+#include <vector>
 
 namespace qtd::automation {
 
@@ -15,7 +17,8 @@ constexpr quint64 kFuzzStream = 99; // apart from the stream of the game
 constexpr quint32 kMaxFuzzCommandsPerTick = 3;
 constexpr quint32 kCommandValues = 3; // x, y and the tower type
 constexpr quint32 kTowerCommandOneIn = 10;
-constexpr quint32 kTowerCommands = 3; // upgrade, sell, target priority
+constexpr quint32 kSpellCommandOneIn = 30;
+constexpr quint32 kTowerCommands = 8; // upgrade, sell, and six times the target priority
 
 /// A game draws how often a command is well-formed, one in so many. 0 means never: such a game
 /// builds nothing and gets lost. A well-formed command can still meet a blocked cell.
@@ -37,6 +40,9 @@ public:
     {
         const core::SimulationState &state = game.state();
         const core::Content &content = game.content();
+        if (const std::optional<core::CastSpellCommand> spell = readySpell(game)) {
+            return *spell;
+        }
         if (state.status != core::GameStatus::Running ||
             state.gold < content.towers[0].levels.front().cost) {
             return std::nullopt;
@@ -54,6 +60,25 @@ public:
     }
 
 private:
+    /// A spell that is ready, on the enemy that has come furthest.
+    static std::optional<core::CastSpellCommand> readySpell(const core::Simulation &game)
+    {
+        const std::vector<core::Enemy> &enemies = game.state().enemies;
+        if (enemies.empty()) {
+            return std::nullopt;
+        }
+        const std::vector<core::Enemy>::const_iterator furthest =
+            std::ranges::max_element(enemies, {}, &core::Enemy::travelled);
+        const core::Cell cell = core::cellAt(game.position(*furthest));
+        for (qint64 spell = 0; std::cmp_less(spell, game.content().spells.size()); ++spell) {
+            const core::CastSpellCommand command{spell, cell};
+            if (game.check(command) == core::CommandResult::Accepted) {
+                return command;
+            }
+        }
+        return std::nullopt;
+    }
+
     static bool nextToPath(const core::Grid &grid, core::Cell cell)
     {
         const std::array<core::Cell, 4> neighbours{core::Cell{cell.x - 1, cell.y},
@@ -92,6 +117,9 @@ public:
             return towerCommand(game.state(), wellFormed);
         }
         const core::Content &content = game.content();
+        if (random_.nextBelow(kSpellCommandOneIn) == 0) {
+            return spellCommand(content, wellFormed);
+        }
         // A broken command breaks one value, so that each of them reaches its check.
         const quint32 broken = wellFormed ? kCommandValues : random_.nextBelow(kCommandValues);
         const qint64 x = pick(content.grid.width(), broken != 0);
@@ -102,10 +130,21 @@ public:
     }
 
 private:
+    /// Without spells, no command can be well-formed.
+    core::CastSpellCommand spellCommand(const core::Content &content, bool wellFormed)
+    {
+        const quint32 broken = wellFormed ? kCommandValues : random_.nextBelow(kCommandValues);
+        const auto spells = static_cast<qint64>(content.spells.size());
+        const qint64 x = pick(content.grid.width(), broken != 0);
+        const qint64 y = pick(content.grid.height(), broken != 1);
+        return {pick(spells, broken != 2 && spells > 0), {x, y}};
+    }
+
     /// One of the commands on a tower that stands.
     core::Command towerCommand(const core::SimulationState &state, bool valid)
     {
         const qint64 tower = towerId(state, valid);
+        // Selling stays rare, a game that sells all it builds never wins.
         switch (random_.nextBelow(kTowerCommands)) {
         case 0:
             return core::UpgradeTowerCommand{tower};

@@ -151,6 +151,22 @@ private slots:
         QCOMPARE(missing["result"_L1].toString(), u"unknownTower"_s);
     }
 
+    void spellsAreCastAndCoolDown()
+    {
+        ControlSession session;
+        start(session);
+        const QJsonObject start = advance(session, 0);
+        QCOMPARE(start["spells"_L1].toArray().size(), 2);
+        const QJsonObject cast = ask(
+            session, {{"action"_L1, "castSpell"_L1}, {"spell"_L1, 0}, {"x"_L1, 1}, {"y"_L1, 2}});
+        QCOMPARE(cast["result"_L1].toString(), u"accepted"_s);
+        const QJsonObject meteor = cast["spells"_L1].toArray().first().toObject();
+        QCOMPARE(meteor["cooldownTicks"_L1].toInteger(), 600);
+        const QJsonObject again = ask(
+            session, {{"action"_L1, "castSpell"_L1}, {"spell"_L1, 0}, {"x"_L1, 1}, {"y"_L1, 2}});
+        QCOMPARE(again["result"_L1].toString(), u"spellCooling"_s);
+    }
+
     void towersAreUpgradedAndSold()
     {
         ControlSession session;
@@ -343,6 +359,10 @@ private slots:
         QTest::newRow("no ticks") << QByteArray(R"({"action":"advance"})") << u"ticks"_s;
         QTest::newRow("text as cell")
             << QByteArray(R"({"action":"buildTower","x":"1","y":0,"towerType":0})") << u"x"_s;
+        QTest::newRow("spell without a place")
+            << QByteArray(R"({"action":"castSpell","spell":0,"x":1})") << u"y"_s;
+        QTest::newRow("spell with a wrong key")
+            << QByteArray(R"({"action":"castSpell","spell":0,"x":1,"y":1,"z":1})") << u"z"_s;
         QTest::newRow("upgrade without a tower")
             << QByteArray(R"({"action":"upgradeTower"})") << u"tower"_s;
         QTest::newRow("sale with a wrong key")

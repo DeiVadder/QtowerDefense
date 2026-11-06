@@ -45,8 +45,24 @@ View3D {
         panZ = Math.min(limitZ, Math.max(-limitZ, panZ - pixelsY * unitsPerPixel));
     }
 
+    // The cell under a hit of the board or of a tower, nothing beside the map.
+    function cellOf(hit: var): var {
+        if (hit.objectHit === towers) {
+            return game.towerCells[hit.instanceIndex];
+        }
+        if (hit.objectHit !== board) {
+            return undefined;
+        }
+        const width = game.gridSize.width;
+        return Qt.point(hit.instanceIndex % width, Math.floor(hit.instanceIndex / width));
+    }
+
     function tapAt(x: real, y: real): bool {
         const hit = pick(x, y);
+        if (game.selectedSpell >= 0) {
+            const target = cellOf(hit);
+            return target !== undefined && game.castSpellAt(target.x, target.y);
+        }
         if (hit.objectHit === towers) {
             const cell = game.towerCells[hit.instanceIndex];
             // Right after a restart, the picture may still show towers of the last game.
@@ -57,11 +73,8 @@ View3D {
             game.clearChosenTower();
             return false;
         }
-        if (hit.objectHit !== board) {
-            return false;
-        }
-        const width = game.gridSize.width;
-        return game.buildTower(hit.instanceIndex % width, Math.floor(hit.instanceIndex / width));
+        const cell = cellOf(hit);
+        return cell !== undefined && game.buildTower(cell.x, cell.y);
     }
 
     camera: sceneCamera

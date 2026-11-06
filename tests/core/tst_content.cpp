@@ -173,7 +173,7 @@ void addBrokenCombatRows()
         R"("damageType": "physical", "effects": [
             {"kind": "poison", "strength": "1", "durationTicks": 1},
             {"kind": "poison", "strength": "1", "durationTicks": 1}])",
-        "towers[0].effects[1].kind: repeats a status effect of this tower");
+        "towers[0].effects[1].kind: repeats a status effect");
     row("slow too strong",
         R"("damageType": "physical")",
         R"("damageType": "physical", "effects": [

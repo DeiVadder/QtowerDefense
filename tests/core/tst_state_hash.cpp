@@ -66,6 +66,7 @@ SimulationState handmadeState()
                             qtd::core::TargetPriority::Strongest,
                             1,
                             70});
+    state.spellCooldowns.push_back(11);
     return state;
 }
 
@@ -125,6 +126,8 @@ NamedChanges entityChanges()
          [](auto &s) { s.towers[0].priority = qtd::core::TargetPriority::Nearest; }},
         {"tower level", [](auto &s) { ++s.towers[0].level; }},
         {"tower spent", [](auto &s) { ++s.towers[0].spent; }},
+        {"spell cooldown", [](auto &s) { ++s.spellCooldowns[0]; }},
+        {"spell added", [](auto &s) { s.spellCooldowns.push_back(0); }},
     };
 }
 
@@ -139,12 +142,12 @@ private slots:
     /// the project. They hold on every compiler and in every process.
     void theStateHashIsPinned()
     {
-        QCOMPARE(stateHash(handmadeState()), 0xCA983B4815B67094ULL);
+        QCOMPARE(stateHash(handmadeState()), 0x0B274E624B8328FEULL);
     }
 
     void theContentHashIsPinned()
     {
-        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x6D9C0DEAB6D73A61ULL);
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x831533BC132D9081ULL);
     }
 
     // The test vectors of the FNV authors.
@@ -171,7 +174,8 @@ private slots:
 
     static void everyFieldOfTheStateCounts()
     {
-        const SimulationState base = runningGame().state();
+        SimulationState base = runningGame().state();
+        base.spellCooldowns.push_back(3); // the scenario has no spells
         QVERIFY(base.enemies.size() == 1 && base.towers.size() == 1);
         QCOMPARE(unnoticed(base, fieldChanges()), QStringList());
         QCOMPARE(unnoticed(base, entityChanges()), QStringList());
@@ -238,6 +242,10 @@ private slots:
         row(R"("cost": 40)", R"("cost": 40, "upgrades": [{"cost": 1}])");
         row(R"("lifeCost": 1)", R"("lifeCost": 1, "regeneration": "1")");
         row(R"("lifeCost": 1)", R"("lifeCost": 1, "boss": true)");
+        const QByteArray spell = R"("cooldownTicks": 1, "radius": "1", "damageMin": "0",
+                                    "damageMax": "1", "damageType": "ice")";
+        const QByteArray oneSpell = R"("spells": [{"id": "s", )" + spell + R"(}], "wave")";
+        row(R"("wave")", oneSpell);
     }
 
     static void hashIgnoresNothingButIds()
@@ -247,6 +255,36 @@ private slots:
         const QByteArray json = editedJson(from, to);
         QVERIFY(!json.isEmpty());
         QVERIFY(contentHash(contentOf(json)) != contentHash(contentOf(scenarioJson())));
+    }
+
+    static void everyFieldOfASpellCounts_data()
+    {
+        QTest::addColumn<QByteArray>("from");
+        QTest::addColumn<QByteArray>("to");
+        const auto row = [](const char *from, const char *to) {
+            QTest::newRow(from) << QByteArray(from) << QByteArray(to);
+        };
+        row(R"("cooldownTicks": 9)", R"("cooldownTicks": 8)");
+        row(R"("radius": "1")", R"("radius": "2")");
+        row(R"("damageMin": "0")", R"("damageMin": "1")");
+        row(R"("damageMax": "1")", R"("damageMax": "2")");
+        row(R"("damageType": "ice")", R"("damageType": "fire")");
+        row(R"("kind": "slow")", R"("kind": "poison")");
+        row(R"("strength": "0.5")", R"("strength": "0.25")");
+        row(R"("durationTicks": 3)", R"("durationTicks": 4)");
+    }
+
+    static void everyFieldOfASpellCounts()
+    {
+        QFETCH(const QByteArray, from);
+        QFETCH(const QByteArray, to);
+        const QByteArray json = editedJson(R"("wave")", R"("spells": [{"id": "s",
+            "cooldownTicks": 9, "radius": "1", "damageMin": "0", "damageMax": "1",
+            "damageType": "ice", "effects": [{"kind": "slow", "strength": "0.5",
+            "durationTicks": 3}]}], "wave")");
+        QVERIFY(json.contains(from));
+        const QByteArray changed = QByteArray(json).replace(from, to);
+        QVERIFY(contentHash(contentOf(changed)) != contentHash(contentOf(json)));
     }
 
     static void contentGoesIntoTheStateHash()

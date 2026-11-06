@@ -1,0 +1,295 @@
+{
+    "checkpoints": [
+        {
+            "hash": "fdee3a11f89f576d",
+            "tick": 0
+        },
+        {
+            "hash": "ec15ae8b198189ef",
+            "tick": 30
+        },
+        {
+            "hash": "f9a051e98c388509",
+            "tick": 60
+        },
+        {
+            "hash": "bb26848470017b71",
+            "tick": 90
+        },
+        {
+            "hash": "ea992d2686a73cce",
+            "tick": 120
+        },
+        {
+            "hash": "f06c466bcea4fe09",
+            "tick": 150
+        },
+        {
+            "hash": "3aad4ed3deb7e1bd",
+            "tick": 180
+        },
+        {
+            "hash": "c6436d0c07629061",
+            "tick": 210
+        },
+        {
+            "hash": "ca06aa3923e1758c",
+            "tick": 240
+        },
+        {
+            "hash": "5b61b0f223a4dc9f",
+            "tick": 270
+        },
+        {
+            "hash": "05eb0358cd7363df",
+            "tick": 300
+        },
+        {
+            "hash": "5dcef15c14d4e858",
+            "tick": 330
+        },
+        {
+            "hash": "fbdd29a9f24cf7b8",
+            "tick": 360
+        },
+        {
+            "hash": "5ffcf7df6725239d",
+            "tick": 390
+        },
+        {
+            "hash": "781735b295881e1b",
+            "tick": 420
+        },
+        {
+            "hash": "4a69424b8476b22b",
+            "tick": 450
+        },
+        {
+            "hash": "9afb649faedc9e0a",
+            "tick": 480
+        },
+        {
+            "hash": "dc9d40b223beac78",
+            "tick": 510
+        },
+        {
+            "hash": "5a683e069a021824",
+            "tick": 540
+        },
+        {
+            "hash": "01bb2e366f6a5c18",
+            "tick": 570
+        },
+        {
+            "hash": "6d7ee18668c83853",
+            "tick": 600
+        },
+        {
+            "hash": "0d06f7e7cd39ff74",
+            "tick": 630
+        },
+        {
+            "hash": "3b79ee35a0895399",
+            "tick": 660
+        },
+        {
+            "hash": "7160de7efc1253e6",
+            "tick": 690
+        },
+        {
+            "hash": "3009455e521bdf29",
+            "tick": 720
+        },
+        {
+            "hash": "506115bb322326e7",
+            "tick": 750
+        },
+        {
+            "hash": "a03f73474f8e16b6",
+            "tick": 780
+        },
+        {
+            "hash": "d750d3c350f6d759",
+            "tick": 810
+        },
+        {
+            "hash": "48ae915ef7856860",
+            "tick": 840
+        },
+        {
+            "hash": "e1b742ded3e59f74",
+            "tick": 870
+        },
+        {
+            "hash": "98a677508a0c0763",
+            "tick": 900
+        },
+        {
+            "hash": "20d6127eeff8fff8",
+            "tick": 930
+        },
+        {
+            "hash": "6b181e61f8bacde3",
+            "tick": 960
+        },
+        {
+            "hash": "094b53aa1bcc0d9c",
+            "tick": 990
+        },
+        {
+            "hash": "98b21c5e7c3dff3a",
+            "tick": 1020
+        },
+        {
+            "hash": "224d9d4a258a45cf",
+            "tick": 1050
+        },
+        {
+            "hash": "ae93378d598bbc33",
+            "tick": 1080
+        },
+        {
+            "hash": "5dc28a72f15b4ebf",
+            "tick": 1110
+        },
+        {
+            "hash": "3241cb07c698ff55",
+            "tick": 1140
+        },
+        {
+            "hash": "43caf51b87c0fe53",
+            "tick": 1170
+        },
+        {
+            "hash": "b71c83f247d68fc4",
+            "tick": 1200
+        },
+        {
+            "hash": "08f889b9cfbd6645",
+            "tick": 1230
+        },
+        {
+            "hash": "73a846041893ccff",
+            "tick": 1260
+        },
+        {
+            "hash": "e1effc7aa6ebc1cf",
+            "tick": 1290
+        },
+        {
+            "hash": "7528fa86b28588ca",
+            "tick": 1320
+        },
+        {
+            "hash": "f59682b3e8c11183",
+            "tick": 1350
+        },
+        {
+            "hash": "159e9791917bb03e",
+            "tick": 1380
+        },
+        {
+            "hash": "a147014a43d869a0",
+            "tick": 1410
+        },
+        {
+            "hash": "1a8d2217d987403c",
+            "tick": 1440
+        },
+        {
+            "hash": "1dfe7771cfd348be",
+            "tick": 1470
+        },
+        {
+            "hash": "b8a05d64d6ff8578",
+            "tick": 1500
+        },
+        {
+            "hash": "14c210eeb38b0057",
+            "tick": 1530
+        },
+        {
+            "hash": "fbb2432b048af817",
+            "tick": 1559
+        }
+    ],
+    "commands": [
+        {
+            "result": "accepted",
+            "rotation": 0,
+            "tick": 0,
+            "towerType": 0,
+            "type": "buildTower",
+            "x": 6,
+            "y": 3
+        },
+        {
+            "result": "accepted",
+            "spell": 0,
+            "tick": 0,
+            "type": "castSpell",
+            "x": 3,
+            "y": 2
+        },
+        {
+            "result": "spellCooling",
+            "spell": 0,
+            "tick": 1,
+            "type": "castSpell",
+            "x": 3,
+            "y": 2
+        },
+        {
+            "result": "unknownSpell",
+            "spell": 2,
+            "tick": 1,
+            "type": "castSpell",
+            "x": 3,
+            "y": 2
+        },
+        {
+            "result": "outsideMap",
+            "spell": 1,
+            "tick": 1,
+            "type": "castSpell",
+            "x": 99,
+            "y": 2
+        },
+        {
+            "result": "accepted",
+            "spell": 1,
+            "tick": 200,
+            "type": "castSpell",
+            "x": 3,
+            "y": 2
+        },
+        {
+            "result": "accepted",
+            "spell": 0,
+            "tick": 640,
+            "type": "castSpell",
+            "x": 8,
+            "y": 5
+        },
+        {
+            "result": "spellCooling",
+            "spell": 1,
+            "tick": 700,
+            "type": "castSpell",
+            "x": 8,
+            "y": 5
+        },
+        {
+            "result": "accepted",
+            "spell": 1,
+            "tick": 1200,
+            "type": "castSpell",
+            "x": 8,
+            "y": 5
+        }
+    ],
+    "content": "mire_siege.json",
+    "contentHash": "c0f41561ffb19b4c",
+    "formatVersion": 1,
+    "seed": "29"
+}

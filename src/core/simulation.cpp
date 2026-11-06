@@ -59,6 +59,7 @@ Simulation::Simulation(Content content, quint64 seed) : content_(std::move(conte
     state_.lives = content_.startLives;
     state_.random = Random(seed, kRandomStream);
     state_.spawnCountdownTicks = content_.wave.front().delayTicks;
+    state_.spellCooldowns.assign(content_.spells.size(), 0);
 }
 
 CommandResult Simulation::execute(const Command &command)
@@ -129,6 +130,22 @@ CommandResult Simulation::check(const SellTowerCommand &command) const
     return checkTowerCommand(command.tower);
 }
 
+CommandResult Simulation::check(const CastSpellCommand &command) const
+{
+    if (state_.status != GameStatus::Running) {
+        return CommandResult::GameOver;
+    }
+    if (command.spell < 0 || std::cmp_greater_equal(command.spell, content_.spells.size())) {
+        return CommandResult::UnknownSpell;
+    }
+    if (!content_.grid.contains(command.cell)) {
+        return CommandResult::OutsideMap;
+    }
+    return state_.spellCooldowns[static_cast<std::size_t>(command.spell)] > 0
+               ? CommandResult::SpellCooling
+               : CommandResult::Accepted;
+}
+
 CommandResult Simulation::run(const SetTargetPriorityCommand &command)
 {
     const CommandResult result = check(command);
@@ -178,6 +195,27 @@ CommandResult Simulation::run(const BuildTowerCommand &command)
     return result;
 }
 
+CommandResult Simulation::run(const CastSpellCommand &command)
+{
+    const CommandResult result = check(command);
+    if (result != CommandResult::Accepted) {
+        return result;
+    }
+    const auto index = static_cast<std::size_t>(command.spell);
+    const SpellType &spell = content_.spells[index];
+    const Fixed damage = rollDamage(spell.damageMin, spell.damageMax);
+    const Point centre = centreOf(command.cell);
+    const Fixed reach = spell.radius * spell.radius;
+    for (Enemy &enemy : state_.enemies) {
+        if (distanceSquared(centre, position(enemy)) <= reach) {
+            hit(&enemy, spell.damageType, spell.effects, damage);
+        }
+    }
+    removeDeadEnemies();
+    state_.spellCooldowns[index] = spell.cooldownTicks;
+    return result;
+}
+
 bool Simulation::hasTowerAt(Cell cell) const
 {
     return std::ranges::any_of(state_.towers, [this, cell](const Tower &tower) {
@@ -192,6 +230,9 @@ void Simulation::tick()
         return;
     }
     ++state_.tick;
+    std::ranges::transform(state_.spellCooldowns,
+                           state_.spellCooldowns.begin(),
+                           [](qint64 cooldown) { return std::max<qint64>(cooldown - 1, 0); });
     moveEnemies();
     spawnEnemies();
     updateHealth();
@@ -316,11 +357,11 @@ std::optional<std::size_t> Simulation::findTarget(const Tower &tower,
     return target;
 }
 
-Fixed Simulation::rollDamage(const TowerLevel &level)
+Fixed Simulation::rollDamage(Fixed lowest, Fixed highest)
 {
-    const qint64 spread = level.damageMax.raw() - level.damageMin.raw();
+    const qint64 spread = highest.raw() - lowest.raw();
     const quint32 roll = state_.random.nextBelow(static_cast<quint32>(spread + 1));
-    return level.damageMin + Fixed::fromRaw(roll);
+    return lowest + Fixed::fromRaw(roll);
 }
 
 void Simulation::fireTowers()
@@ -348,8 +389,9 @@ void Simulation::fireTowers()
 void Simulation::strike(const Tower &tower, const std::vector<Point> &positions, std::size_t target)
 {
     const TowerLevel &level = levelOf(tower);
-    const Fixed damage = rollDamage(level);
-    hit(&state_.enemies[target], tower, damage);
+    const Fixed damage = rollDamage(level.damageMin, level.damageMax);
+    const DamageType damageType = content_.towers[tower.type].damageType;
+    hit(&state_.enemies[target], damageType, level.effects, damage);
     if (level.splashRadius == Fixed()) {
         return;
     }
@@ -358,17 +400,19 @@ void Simulation::strike(const Tower &tower, const std::vector<Point> &positions,
         Enemy &enemy = state_.enemies[index];
         if (index != target && enemy.health > Fixed() &&
             distanceSquared(positions[target], positions[index]) <= reach) {
-            hit(&enemy, tower, damage);
+            hit(&enemy, damageType, level.effects, damage);
         }
     }
 }
 
-void Simulation::hit(Enemy *enemy, const Tower &tower, Fixed damage)
+void Simulation::hit(Enemy *enemy,
+                     DamageType damageType,
+                     const std::vector<StatusEffect> &effects,
+                     Fixed damage)
 {
-    const DamageType damageType = content_.towers[tower.type].damageType;
     const Fixed share = hitShare(content_.enemies[enemy->type], damageType);
     hurt(enemy, damage * share);
-    for (const StatusEffect &effect : levelOf(tower).effects) {
+    for (const StatusEffect &effect : effects) {
         const Fixed strength = effect.strength * share;
         if (effect.kind == StatusKind::Slow) {
             afflict(&enemy->slow, std::min(strength, maxSlow()), effect.durationTicks);

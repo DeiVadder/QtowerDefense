@@ -66,6 +66,7 @@ struct SimulationState
     qint64 spawnCountdownTicks = 0;
     std::vector<Enemy> enemies;
     std::vector<Tower> towers;
+    std::vector<qint64> spellCooldowns; // ticks until each spell of the content can be cast
 };
 
 struct BuildTowerCommand
@@ -91,9 +92,18 @@ struct SellTowerCommand
     qint64 tower = 0; // the id of a tower in the game
 };
 
+struct CastSpellCommand
+{
+    qint64 spell = 0; // an index into Content::spells
+    Cell cell;        // the centre of the spell
+};
+
 /// What a player, human or bot, can ask for. New commands join this list.
-using Command = std::
-    variant<BuildTowerCommand, SetTargetPriorityCommand, UpgradeTowerCommand, SellTowerCommand>;
+using Command = std::variant<BuildTowerCommand,
+                             SetTargetPriorityCommand,
+                             UpgradeTowerCommand,
+                             SellTowerCommand,
+                             CastSpellCommand>;
 
 enum class CommandResult : quint8 {
     Accepted,
@@ -105,6 +115,8 @@ enum class CommandResult : quint8 {
     NotEnoughGold,
     UnknownTower,
     HighestLevel,
+    UnknownSpell,
+    SpellCooling,
 };
 
 /// One game. Same content, seed and commands at the same ticks give the same states, bit by bit.
@@ -128,12 +140,13 @@ public:
     CommandResult check(const SetTargetPriorityCommand &command) const;
     CommandResult check(const UpgradeTowerCommand &command) const;
     CommandResult check(const SellTowerCommand &command) const;
+    CommandResult check(const CastSpellCommand &command) const;
 
     /// Applies a command between two ticks. Anything but Accepted leaves the state untouched.
     CommandResult execute(const Command &command);
 
-    /// Runs one tick: enemies move, new ones spawn, poison and regeneration work, towers fire, then
-    /// the game may end. Does nothing once the game is over.
+    /// Runs one tick: spells cool down, enemies move, new ones spawn, poison and regeneration work,
+    /// towers fire, then the game may end. Does nothing once the game is over.
     void tick();
 
     /// Runs up to the given number of ticks, fewer if the game ends.
@@ -162,6 +175,7 @@ private:
     CommandResult run(const SetTargetPriorityCommand &command);
     CommandResult run(const UpgradeTowerCommand &command);
     CommandResult run(const SellTowerCommand &command);
+    CommandResult run(const CastSpellCommand &command);
     /// GameOver, UnknownTower or Accepted, what all commands on a tower check first.
     CommandResult checkTowerCommand(qint64 id) const;
     bool hasTowerAt(Cell cell) const;
@@ -171,13 +185,16 @@ private:
     void fireTowers();
     void updateStatus();
     void strike(const Tower &tower, const std::vector<Point> &positions, std::size_t target);
-    void hit(Enemy *enemy, const Tower &tower, Fixed damage);
+    void hit(Enemy *enemy,
+             DamageType damageType,
+             const std::vector<StatusEffect> &effects,
+             Fixed damage);
     void hurt(Enemy *enemy, Fixed damage);
     void removeDeadEnemies();
     /// The index of the enemy that a tower fires at.
     std::optional<std::size_t> findTarget(const Tower &tower,
                                           const std::vector<Point> &positions) const;
-    Fixed rollDamage(const TowerLevel &level);
+    Fixed rollDamage(Fixed lowest, Fixed highest);
 
     Content content_;
     SimulationState state_;

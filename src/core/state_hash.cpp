@@ -97,6 +97,18 @@ quint64 contentHash(const Content &content)
     for (const SpawnGroup &group : content.wave) {
         fields.add(group.enemyType, group.count, group.delayTicks, group.intervalTicks);
     }
+    fields.add(content.spells.size());
+    for (const SpellType &spell : content.spells) {
+        fields.add(spell.cooldownTicks,
+                   spell.radius.raw(),
+                   spell.damageMin.raw(),
+                   spell.damageMax.raw(),
+                   spell.damageType);
+        fields.add(spell.effects.size());
+        for (const StatusEffect &effect : spell.effects) {
+            fields.add(effect.kind, effect.strength.raw(), effect.durationTicks);
+        }
+    }
     return fields.value();
 }
 
@@ -118,6 +130,10 @@ quint64 stateHash(const SimulationState &state)
         fields.add(
             tower.id, tower.type, tower.cell.x, tower.cell.y, tower.cooldownTicks, tower.rotation);
         fields.add(tower.priority, tower.level, tower.spent);
+    }
+    fields.add(state.spellCooldowns.size());
+    for (const qint64 cooldown : state.spellCooldowns) {
+        fields.add(cooldown);
     }
     return fields.value();
 }
