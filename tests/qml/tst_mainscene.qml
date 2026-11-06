@@ -268,9 +268,35 @@ Item {
         function test_aTreeTakesATapOnItsTop() {
             const scene = createScene();
             waitForRendering(scene);
-            const place = scene.blockTopOnScreen(13, 2, 1.45);
+            const place = scene.blockTopOnScreen(13, 2, 0.9);
             mouseClick(scene, place.x, place.y);
             compare(scene.game.towerCount, 0);
+        }
+
+        function test_theCellsBesideTheTreesKeepTheirTaps() {
+            const scene = createScene();
+            waitForRendering(scene);
+            for (let y = 0; y < 3; ++y) {
+                const place = scene.cellOnScreen(15, y);
+                compare(scene.cellOf(scene.pick(place.x, place.y)), Qt.point(15, y));
+            }
+        }
+
+        // A texture that only got new data would keep the distance of the last map.
+        function test_aNewMapShowsItsOwnGround() {
+            const fresh = createScene();
+            fresh.game.startNewGame(":/content/mire_siege.json");
+            waitForRendering(fresh);
+            const wanted = grabImage(fresh);
+            const scene = createScene();
+            waitForRendering(scene);
+            scene.game.startNewGame(":/content/mire_siege.json");
+            waitForRendering(scene);
+            wait(100);
+            const shown = grabImage(scene);
+            for (let x = 20; x < scene.width; x += 40) {
+                verify(Qt.colorEqual(shown.pixel(x, 6), wanted.pixel(x, 6)), "x " + x);
+            }
         }
 
         function test_theCellBehindATreeTakesATap() {
@@ -346,11 +372,11 @@ Item {
             scene.game.paused = true;
             const place = scene.enemyOnScreen(0, 2);
             const ground = empty.pixel(place.x, place.y);
-            const sameGround = scene.enemyOnScreen(2, 0);
-            verify(Qt.colorEqual(empty.pixel(origin.x, origin.y), empty.pixel(sameGround.x,
-                                                                              sameGround.y)));
             tryVerify(() => !Qt.colorEqual(grabImage(scene).pixel(place.x, place.y), ground), 3000,
             "no enemy at the start of the path");
+            // Only the enemy changed the picture, a cell away from the path stays as it was.
+            verify(Qt.colorEqual(grabImage(scene).pixel(origin.x, origin.y), empty.pixel(origin.x,
+                                                                                         origin.y)));
         }
 
         function test_theWholeGroundFitsTheView_data() {

@@ -22,6 +22,8 @@ View3D {
     readonly property real enemyHeight: 15
     readonly property real minZoom: 0.4
     readonly property real maxZoom: 1.6
+    // Until the cards bring a state for building, the grid stays faintly in view (E-34).
+    property real gridStrength: 0.16
     property real zoom: 1
     property real panX: 0
     property real panZ: 0
@@ -95,7 +97,21 @@ View3D {
 
     environment: SceneEnvironment {
         backgroundMode: SceneEnvironment.Color
-        clearColor: "#1d2733"
+        clearColor: landscape.sky
+        fog: Fog {
+            enabled: true
+            color: landscape.sky
+            depthEnabled: true
+            depthNear: 1.25 * root.zoom * root.fitCameraDistance(root.groundExtent,
+                                                                 root.fieldOfView)
+            depthFar: 3 * root.zoom * root.fitCameraDistance(root.groundExtent, root.fieldOfView)
+        }
+    }
+
+    LandscapeView {
+        id: landscape
+
+        game: root.game
     }
 
     DragHandler {
@@ -149,15 +165,10 @@ View3D {
         eulerRotation.x: -50
         eulerRotation.y: -30
         ambientColor: "#505a60" // the far side of a model stays visible
-    }
-
-    Model {
-        source: "#Rectangle"
-        eulerRotation.x: -90
-        scale: Qt.vector3d(root.groundWidth / 100, root.groundDepth / 100, 1)
-        materials: PrincipledMaterial {
-            baseColor: "#33502c"
-        }
+        castsShadow: true
+        shadowFactor: 55
+        shadowMapQuality: Light.ShadowMapQualityHigh
+        shadowMapFar: 2500
     }
 
     Node {
@@ -166,10 +177,19 @@ View3D {
         x: -(root.game.gridSize.width - 1) * root.fieldSize / 2
         z: -(root.game.gridSize.height - 1) * root.fieldSize / 2
 
+        Ground {
+            view: landscape
+            game: root.game
+            fieldSize: root.fieldSize
+            gridStrength: root.gridStrength
+        }
+
         Model {
             id: board
 
             source: "#Cube"
+            castsShadows: false
+            receivesShadows: false
             pickable: true // the block of a cell takes the taps, its instance names the cell
             instanceRoot: board
             instancing: MapInstances {
@@ -179,7 +199,7 @@ View3D {
             }
             materials: PrincipledMaterial {
                 baseColor: "white"
-                alphaMode: PrincipledMaterial.Blend // obstacles are seen through their block
+                alphaMode: PrincipledMaterial.Blend // only takes taps, Ground shows the terrain
             }
         }
 
@@ -187,6 +207,8 @@ View3D {
             id: towers
 
             source: "#Cube"
+            castsShadows: false
+            receivesShadows: false
             pickable: true // a tap on a tower must not reach the cell behind it
             instanceRoot: towers
             instancing: MapInstances {
@@ -310,23 +332,25 @@ View3D {
         }
 
         AssetModel {
-            name: "rock"
+            name: landscape.rockModel
             fallback: "#Cube"
             instancing: MapInstances {
                 game: root.game
                 layer: MapInstances.Rocks
                 fieldSize: root.fieldSize
+                modelSize: 0.42
             }
         }
 
         AssetModel {
-            name: "tree"
+            name: landscape.treeModel
             fallback: "#Cube"
             pickable: true
             instancing: MapInstances {
                 game: root.game
                 layer: MapInstances.Trees
                 fieldSize: root.fieldSize
+                modelSize: 1
             }
         }
     }

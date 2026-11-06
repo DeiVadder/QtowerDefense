@@ -50,27 +50,20 @@ struct Piece
     QVector3D angles = {};
 };
 
-struct Look
-{
-    QColor color;
-    float height = kFlatHeight;
-};
-
-Look lookOf(core::Terrain terrain, core::Cell cell)
+/// How high the block of a cell is. Nobody sees it, the ground shows the terrain.
+float blockHeightOf(core::Terrain terrain)
 {
     switch (terrain) {
     case core::Terrain::Open:
-        return {QColor((cell.x + cell.y) % 2 == 0 ? 0x4f7942 : 0x5c8a4e)};
     case core::Terrain::Path:
-        return {QColor((cell.x + cell.y) % 2 == 0 ? 0x8a6f4d : 0x96795a)};
-    case core::Terrain::Rock:
-        return {Qt::transparent, kRockHeight}; // the block takes the taps, Rocks shows the rock
-    case core::Terrain::Tree:
-        return {Qt::transparent, kTreeHeight};
     case core::Terrain::Water:
-        return {QColor(0x3b6ea5)};
+        break;
+    case core::Terrain::Rock:
+        return kRockHeight;
+    case core::Terrain::Tree:
+        return kTreeHeight;
     }
-    return {};
+    return kFlatHeight;
 }
 
 /// A block that stands on the cell.
@@ -94,27 +87,11 @@ std::vector<Piece> boardPieces(const GameSession &game, float fieldSize)
     pieces.reserve(grid->cells().size());
     for (qint64 y = 0; y < grid->height(); ++y) {
         for (qint64 x = 0; x < grid->width(); ++x) {
-            const core::Cell cell{x, y};
-            const Look look = lookOf(grid->terrainAt(cell), cell);
             pieces.push_back(blockOn(QPoint(static_cast<int>(x), static_cast<int>(y)),
                                      fieldSize,
                                      kBoardShare,
-                                     look.color,
-                                     look.height));
-        }
-    }
-    // After all cells, so that a tap still names its cell: the ground under the obstacles. The
-    // block of a cell is higher and takes the tap first.
-    for (qint64 y = 0; y < grid->height(); ++y) {
-        for (qint64 x = 0; x < grid->width(); ++x) {
-            const core::Cell cell{x, y};
-            if (lookOf(grid->terrainAt(cell), cell).color.alpha() == 0) {
-                pieces.push_back(blockOn(QPoint(static_cast<int>(x), static_cast<int>(y)),
-                                         fieldSize,
-                                         kBoardShare,
-                                         lookOf(core::Terrain::Open, cell).color,
-                                         kFlatHeight));
-            }
+                                     Qt::transparent,
+                                     blockHeightOf(grid->terrainAt({x, y}))));
         }
     }
     return pieces;
@@ -136,7 +113,8 @@ QColor colorOf(core::DamageType damage)
 }
 
 /// What stands on the cells of one terrain.
-std::vector<Piece> decorPieces(const GameSession &game, float fieldSize, core::Terrain terrain)
+std::vector<Piece>
+decorPieces(const GameSession &game, float fieldSize, float modelSize, core::Terrain terrain)
 {
     std::vector<Piece> pieces;
     const core::Grid *grid = game.grid();
@@ -149,7 +127,7 @@ std::vector<Piece> decorPieces(const GameSession &game, float fieldSize, core::T
                 pieces.push_back({QVector3D(static_cast<float>(x) * fieldSize,
                                             0,
                                             static_cast<float>(y) * fieldSize),
-                                  QVector3D(1, 1, 1) * fieldSize,
+                                  QVector3D(1, 1, 1) * fieldSize * modelSize,
                                   Qt::white});
             }
         }
@@ -374,7 +352,7 @@ void MapInstances::setModelSize(float size)
 {
     if (!qFuzzyCompare(modelSize_, size)) {
         modelSize_ = size;
-        markDirtyFor({Layer::TowerLooks});
+        markDirtyFor({Layer::TowerLooks, Layer::Rocks, Layer::Trees});
         emit modelSizeChanged();
     }
 }
@@ -434,10 +412,10 @@ QByteArray MapInstances::getInstanceBuffer(int *instanceCount)
             pieces = shotPieces(*game_, fieldSize_);
             break;
         case Layer::Rocks:
-            pieces = decorPieces(*game_, fieldSize_, core::Terrain::Rock);
+            pieces = decorPieces(*game_, fieldSize_, modelSize_, core::Terrain::Rock);
             break;
         case Layer::Trees:
-            pieces = decorPieces(*game_, fieldSize_, core::Terrain::Tree);
+            pieces = decorPieces(*game_, fieldSize_, modelSize_, core::Terrain::Tree);
             break;
         }
     }

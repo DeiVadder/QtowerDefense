@@ -46,5 +46,8 @@ Der Smoke-Test bleibt beim Standard: Bei fast 4.000 Bildern je Sekunde sinkt das
 | 8 | 2026-11-06 | 228 | 154 | 103 (nachts ohne Eingabe gemessen, Ursache offen) |
 | 9 | 2026-11-06 | 261 | 155 | 104 (wie Etappe 8, Ursache offen) |
 | 10 | 2026-11-06 | 296 | 53 | 101 (wie Etappe 8, Ursache offen) |
+| Spielwelt | 2026-11-06 | 384 | 183 | im Smoke-Test 167 |
 
 Etappe 10: CPU je Bild steigt um 13 %, die GPU-Zeit fällt auf rund 40 %. Vermutet, nicht einzeln gemessen: Je Turm- und Gegnertyp gibt es jetzt ein eigenes instanziertes Modell, das sind mehr Draw Calls und Instanztabellen, dafür haben die Modelle weit weniger Dreiecke als die Kugel von Qt.
+
+Spielwelt: CPU je Bild steigt um 30 %, die GPU-Zeit auf mehr als das Dreifache. Das passt zu Schatten, Gelände und rund 20 weiteren instanzierten Modellen, einzeln gemessen ist es nicht. Beide Werte bleiben weit unter der Grenze von 2.500 µs. Eine schwache GPU fehlt zum Messen, das Budget dort ist ungeprüft.

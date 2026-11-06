@@ -20,12 +20,15 @@ import subprocess
 import sys
 import tempfile
 import zipfile
+import zlib
 
 from qtd_common import REPO
 
 TARGET = REPO / "src" / "client" / "assets"
 TOWERS = "tower-defense-kit"
 BLOCKY = "blocky-characters"
+NATURE = "nature-kit"
+GRAVES = "graveyard-kit"
 
 # name: pack, the parts from the bottom up, what fits into one unit, the texture of the pack
 MODELS = {
@@ -77,6 +80,55 @@ for letter, enemy in zip(
     MODELS[enemy] = (BLOCKY, [f"character-{letter}"], "height", f"texture-{letter}")
 
 # name: pack, the start of a file name in it
+# The scenery of the landscapes: name, pack, part. One unit high, the landscape sets the size. The
+# models of the Nature Kit have colors instead of a texture, a palette takes their place.
+SCENERY = {
+    "oak": (NATURE, "tree_oak"),
+    "round_tree": (NATURE, "tree_default"),
+    "tall_tree": (NATURE, "tree_tall"),
+    "pine": (NATURE, "tree_pineRoundA"),
+    "bush": (NATURE, "plant_bush"),
+    "big_bush": (NATURE, "plant_bushLarge"),
+    "boulder": (NATURE, "rock_largeA"),
+    "stone": (NATURE, "rock_smallA"),
+    "grass_tuft": (NATURE, "grass"),
+    "tall_grass": (NATURE, "grass_large"),
+    "yellow_flower": (NATURE, "flower_yellowA"),
+    "red_flower": (NATURE, "flower_redA"),
+    "purple_flower": (NATURE, "flower_purpleA"),
+    "stump": (NATURE, "stump_round"),
+    "fallen_log": (NATURE, "log"),
+    "red_mushroom": (NATURE, "mushroom_redGroup"),
+    "dark_tree": (NATURE, "tree_thin_dark"),
+    "dark_oak": (NATURE, "tree_default_dark"),
+    "old_stump": (NATURE, "stump_old"),
+    "big_log": (NATURE, "log_large"),
+    "lily": (NATURE, "lily_large"),
+    "small_lily": (NATURE, "lily_small"),
+    "reed": (NATURE, "plant_flatTall"),
+    "tan_mushroom": (NATURE, "mushroom_tanGroup"),
+    "broken_grave": (GRAVES, "gravestone-broken"),
+}
+
+# The Nature Kit is teal and peach. These earthy colors replace its own, by the name of a material.
+NATURAL_COLORS = {
+    "leafsGreen": (92, 138, 58),
+    "leafsDark": (58, 96, 52),
+    "leafsFall": (186, 120, 50),
+    "grass": (110, 150, 66),
+    "wood": (120, 84, 56),
+    "woodBark": (104, 74, 50),
+    "woodBarkDark": (78, 58, 44),
+    "woodDark": (84, 60, 42),
+    "woodInner": (196, 164, 120),
+    "woodBirch": (222, 214, 196),
+    "dirt": (112, 86, 58),
+    "dirtDark": (84, 66, 46),
+    "stone": (150, 150, 142),
+    "stoneDark": (112, 114, 110),
+    "colorTan": (200, 170, 130),
+}
+
 SOUNDS = {
     "build": ("impact-sounds", "impactWood_heavy_000"),
     "upgrade": ("impact-sounds", "impactMetal_heavy_000"),
@@ -88,6 +140,8 @@ SOUNDS = {
 }
 
 PACK_NAMES = {
+    NATURE: "Nature Kit",
+    GRAVES: "Graveyard Kit",
     TOWERS: "Tower Defense Kit",
     BLOCKY: "Blocky Characters",
     "impact-sounds": "Impact Sounds",
@@ -96,6 +150,8 @@ PACK_NAMES = {
     "music-jingles": "Music Jingles",
 }
 DATE = "2026-11-06"
+
+PALETTE_WIDTH = 16
 
 COMPONENTS = {5121: ("B", 1), 5123: ("H", 2), 5125: ("I", 4), 5126: ("f", 4)}
 SIZES = {"SCALAR": 1, "VEC2": 2, "VEC3": 3}
@@ -147,6 +203,43 @@ def apply(matrix, vector, moves):
     return [sum(matrix[row][k] * ([*vector, w][k]) for k in range(4)) for row in range(3)]
 
 
+def color_of(document, primitive):
+    """The plain color of a part, nothing if it has a texture."""
+    material = document["materials"][primitive["material"]]
+    surface = material["pbrMetallicRoughness"]
+    if "baseColorTexture" in surface:
+        return None
+    natural = NATURAL_COLORS.get(material.get("name"))
+    return tuple(value / 255 for value in natural) if natural else tuple(surface["baseColorFactor"][:3])
+
+
+def palette_place(mesh, color):
+    """Where a color lies in the palette of the model, the texture is one pixel high."""
+    palette = mesh["palette"]
+    if color not in palette:
+        palette.append(color)
+    return [(palette.index(color) + 0.5) / PALETTE_WIDTH, 0.5]
+
+
+def png_of(colors):
+    """A palette as a picture. The last color fills the rest."""
+    pixels = [colors[min(item, len(colors) - 1)] for item in range(PALETTE_WIDTH)]
+    # The Nature Kit writes the values of its colors as they are shown, not as linear light.
+    line = b"\0" + bytes(round(255 * value) for pixel in pixels for value in pixel)
+
+    def chunk(kind, data):
+        checksum = zlib.crc32(kind + data)
+        return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", checksum)
+
+    header = struct.pack(">IIBBBBB", PALETTE_WIDTH, 1, 8, 2, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(line))
+        + chunk(b"IEND", b"")
+    )
+
+
 def collect(document, binary, index, parent, mesh):
     node = document["nodes"][index]
     matrix = multiply(parent, matrix_of(node))
@@ -160,7 +253,11 @@ def collect(document, binary, index, parent, mesh):
                 turned = apply(matrix, normal, False)
                 length = math.sqrt(sum(value * value for value in turned)) or 1
                 mesh["normals"].append([value / length for value in turned])
-            mesh["uvs"].extend(read_accessor(document, binary, attributes["TEXCOORD_0"]))
+            uvs = read_accessor(document, binary, attributes["TEXCOORD_0"])
+            color = color_of(document, primitive)
+            if color is not None:
+                uvs = [palette_place(mesh, color)] * len(uvs)
+            mesh["uvs"].extend(uvs)
             indices = read_accessor(document, binary, primitive["indices"])
             mesh["indices"].extend(base + item[0] for item in indices)
     for child in node.get("children", []):
@@ -168,9 +265,10 @@ def collect(document, binary, index, parent, mesh):
 
 
 def part_of(pack, name):
-    path = next(item for item in pack.namelist() if item.endswith(f"GLB format/{name}.glb"))
+    endings = (f"GLB format/{name}.glb", f"GLTF format/{name}.glb")
+    path = next(item for item in pack.namelist() if item.endswith(endings))
     document, binary = read_glb(pack.read(path))
-    mesh = {"positions": [], "normals": [], "uvs": [], "indices": []}
+    mesh = {"positions": [], "normals": [], "uvs": [], "indices": [], "palette": []}
     identity = [[float(row == col) for col in range(4)] for row in range(4)]
     for root in document["scenes"][document.get("scene", 0)]["nodes"]:
         collect(document, binary, root, identity, mesh)
@@ -178,7 +276,7 @@ def part_of(pack, name):
 
 
 def merged(pack, names):
-    whole = {"positions": [], "normals": [], "uvs": [], "indices": []}
+    whole = {"positions": [], "normals": [], "uvs": [], "indices": [], "palette": []}
     height = 0.0
     for name in names:
         part = part_of(pack, name)
@@ -189,6 +287,7 @@ def merged(pack, names):
         whole["normals"].extend(part["normals"])
         whole["uvs"].extend(part["uvs"])
         whole["indices"].extend(base + index for index in part["indices"])
+        whole["palette"] = part["palette"]
         height = max(place[1] for place in whole["positions"])
     return whole
 
@@ -276,6 +375,20 @@ def import_model(folder, name, work):
         mesh = merged(pack, parts)
         normalized(mesh, fit)
         (TARGET / f"{name}.png").write_bytes(texture_of(pack, texture))
+    compile_mesh(mesh, name, work)
+
+
+def import_scenery(folder, name, work):
+    pack_name, part = SCENERY[name]
+    with zipfile.ZipFile(folder / f"{pack_name}.zip") as pack:
+        mesh = merged(pack, [part])
+        normalized(mesh, "height")
+        picture = png_of(mesh["palette"]) if mesh["palette"] else texture_of(pack, "colormap")
+    (TARGET / f"{name}.png").write_bytes(picture)
+    compile_mesh(mesh, name, work)
+
+
+def compile_mesh(mesh, name, work):
     source = work / f"{name}.glb"
     source.write_bytes(glb_of(mesh))
     out = work / name
@@ -322,6 +435,9 @@ def asset_list(sounds):
         change = f"Aus {', '.join(parts)} zu einem Mesh verbunden, auf eine Einheit skaliert"
         lines.append(row(f"{name}.mesh", pack, change))
         lines.append(row(f"{name}.png", pack, f"{texture}.png, unverändert"))
+    for name, (pack, part) in SCENERY.items():
+        lines.append(row(f"{name}.mesh", pack, f"Aus {part}, auf eine Einheit Höhe skaliert"))
+        lines.append(row(f"{name}.png", pack, f"Farben von {part} geändert, als Palette, oder colormap.png"))
     for name, (pack, _) in SOUNDS.items():
         lines.append(row(f"{name}.ogg", pack, f"{sounds[name]}, unverändert"))
     return "\n".join(lines) + "\n"
@@ -336,6 +452,9 @@ def main():
     with tempfile.TemporaryDirectory() as work:
         for name in MODELS:
             import_model(folder, name, pathlib.Path(work))
+            print(name)
+        for name in SCENERY:
+            import_scenery(folder, name, pathlib.Path(work))
             print(name)
     sounds = {name: import_sound(folder, name) for name in SOUNDS}
     (REPO / "docs" / "ASSETS.md").write_text(asset_list(sounds), encoding="utf-8", newline="\n")

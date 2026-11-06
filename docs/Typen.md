@@ -29,14 +29,28 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `AppInfo` | class | `app_info.h` | Build information for the QML side. |
 | `GameSession` | class | `game_session.h` | The running game for the QML side. |
 | `GameSession::Cue` | enum class | `game_session.h` | Something a player should hear. |
-| `Look` | struct | `map_instances.cpp` |  |
+| `GroundField` | class | `ground_field.h` | The shape and the colors of the ground, as functions of a place in fields: the middle of the cell (x, y) is at (x, y). |
+| `GroundField::Exit` | struct | `ground_field.h` | Where a path leaves the grid: it goes straight on from the cell, in the direction. |
+| `GroundField::Surface` | struct | `ground_field.h` | What decides the color of a place, without the fine grain. |
+| `GroundField::Tint` | struct | `ground_field.h` |  |
+| `Landscape` | struct | `landscape.h` | How a map looks. |
+| `SceneryItem` | struct | `landscape.h` | One kind of scenery. |
+| `SceneryZone` | enum class | `landscape.h` | Where a kind of scenery may stand. |
+| `LandscapeView` | class | `landscape_view.h` | The landscape of the running map, for the scene. |
 | `Piece` | struct | `map_instances.cpp` |  |
 | `MapInstances` | class | `map_instances.h` | Draws one layer of a game with a single model: a map has hundreds of cells, and the number of enemies changes with every wave. |
 | `MapInstances::Layer` | enum class | `map_instances.h` |  |
+| `Cells` | using | `scenery_instances.cpp` |  |
+| `Plant` | struct | `scenery_instances.cpp` |  |
+| `SceneryInstances` | class | `scenery_instances.h` | The places of one kind of scenery. |
 | `FrameCosts` | class | `screen_control.cpp` | What frames cost, apart from how often the window draws them. |
 | `ScreenControl::Mailbox` | struct | `screen_control.cpp` | The way from the thread that reads to the control. |
 | `ScreenControl::ScreenGame` | class | `screen_control.cpp` | The game on the screen, as the control interface sees it. |
 | `ScreenControl` | class | `screen_control.h` | The control interface in the real game: requests play the game on the screen. |
+| `Vertex` | struct | `terrain_mesh.cpp` |  |
+| `TerrainMesh` | class | `terrain_mesh.h` | The ground as one mesh, in the coordinates of the map: the board and the land around it. |
+| `GridCellPicture` | class | `terrain_picture.h` | One cell of the grid that shows where towers go: a thin frame, the rest is clear. |
+| `TerrainPicture` | class | `terrain_picture.h` | The colors of the ground. |
 
 ## core
 

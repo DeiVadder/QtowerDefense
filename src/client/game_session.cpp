@@ -234,6 +234,11 @@ QStringList GameSession::enemyModels() const
     return game_ ? modelsOf(game_->simulation().content().enemies) : QStringList();
 }
 
+const QString &GameSession::mapFile() const
+{
+    return fileName_;
+}
+
 bool GameSession::callWave()
 {
     if (!game_ || game_->execute(core::CallWaveCommand{}) != core::CommandResult::Accepted) {

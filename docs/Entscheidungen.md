@@ -270,4 +270,20 @@ Vom Menschen am 2026-11-06 festgelegt, ergänzt den Auftrag.
 - **Gegner:** Blockfiguren aus Blocky Characters sind Platzhalter, ein CC0-Paket mit Fantasy-Monstern fehlt noch. Bosse sind nur größer.
 - **Schüsse:** Sie sind nur ein Bild. Die Simulation trifft sofort und nennt ihr Ziel nicht, ein Schuss fliegt zum nächsten Gegner, nicht immer zum echten Ziel.
 - **Sound:** `GameSession::cue` meldet, was zu hören ist, `GameSounds.qml` spielt OGG mit `MediaPlayer`. `SoundEffect` kann nur WAV. Über die Steuerschnittstelle gibt es keine Töne. Der Ton einer Welle bestätigt nur das Rufen, eine Welle, die von selbst kommt, bleibt vorerst still. Die Player entstehen erst mit dem ersten Ton, denn schon das Anlegen lädt FFmpeg, und das schreibt ins Log.
-- **Noch offen:** Hintergrundmusik, denn Kenney hat nur Jingles, sie braucht eine zweite Quelle. Das Brett bleibt ein Schachbrett, Geländekacheln und die Landschaften kommen mit den Karten der Weltkarte (E-32). Dafür sind Nature Kit, Graveyard Kit und Castle Kit geladen und geprüft, aber noch nicht eingebaut. Lautstärke gehört zu den Einstellungen aus Etappe 11.
+- **Noch offen:** Hintergrundmusik, denn Kenney hat nur Jingles, sie braucht eine zweite Quelle. Das Gelände kam mit E-34, die übrigen Landschaften kommen mit den Karten der Weltkarte (E-32). Das Castle Kit ist geladen und geprüft, aber noch nicht eingebaut. Lautstärke gehört zu den Einstellungen aus Etappe 11.
+
+## E-34 UI-Thema
+
+Vom Menschen am 2026-11-06 aus vier Demos gewählt, ergänzt E-32 und den Auftrag.
+
+- **Stil:** Holz und Eisen aus Demo A (`feature/ui-demo-1`) für Menü, HUD, Karten und Held. Die Demos selbst kommen nicht nach `dev`, ihr Code ist nur Vorlage.
+- **Weltkarte:** Zusammenhängendes Land mit weichen Formen wie in Demo D (`feature/ui-demo-2`), in gedeckten Farben und mit den Rahmen von A. Landschaften gehen ineinander über, der Nebel verdeckt den Rest ganz, nur Umrisse ragen heraus (E-32).
+- **Held:** Animiertes Portrait, schaut aufs Brett, kommentiert frech per Sprechblase und wirkt die Zauber. Sprachausgabe bleibt ein Experiment, `QtTextToSpeech` ist noch nicht installiert.
+- **Karten:** Türme sind Spielkarten mit Icon und Werten, aufgefächert unten, höchstens fünf. Beim Platzieren gehen sie animiert ins 3D-Modell über. Nur Querformat.
+- **Würfeln:** Ein Wurf gibt eine zufällige Karte und ist billiger als der Direktkauf. Bonusmünzen besiegter Gegner bringen beim Anklicken etwa 20 bis 30 % extra. Beides ändert die Regeln und wird deshalb Befehl in Core, sonst stimmen Replays nicht mehr.
+- **Spielwelt:** Die 3D-Welt hinter dem HUD muss deutlich detaillierter werden (Wunsch des Menschen). Das Schachbrett weicht Gelände je Landschaft mit Bewuchs und Umgebung über den Rand des Rasters hinaus, passend zum Abschnitt der Weltkarte (E-32, E-33). Das Raster bleibt nur beim Bauen sichtbar. Das Budget für schwache GPUs gilt weiter.
+- **Umsetzung der Spielwelt:** `content/landscapes.json` ordnet Karten Landschaften zu, in der Kartendatei geht das nicht, denn Core lehnt unbekannte Schlüssel ab und kennt keine Landschaften. Das Gelände ist ein Mesh mit einem je Karte gemalten Bild, beides aus `GroundField`. Über dem Raster bleibt es flach, Türme und Gegner brauchen also keine Höhe. Pflanzen stehen je Art in einem instanzierten Modell. Die Blöcke der Zellen sind unsichtbar und nehmen nur noch Taps. Nebel und Schatten kommen von Qt Quick 3D. Jenseits des Geländes liegt eine einfarbige Ebene oder Wasser bis in den Nebel, die Kamera darf über den Rand schauen. Nur die Enden eines Pfads am Rand führen über das Raster hinaus. Für eine neue Landschaft baut `Ground.qml` Mesh und Bild neu, denn eine Textur mit neuen Daten behält ihre alten Mipmaps.
+- **Farben des Nature Kit:** Das Paket ist türkis und pfirsichfarben. `scripts/import_assets.py` ersetzt die Farben nach dem Namen des Materials durch erdige, jede Landschaft kann ihre Pflanzen tönen.
+- **Raster vorerst immer schwach sichtbar:** Ein Zustand „Bauen" gibt es erst mit den Karten. Bis dahin steht `gridStrength` fest auf einem schwachen Wert, die Karten binden ihn an das Ziehen.
+- **HUD und Menü:** HUD mit Icons statt Text, alles gerahmt. Das Menü behält Text.
+- **Offen:** Der Auftrag nennt Neon `#2CDE85` als Akzent, Demo A nutzt Orange und Gold. Der Mensch entscheidet.

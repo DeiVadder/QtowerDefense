@@ -8,9 +8,15 @@ qt_add_qml_module(qtd_client
         app_info.cpp app_info.h
         game_session.cpp game_session_save.cpp game_session.h
         graphics.cpp graphics.h
+        ground_field.cpp ground_field.h
+        landscape.cpp landscape.h
+        landscape_view.cpp landscape_view.h
         map_instances.cpp map_instances.h
+        scenery_instances.cpp scenery_instances.h
         screen_control.cpp screen_control.h
-    QML_FILES AssetModel.qml GameSounds.qml Hud.qml HudButton.qml Main.qml MainScene.qml)
+        terrain_mesh.cpp terrain_mesh.h
+        terrain_picture.cpp terrain_picture.h
+    QML_FILES AssetModel.qml GameSounds.qml Ground.qml Hud.qml HudButton.qml Main.qml MainScene.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
 # rhi/qrhi.h, only for the GPU time of a frame.
 target_link_libraries(qtd_client PRIVATE Qt6::GuiPrivate)
@@ -21,6 +27,7 @@ qt_add_resources(qtd_client "qtd_content"
     PREFIX "/content"
     BASE "${PROJECT_SOURCE_DIR}/content"
     FILES
+        "${PROJECT_SOURCE_DIR}/content/landscapes.json"
         "${PROJECT_SOURCE_DIR}/content/training_ground.json"
         "${PROJECT_SOURCE_DIR}/content/mire_siege.json")
 

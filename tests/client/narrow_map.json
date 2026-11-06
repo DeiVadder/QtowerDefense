@@ -1,0 +1,15 @@
+{
+    "formatVersion": 1,
+    "startGold": 100,
+    "startLives": 3,
+    "gridWidth": 1,
+    "gridHeight": 6,
+    "path": [{"x": 0, "y": 0}, {"x": 0, "y": 5}],
+    "obstacles": [],
+    "towers": [{"id": "plain_tower", "cost": 40, "range": "3", "cooldownTicks": 4,
+                "damageMin": "2", "damageMax": "2", "damageType": "physical",
+                "footprint": [{"x": 0, "y": 0}]}],
+    "enemies": [{"id": "plain_enemy", "health": "4", "speedPerTick": "0.5", "bounty": 7,
+                 "lifeCost": 1}],
+    "wave": [{"enemy": "plain_enemy", "count": 2, "delayTicks": 0, "intervalTicks": 4}]
+}

@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/11-spielwelt`:** Gelände, Nebel, Schatten, Pflanzen und Wege statt Schachbrett, Landschaften Wiese und Sumpf (E-34). Die übrigen sieben Landschaften kommen mit ihren Karten.
 - **Dazu aus Etappe 10:** Türme, Hindernisse und Gegner als Modelle (Kenney, CC0), Schüsse, Einschlag der Zauber, Sound für Bauen, Upgrade, Verkauf, Zauber, Welle und Spielende (E-33). Hintergrundmusik fehlt.
 - **Dazu aus Etappe 9:** Wellen vorziehen gegen Bonusgold, Speichern und Laden eines laufenden Spiels als Replay, von Hand in der Pause und beim Gang in den Hintergrund, auch über die Steuerschnittstelle (E-31).
 - **Dazu aus Etappe 8:** Zauber `meteor` und `deep_freeze` mit Abklingzeit, im HUD wählbar, auf Bots und Steuerschnittstelle (E-30).
@@ -23,9 +24,10 @@
 
 ## Nächster Schritt
 
-1. Etappe 11, zuvor das UI-Thema. Geländekacheln und Landschaften je Abschnitt kommen dort dazu (E-32, E-33).
-2. Vor Etappe 11 (Wunsch des Menschen, 2026-11-05): das UI-Thema aus dem Auftrag, also Neon `#2CDE85` als Akzent und ein QML-Theme-Singleton für alle Farben, Abstände und Schriften. Das HUD hat bisher feste Farben.
-3. In Etappe 11: Weltkarte im Nebel mit neun Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
+1. Etappe 11, zuvor das UI-Thema. Die übrigen Landschaften kommen mit ihren Abschnitten dazu (E-32, E-34).
+2. Vor Etappe 11: das UI-Thema nach E-34, je Schritt ein Branch: Theme-Singleton und Rahmen, Held, Karten, Würfeln und Münzen in Core, zuletzt die Weltkarte. Das HUD hat bisher feste Farben.
+3. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro.
+4. In Etappe 11: Weltkarte im Nebel mit neun Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
 
 ## Bekannte Mängel und offene Punkte
 
@@ -33,6 +35,8 @@
 - **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Schadensarten, Effekte und Resistenzen stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
 - **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `MapInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende.
 - **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Die Form ist nur im HUD zu sehen, nicht auf der Karte, ein abgelehnter Tipp bleibt stumm, das HUD nennt die rohe ID statt eines übersetzbaren Namens, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
+- **Review von `feature/11-spielwelt`:** Erst nicht bestanden: Absturz auf Karten von 1 Feld Breite, Pfade am Rand wurden zu Sandflächen, drei Mutanten überlebten, nach einem Kartenwechsel blieb im fernen Boden das alte Bild, der Rand des Geländes war sichtbar, Wasser sah aus wie Schlamm, Baumkronen nahmen Taps der Nachbarfelder. Alles behoben, Nachprüfung mit Mutanten bestanden (`1011d4d`).
+- **Aus dem Review von `feature/11-spielwelt`, nicht behoben:** Im Sumpf zeigt ganz verschobene Kamera bei größtem Zoom eine gerade Küste, weil das Land am Rand auf Höhe 0 ausläuft. Eine Landschaft ohne `water` und ohne `lakes: false`, auch der Standard bei kaputter `landscapes.json`, hat jenseits des Geländes weder Ebene noch Meer; heute trifft das keine Karte. Der GPU-Speicher bei vielen Kartenwechseln ist ungeprüft, der Arbeitsspeicher blieb stabil. Die Vollprüfung scheiterte zweimal an einem internen Fehler von MSVC im Coverage-Build, an wechselnden Dateien, Ursache offen, danach nicht wieder.
 - **Aus dem Review von Etappe 9, nicht behoben:** Fehlertexte beim Laden kommen aus Core und erscheinen englisch im HUD, wie die Fehler einer Karte. Übersetzbar werden sie mit Etappe 13. `resumeGame` vergleicht ähnlich wie `ReplayPlayer`, `loadGame` liest die Datei zweimal.
 - **Aus dem Review von Etappe 8, nicht behoben:** Das HUD zeigt die rohen IDs der Zauber (`deep_freeze`), wie bei den Türmen. Anzeigenamen gehören zum UI-Thema vor Etappe 11.
 - **Aus dem Review von Etappe 7, nicht behoben:** `mire_siege` ist zu leicht, der naive Bot gewinnt ohne Upgrades (Etappe 12). Über die Steuerschnittstelle verkauft, bleibt die ID des gewählten Turms in `GameSession` stehen. Das ist harmlos, weil alles über `chosen()` geht.

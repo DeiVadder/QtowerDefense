@@ -65,8 +65,8 @@ private slots:
         QVERIFY(trees.count() > 3);
     }
 
-    // A tap names its cell by the instance, so the ground below obstacles comes last.
-    static void theBoardStartsWithAllItsCells()
+    // A tap names its cell by the instance.
+    static void theBoardIsMadeOfItsCells()
     {
         GameSession game;
         game.startGame(mapFile(), 7);
@@ -74,9 +74,7 @@ private slots:
         const QSize size = game.gridSize();
         QCOMPARE(board.entry(1).getPosition().x(), 50.0F);
         QCOMPARE(board.entry(size.width()).getPosition().z(), 50.0F);
-        QVERIFY(board.count() > size.width() * size.height());
-        const QVector3D last = board.entry(board.count() - 1).getScale();
-        QVERIFY(last.y() < board.entry(5 * size.width() + 2).getScale().y());
+        QCOMPARE(board.count(), size.width() * size.height());
     }
 
     static void towersShowWithAllTheirCells()

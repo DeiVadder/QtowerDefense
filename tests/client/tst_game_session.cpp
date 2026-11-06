@@ -458,7 +458,7 @@ private slots:
         QCOMPARE(game.towerCount(), 0);
     }
 
-    void theBoardShowsEveryCellInTheLookOfItsTerrain()
+    void theBoardHasABlockForEveryCell()
     {
         GameSession game;
         game.startGame(mapFile(), 7);
@@ -466,18 +466,14 @@ private slots:
         board.setLayer(MapInstances::Layer::Board);
         board.setFieldSize(50);
         board.setGame(&game);
-        QVERIFY(board.count() > 17 * 11); // the ground under the obstacles comes after the cells
+        QCOMPARE(board.count(), 17 * 11);
         const auto at = [&board](int x, int y) {
             return board.entry(y * 17 + x);
         };
         QCOMPARE(at(16, 3).getPosition().x(), 16 * 50.0F);
         QCOMPARE(at(16, 3).getPosition().z(), 3 * 50.0F);
-        QVERIFY(at(5, 5).getColor() != at(6, 5).getColor()); // the chessboard
-        QCOMPARE(at(5, 5).getColor(), at(6, 6).getColor());
-        const QColor open = at(5, 5).getColor();
-        QVERIFY(at(3, 2).getColor() != open && at(6, 5).getColor() != at(3, 2).getColor()); // path
-        QVERIFY(at(2, 9).getColor() != open);                                               // water
-        QVERIFY(at(2, 5).getScale().y() > at(5, 5).getScale().y());                         // rock
+        QCOMPARE(at(5, 5).getColor().alpha(), 0);                   // the blocks only take taps
+        QVERIFY(at(2, 5).getScale().y() > at(5, 5).getScale().y()); // rock
         QVERIFY(at(13, 2).getScale().y() <
                 at(2, 5).getScale().y()); // the model of a tree takes taps
     }

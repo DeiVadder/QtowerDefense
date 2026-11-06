@@ -144,6 +144,8 @@ public:
     [[nodiscard]] int towerCount() const;
     /// The chessboard of the map, nothing without a game.
     [[nodiscard]] const core::Grid *grid() const;
+    /// The file of the running map.
+    [[nodiscard]] const QString &mapFile() const;
     /// The game to look at, nothing without a game.
     [[nodiscard]] const core::Simulation *simulation() const;
     /// All cells that towers take, as QPoint.

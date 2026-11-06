@@ -153,6 +153,14 @@ if(NOT QTD_ENABLE_UBSAN)
     target_compile_definitions(tst_client_game_session PRIVATE
         QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
+    qtd_add_test(tst_client_landscape
+        SOURCES client/tst_landscape.cpp
+        LIBS qtd_client
+        LABELS client)
+    target_compile_definitions(tst_client_landscape PRIVATE
+        QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content"
+        QTD_TEST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/client")
+
     qtd_add_test(tst_client_map_looks
         SOURCES client/tst_map_looks.cpp
         LIBS qtd_client
