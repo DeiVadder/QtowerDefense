@@ -22,8 +22,9 @@
 
 ## Nächster Schritt
 
-1. Etappe 10.
+1. Etappe 10, die Assets gleich je Landschaft für Level und Weltkarte (E-32).
 2. Vor Etappe 11 (Wunsch des Menschen, 2026-11-05): das UI-Thema aus dem Auftrag, also Neon `#2CDE85` als Akzent und ein QML-Theme-Singleton für alle Farben, Abstände und Schriften. Das HUD hat bisher feste Farben.
+3. In Etappe 11: Weltkarte im Nebel mit sechs Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
 
 ## Bekannte Mängel und offene Punkte
 

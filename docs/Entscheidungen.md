@@ -247,3 +247,15 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Bots:** Der Fuzz-Bot ruft Wellen, der naive nicht. Ihn mutiger zu machen, gehört zum guten Bot aus Etappe 12.
 - **Noch offen:** Kampagnenfortschritt, Highscores und Einstellungen aus dem Auftrag kommen mit Etappe 11, denn es gibt sie noch nicht. Das Spieltempo merkt sich der Spielstand nicht.
 - **Formatversion:** Bleibt 1, der neue Schlüssel ist optional.
+
+## E-32 Weltkarte der Kampagne
+
+Vom Menschen am 2026-11-06 festgelegt, ergänzt den Auftrag.
+
+- **Eine zusammenhängende Welt:** Die Kampagne zeigt eine große Weltkarte im Nebel, in der man den nächsten Abschnitt wählt. Einzelne Assets ragen aus dem Nebel. Kein Menü mit einer Kartenliste.
+- **Die Welt entspricht den Levels:** Ist ein Abschnitt auf der Weltkarte ein Sumpf, ist auch das Level ein Sumpf. Beide nutzen dieselben Assets je Landschaft.
+- **Freischalten:** Ein geschafftes Level öffnet seine Nachbarn und lichtet dort den Nebel. Das erlaubt Verzweigungen und ersetzt „Karten nacheinander freischalten" aus dem Auftrag. Die Sterne je Karte bleiben.
+- **Größe:** Sechs Abschnitte, auch das weicht vom Auftrag ab (3 bis 5 Karten). Weniger wirken in einer großen Welt leer, und jede Karte kostet Balancing in Etappe 12. Form: ein Anfang, zwei Wege mit je zwei Abschnitten, ein gemeinsames Ende. `training_ground` und `mire_siege` sind zwei davon, vier Karten sind neu. Die Landschaften wählt Etappe 10 nach den verfügbaren CC0-Assets.
+- **Daten und Schichten:** Die Weltkarte ist eine JSON-Datei (Abschnitte, Lage, Karte, Nachbarn). Regeln und Fortschritt liegen in C++, Nebel und Szene sind reine Darstellung. Die Simulation ändert sich nicht.
+- **Nebel:** Zuerst halbtransparente Ebenen oder Sprites, ein eigener Shader nur, wenn das nicht reicht. Er muss auch auf Mobile laufen.
+- **Reihenfolge:** Etappe 10 sucht die Assets je Landschaft schon mit Blick auf die Weltkarte, also Gelände und große Landmarken. In Etappe 11 wird die Weltkarte ein eigenes Feature, damit Sterne, Fortschritt und Endlosmodus nicht an ihr hängen.
