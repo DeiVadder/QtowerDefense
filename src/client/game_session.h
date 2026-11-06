@@ -55,6 +55,7 @@ class GameSession : public QObject
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY clockChanged)
     Q_PROPERTY(int speed READ speed WRITE setSpeed NOTIFY clockChanged)
     Q_PROPERTY(int maxSpeed READ maxSpeed CONSTANT)
+    Q_PROPERTY(int ticksPerSecond READ ticksPerSecond CONSTANT)
 
 public:
     /// Something a player should hear.
@@ -70,6 +71,7 @@ public:
     Q_ENUM(Cue)
 
     explicit GameSession(QObject *parent = nullptr);
+    [[nodiscard]] static int ticksPerSecond();
     ~GameSession() override;
 
     /// Starts a game with a seed of its own. A map that cannot be loaded leaves no game and an

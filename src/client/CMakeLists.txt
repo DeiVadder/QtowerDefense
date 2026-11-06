@@ -17,7 +17,7 @@ qt_add_qml_module(qtd_client
         screen_control.cpp screen_control.h
         terrain_mesh.cpp terrain_mesh.h
         terrain_picture.cpp terrain_picture.h
-    QML_FILES AssetModel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hud.qml HudButton.qml HudFrame.qml
+    QML_FILES AssetModel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml
         IconPaths.js Main.qml MainScene.qml Theme.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
 # rhi/qrhi.h, only for the GPU time of a frame.

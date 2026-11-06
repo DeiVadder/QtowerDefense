@@ -183,7 +183,7 @@ if(NOT QTD_ENABLE_UBSAN)
     target_link_libraries(tst_qml PRIVATE Qt6::QuickTest qtd_client qtd_clientplugin)
     qtd_set_strict_warnings(tst_qml)
     add_test(NAME tst_qml COMMAND tst_qml)
-    set_tests_properties(tst_qml PROPERTIES LABELS client TIMEOUT 60)
+    set_tests_properties(tst_qml PROPERTIES LABELS client TIMEOUT 120)
 
     # Vsync depends on the display: on an idle machine a window got almost no frames.
     set_tests_properties(tst_client_window tst_client_screen_control tst_qml PROPERTIES

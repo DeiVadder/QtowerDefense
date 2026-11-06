@@ -63,6 +63,11 @@ void GameSession::startNewGame(const QString &fileName)
     startGame(fileName, QRandomGenerator::global()->generate64());
 }
 
+int GameSession::ticksPerSecond()
+{
+    return core::kTicksPerSecond;
+}
+
 void GameSession::restart()
 {
     startNewGame(fileName_);

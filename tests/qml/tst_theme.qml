@@ -64,6 +64,11 @@ Item {
                             back: Theme.wood
                         },
                         {
+                            tag: "the words of the hero",
+                            front: Theme.woodDark,
+                            back: Theme.text
+                        },
+                        {
                             tag: "an error on wood",
                             front: Theme.danger,
                             back: Theme.wood

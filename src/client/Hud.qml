@@ -19,6 +19,8 @@ Item {
     readonly property bool failed: game.error.length > 0
 
     FramedPanel {
+        id: stats
+
         objectName: "stats"
         anchors.left: parent.left
         anchors.top: parent.top
@@ -393,6 +395,22 @@ Item {
             text: qsTr("Rotate")
             onClicked: root.game.rotateSelection()
         }
+    }
+
+    // Takes what the buttons at the left leave free. Below the size of a button it is not worth it.
+    Hero {
+        readonly property real room: root.height - stats.height - root.unit * (Theme.leftRows + (Theme.leftRows
+                                                                                                 + 1) * Theme.gap
+                                                                               + 4 * Theme.inset)
+
+        objectName: "hero"
+        visible: room >= root.unit
+        size: Math.min(root.unit * Theme.heroSize, room)
+        anchors.left: parent.left
+        anchors.top: stats.bottom
+        anchors.margins: root.unit * Theme.inset
+        game: root.game
+        unit: root.unit
     }
 
     FramedPanel {

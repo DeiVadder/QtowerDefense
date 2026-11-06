@@ -19,6 +19,13 @@ QtObject {
     readonly property color fire: "#e8702a"
     readonly property color ice: "#7fd4f5"
 
+    readonly property color heroSkin: "#e2b48c"
+    readonly property color heroBeard: "#b5562a"
+
+    function spellColor(spell: int): color {
+        return spell === 0 ? fire : ice;
+    }
+
     readonly property string face: Qt.fontFamilies().includes("Rockwell") ? "Rockwell" : "Georgia"
 
     // In shares of the unit of the HUD.
@@ -34,6 +41,9 @@ QtObject {
     readonly property real endWidth: 8
     readonly property real endHeight: 3.5
     readonly property real endMargin: 0.5
+    readonly property real heroSize: 2.2
+    readonly property real leftRows: 3 // the rows of buttons below the hero, at most
+    readonly property real bubbleWidth: 6
     readonly property real plank: 0.6
     readonly property real bracket: 0.3
     readonly property real bracketBar: 0.09
@@ -49,6 +59,10 @@ QtObject {
     readonly property real unitsAcross: 14
 
     readonly property real unavailable: 0.5 // the opacity of what cannot be used now
+
+    // How long the hero talks, and how long it keeps small talk to itself, in seconds of play.
+    readonly property int speechSeconds: 4
+    readonly property int quietSeconds: 10
 
     // In pixels, what must stay visible on a small screen.
     readonly property real thinnestBar: 3

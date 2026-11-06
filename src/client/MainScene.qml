@@ -325,7 +325,7 @@ View3D {
             function onSpellCast(x: int, y: int, radius: real, spell: int) {
                 blast.x = x * root.fieldSize;
                 blast.z = y * root.fieldSize;
-                blastMaterial.baseColor = spell === 0 ? Theme.fire : Theme.ice;
+                blastMaterial.baseColor = Theme.spellColor(spell);
                 blastGrowth.to = 2 * radius * root.fieldSize / 100;
                 blastAnimation.restart();
             }

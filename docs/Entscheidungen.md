@@ -286,5 +286,6 @@ Vom Menschen am 2026-11-06 aus vier Demos gewählt, ergänzt E-32 und den Auftra
 - **Farben des Nature Kit:** Das Paket ist türkis und pfirsichfarben. `scripts/import_assets.py` ersetzt die Farben nach dem Namen des Materials durch erdige, jede Landschaft kann ihre Pflanzen tönen.
 - **Raster vorerst immer schwach sichtbar:** Ein Zustand „Bauen" gibt es erst mit den Karten. Bis dahin steht `gridStrength` fest auf einem schwachen Wert, die Karten binden ihn an das Ziehen.
 - **HUD und Menü:** HUD mit Icons statt Text, alles gerahmt. Das Menü behält Text.
+- **Umsetzung des Helden:** `HeroVoice` hört nur zu, die Simulation weiß nichts vom Helden. Sätze wechseln reihum statt zufällig, ihre Dauer zählt in Spielzeit, je nach Tempo gestreckt. Plaudern pausiert 10 Sekunden, Zauber, Leben, Sieg und Niederlage kommen immer durch. Die Sprachausgabe bleibt offen, `QtTextToSpeech` ist nicht installiert.
 - **Akzent:** Neon `#2CDE85` wie im Auftrag, vom Menschen am 2026-11-06 bestätigt. Demo A nutzte Orange. Alle Farben stehen in `Theme.qml`, ein Wechsel ist eine Zeile.
 - **Icons:** Sie stammen aus Demo A, eigene SVG-Pfade in `IconPaths.js`. Jeder Turm und Zauber hat ein eigenes Icon, ein Test prüft das. Der Text eines Knopfs bleibt für Screenreader. Fehlt für neuen Inhalt ein Icon, zeigt der Knopf einen Blitz.
