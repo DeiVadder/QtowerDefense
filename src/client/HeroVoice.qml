@@ -15,8 +15,12 @@ Item {
         Wave,
         Won,
         Lost,
+        Roll,
+        Coin,
         LifeLost,
-        SpellChosen
+        SpellChosen,
+        HandFull,
+        Broke
     }
 
     enum Mood {
@@ -37,7 +41,8 @@ Item {
 
     readonly property list<int> moods: [HeroVoice.Mood.Glad, HeroVoice.Mood.Glad,
         HeroVoice.Mood.Worried, HeroVoice.Mood.Casting, HeroVoice.Mood.Glad, HeroVoice.Mood.Glad,
-        HeroVoice.Mood.Worried, HeroVoice.Mood.Worried, HeroVoice.Mood.Casting]
+        HeroVoice.Mood.Worried, HeroVoice.Mood.Glad, HeroVoice.Mood.Glad, HeroVoice.Mood.Worried,
+        HeroVoice.Mood.Casting, HeroVoice.Mood.Worried, HeroVoice.Mood.Worried]
     readonly property list<string> buildLines: [qsTr("Nice spot. For a beginner."), qsTr(
             "That should scare a goblin. Maybe."), qsTr("Another one? Show-off.")]
     readonly property list<string> upgradeLines: [qsTr("Bigger is better. Usually."), qsTr(
@@ -50,13 +55,18 @@ Item {
             "More for me!")]
     readonly property list<string> wonLines: [qsTr("We won! I did most of it.")]
     readonly property list<string> lostLines: [qsTr("I blame the architect.")]
+    readonly property list<string> rollLines: [qsTr("Feeling lucky?"), qsTr(
+            "The dice hate you. Roll anyway.")]
+    readonly property list<string> coinLines: [qsTr("Mine! I mean, ours."), qsTr("Shiny!")]
+    readonly property list<string> fullLines: [qsTr("Your hand is full. Like my patience.")]
+    readonly property list<string> brokeLines: [qsTr("We are broke. Try not being broke.")]
     readonly property list<string> lifeLines: [qsTr("One got through! Were you watching?"), qsTr(
             "Ouch. That was my favorite life.")]
     readonly property list<string> chosenLines: [qsTr("Point where it should hurt.")]
     readonly property var lines: [buildLines, upgradeLines, sellLines, spellLines, waveLines,
-        wonLines, lostLines, lifeLines, chosenLines]
+        wonLines, lostLines, rollLines, coinLines, lifeLines, chosenLines, fullLines, brokeLines]
 
-    property var spoken: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+    property var spoken: lines.map(() => 0)
     property int lastLives: -1
     property int lastSpell: -1
     property real silentAt: 0 // the tick the line goes away
@@ -97,6 +107,10 @@ Item {
 
         function onCue(what: int) {
             root.say(what);
+        }
+
+        function onHandRefused(full: bool) {
+            root.say(full ? HeroVoice.Moment.HandFull : HeroVoice.Moment.Broke);
         }
 
         function onStateChanged() {

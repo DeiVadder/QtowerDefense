@@ -144,6 +144,11 @@ Item {
     }
 
     HudFrame {
+        around: cardButtons
+        unit: root.unit
+    }
+
+    HudFrame {
         around: savePanel
         unit: root.unit
     }
@@ -295,7 +300,9 @@ Item {
         anchors.bottomMargin: root.cardUnit * Theme.cardLift
         game: root.game
         unit: root.cardUnit
-        maxWidth: parent.width - 2 * (placement.width + root.unit * Theme.gap * 2)
+        heldBack: dice.rolling ? 1 : 0
+        maxWidth: parent.width - 2 * (Math.max(placement.width, cardButtons.width) + root.unit
+                                      * Theme.gap * 2)
         lowered: root.game.chosenSellValue >= 0
         onDropped: (x, y) => {
             // A card over the HUD goes back into the hand.
@@ -399,6 +406,47 @@ Item {
         }
     }
 
+    // Where cards come from, and where they go.
+    Row {
+        id: cardButtons
+
+        objectName: "cardButtons"
+        anchors.right: parent.right
+        anchors.bottom: placement.top
+        anchors.margins: root.unit * Theme.gap
+        spacing: root.unit * Theme.gap
+
+        HudButton {
+            objectName: "rollButton"
+            unit: root.unit
+            icon: "dice"
+            caption: root.game.rollCost
+            captionColor: Theme.gold
+            text: qsTr("Roll for a card")
+            available: !dice.rolling
+            onClicked: root.game.rollCard()
+        }
+
+        HudButton {
+            objectName: "shopButton"
+            unit: root.unit
+            icon: "bag"
+            text: qsTr("Buy a card")
+            available: !dice.rolling // the hand holds back the last card until the dice stop
+            onClicked: shop.open = true
+        }
+
+        HudButton {
+            objectName: "discardButton"
+            unit: root.unit
+            icon: "trash"
+            text: qsTr("Throw the chosen card away")
+            highlighted: root.game.hand.length >= root.game.handLimit
+            available: root.game.chosenCard >= 0
+            onClicked: root.game.discardCard()
+        }
+    }
+
     // How it will stand: the dark cell is the one that is tapped.
     Row {
         id: placement
@@ -454,6 +502,25 @@ Item {
         holding: towerList.dragging
         held: towerList.held
         heldInfo: root.game.towerTypes[root.game.selectedTower] ?? heldInfo
+    }
+
+    DiceRoll {
+        id: dice
+
+        objectName: "dice"
+        anchors.centerIn: parent
+        game: root.game
+        unit: root.cardUnit
+    }
+
+    CardShop {
+        id: shop
+
+        objectName: "shop"
+        anchors.fill: parent
+        game: root.game
+        unit: root.unit
+        cardUnit: root.cardUnit
     }
 
     FramedPanel {

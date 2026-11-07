@@ -25,7 +25,7 @@ namespace {
 constexpr qint64 kFormatVersion = 1;
 constexpr qsizetype kHashDigits = 16;
 
-using ResultNames = std::array<QLatin1StringView, 12>;
+using ResultNames = std::array<QLatin1StringView, 15>;
 constexpr ResultNames kResultNames{"accepted"_L1,
                                    "gameOver"_L1,
                                    "unknownTowerType"_L1,
@@ -37,8 +37,11 @@ constexpr ResultNames kResultNames{"accepted"_L1,
                                    "highestLevel"_L1,
                                    "unknownSpell"_L1,
                                    "spellCooling"_L1,
-                                   "noWaveWaiting"_L1};
-static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::NoWaveWaiting) + 1);
+                                   "noWaveWaiting"_L1,
+                                   "handFull"_L1,
+                                   "unknownCard"_L1,
+                                   "unknownCoin"_L1};
+static_assert(kResultNames.size() == static_cast<std::size_t>(CommandResult::UnknownCoin) + 1);
 
 enum class Kind : quint8 {
     Replay,
@@ -115,6 +118,18 @@ Command readCommand(ObjectReader &item)
     }
     if (type == "callWave"_L1) {
         return CallWaveCommand{};
+    }
+    if (type == "rollCard"_L1) {
+        return RollCardCommand{};
+    }
+    if (type == "buyCard"_L1) {
+        return BuyCardCommand{item.integer("towerType"_L1, -kMaxExactInteger, kMaxExactInteger)};
+    }
+    if (type == "discardCard"_L1) {
+        return DiscardCardCommand{item.integer("slot"_L1, -kMaxExactInteger, kMaxExactInteger)};
+    }
+    if (type == "collectCoin"_L1) {
+        return CollectCoinCommand{item.integer("coin"_L1, -kMaxExactInteger, kMaxExactInteger)};
     }
     if (type != "buildTower"_L1) {
         item.fail(u"type"_s, u"unknown command \"%1\""_s.arg(type));
@@ -242,6 +257,26 @@ QJsonObject fieldsOf(const CastSpellCommand &command)
 QJsonObject fieldsOf(const CallWaveCommand & /*command*/)
 {
     return {{"type"_L1, "callWave"_L1}};
+}
+
+QJsonObject fieldsOf(const RollCardCommand & /*command*/)
+{
+    return {{"type"_L1, "rollCard"_L1}};
+}
+
+QJsonObject fieldsOf(const BuyCardCommand &command)
+{
+    return {{"type"_L1, "buyCard"_L1}, {"towerType"_L1, command.towerType}};
+}
+
+QJsonObject fieldsOf(const DiscardCardCommand &command)
+{
+    return {{"type"_L1, "discardCard"_L1}, {"slot"_L1, command.slot}};
+}
+
+QJsonObject fieldsOf(const CollectCoinCommand &command)
+{
+    return {{"type"_L1, "collectCoin"_L1}, {"coin"_L1, command.coin}};
 }
 
 QJsonObject commandToJson(const RecordedCommand &recorded)

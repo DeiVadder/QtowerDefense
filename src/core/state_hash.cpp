@@ -60,6 +60,7 @@ quint64 contentHash(const Content &content)
     Fields fields;
     fields.add(content.startGold, content.startLives, content.sellPercent);
     fields.add(content.earlyCallTicksPerGold);
+    fields.add(content.rollPercent, content.coinPercent, content.coinTicks);
     fields.addPoints(content.path.points());
     fields.add(content.grid.width(), content.grid.height());
     for (const Terrain terrain : content.grid.cells()) {
@@ -135,6 +136,14 @@ quint64 stateHash(const SimulationState &state)
     fields.add(state.spellCooldowns.size());
     for (const qint64 cooldown : state.spellCooldowns) {
         fields.add(cooldown);
+    }
+    fields.add(state.hand.size());
+    for (const Card &card : state.hand) {
+        fields.add(card.type, card.paid);
+    }
+    fields.add(state.nextCoinId, state.coins.size());
+    for (const BonusCoin &coin : state.coins) {
+        fields.add(coin.id, coin.place.x.raw(), coin.place.y.raw(), coin.value, coin.ticksLeft);
     }
     return fields.value();
 }

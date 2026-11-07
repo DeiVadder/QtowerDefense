@@ -15,6 +15,7 @@
 
 #include <map>
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace qtd::client {
@@ -30,6 +31,10 @@ class GameSession : public QObject
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
     Q_PROPERTY(QStringList towerModels READ towerModels NOTIFY mapChanged)
     Q_PROPERTY(QStringList enemyModels READ enemyModels NOTIFY mapChanged)
+    Q_PROPERTY(QVariantList hand READ hand NOTIFY handChanged)
+    Q_PROPERTY(int handLimit READ handLimit CONSTANT)
+    Q_PROPERTY(int rollCost READ rollCost NOTIFY mapChanged)
+    Q_PROPERTY(int chosenCard READ chosenCard NOTIFY selectionChanged)
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
     Q_PROPERTY(QStringList spellNames READ spellNames NOTIFY mapChanged)
@@ -67,6 +72,8 @@ public:
         Wave,
         Won,
         Lost,
+        Roll,
+        Coin,
     };
     Q_ENUM(Cue)
 
@@ -103,6 +110,16 @@ public:
     /// Goes on with the save file, paused, on the map it names. The maps lie side by side. A
     /// failure shows in saveError and keeps the current game.
     Q_INVOKABLE bool loadGame();
+    /// Makes the card in this slot the next thing a tap on the map builds, or none at all.
+    Q_INVOKABLE void chooseCard(int slot);
+    /// A random card for the price of a roll. True if the game took the command.
+    Q_INVOKABLE bool rollCard();
+    /// The card of this tower type at its full price. True if the game took the command.
+    Q_INVOKABLE bool buyCard(int towerType);
+    /// Throws the chosen card away, its gold is gone. True if there was one.
+    Q_INVOKABLE bool discardCard();
+    /// Takes a bonus coin from the map. True if it still lay there.
+    Q_INVOKABLE bool collectCoin(int coin);
     /// Turns what a tap on the map builds by a quarter, clockwise.
     Q_INVOKABLE void rotateSelection();
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
@@ -126,6 +143,11 @@ public:
     [[nodiscard]] QSize gridSize() const;
     /// What can be built, as maps with the name and the cost of each type.
     [[nodiscard]] QVariantList towerTypes() const;
+    /// The tower type of each card, in the order of the hand.
+    [[nodiscard]] QVariantList hand() const;
+    [[nodiscard]] static int handLimit();
+    [[nodiscard]] int rollCost() const;
+    [[nodiscard]] int chosenCard() const;
     [[nodiscard]] int selectedTower() const;
     [[nodiscard]] QStringList spellNames() const;
     /// The seconds until each spell can be cast, rounded up, 0 for a spell that is ready.
@@ -184,6 +206,14 @@ signals:
     void stateChanged();
     void clockChanged();
     void saveChanged();
+    void handChanged();
+    /// A roll brought this card, it is in the hand already.
+    void cardRolled(int towerType);
+    /// No card for now: the hand is full, or else the gold is too little.
+    void handRefused(bool full);
+    /// In tiles of the map.
+    void coinDropped(int coin, double x, double y, int value);
+    void coinGone(int coin);
     void cue(qtd::client::GameSession::Cue what);
     void towerBuilt(int x, int y);
     /// A spell has hit this cell, in map units around it.
@@ -198,6 +228,11 @@ private:
     [[nodiscard]] const core::Tower *chosen() const;
     /// Gives a command on the chosen tower and shows what it changed.
     bool executeOnChosen(const core::Command &command);
+    /// Gives a command on the hand and shows what it changed, or why it could not be.
+    bool executeOnHand(const core::Command &command);
+    void forgetCard();
+    /// Tells of the coins that came and went since the last time.
+    void reportCoins();
 
     std::unique_ptr<core::ReplayRecorder> game_;
     core::TickClock clock_;
@@ -209,6 +244,8 @@ private:
     bool saveIsOurs_ = false; // the save file holds this game, not one the player may want back
     qint64 chosenTower_ = 0;
     int selectedTower_ = 0;
+    int chosenCard_ = -1;
+    std::set<qint64> shownCoins_;
     int selectedSpell_ = -1;
     core::Rotation selectedRotation_ = core::Rotation::None;
     bool paused_ = false;

@@ -39,7 +39,7 @@ Item {
             GameSession {
                 id: session
 
-                Component.onCompleted: startNewGame(":/content/training_ground.json")
+                Component.onCompleted: startNewGame(richMap) // qmllint disable unqualified
             }
         }
     }
@@ -48,9 +48,17 @@ Item {
         name: "Cards"
         when: windowShown
 
+        // One card of each of the first towers, in that order.
+        function deal(game) {
+            for (let type = 0; type < game.scene.game.handLimit; ++type) {
+                verify(game.scene.game.buyCard(type));
+            }
+        }
+
         function create() {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);
+            deal(game);
             const cards = findChild(game.hud, "towerButtons");
             tryVerify(() => cards.children.length > 3);
             game.cards = cards;
@@ -110,6 +118,8 @@ Item {
             const hand = findChild(game.hud, "towerList");
             const rotation = findChild(game.hud, "rotation");
             verify(hand.x + hand.width <= rotation.x, hand.width);
+            const buttons = findChild(game.hud, "cardButtons");
+            verify(hand.x + hand.width <= buttons.x, hand.width + " and " + buttons.x);
             verify(hand.step > 0);
             stage.width = 640;
             stage.height = 360;
@@ -176,7 +186,8 @@ Item {
             compare(session.towerCount, 1);
             compare(Qt.point(session.towerCells[0].x, session.towerCells[0].y), Qt.point(4, 4));
             verify(!findChild(game.hud, "heldCard").visible);
-            compare(card.opacity, 1);
+            compare(session.hand.indexOf(2), -1);
+            tryVerify(() => cardsOf(game.cards).length === session.handLimit - 1);
         }
 
         function test_theGridShowsDuringADrag() {
@@ -299,6 +310,7 @@ Item {
                     const over = game.hud.childAt(place.x, place.y);
                     if (over !== null && over !== hand && game.scene.game.buildTower(x, y)) {
                         game.scene.game.restart();
+                        deal(game);
                         return Qt.point(place.x, place.y);
                     }
                 }

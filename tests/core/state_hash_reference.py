@@ -32,6 +32,7 @@ def scenario_content():
     return [
         100, 3, 70,                                 # start gold, start lives, sell percent
         0,                                          # no bonus for an early wave
+        80, 25, 120,                                # roll percent, coin percent, coin ticks
         2, 0, 0, 100000, 0,                         # path
         11, 11, *terrain,                           # grid
         1, 0,                                       # towers: damage type physical
@@ -55,6 +56,8 @@ def handmade_state():
         1, 3, 0, 15000, 25000, 4, 5000, 6, 2500,    # enemies with slow and poison
         1, 5, 1, 2, 3, 6, 3, 2, 1, 70,              # towers: turned, aiming at the last, upgraded
         1, 11,                                      # one spell cooling down
+        1, 1, 35,                                   # a card in the hand
+        4, 1, 3, 20000, 30000, 2, 8,                # next coin, a coin with its place
     ]  # fmt: skip
 
 

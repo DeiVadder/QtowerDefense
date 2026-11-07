@@ -81,6 +81,20 @@ QtObject {
 
     readonly property real cardWidth: 3
     readonly property real cardHeight: 4.25
+    readonly property real coinSize: 0.7
+    readonly property real coinTap: 1.2 // a finger hits more than the coin
+    readonly property real coinHop: 1.2
+    readonly property real coinRim: 0.08 // of the coin
+    readonly property real coinMark: 0.6
+    readonly property int coinMillis: 500
+    readonly property int diceSteps: 9
+    readonly property int diceFirstStep: 45
+    readonly property real diceSlowing: 3.5
+    readonly property int diceMillis: 1100
+    readonly property int diceRest: 450
+    readonly property real diceSpin: 1080
+    readonly property int diceSeed: 33
+    readonly property int shopSeed: 12
     readonly property real cardPeek: 1.6 // what stays of the hand while a tower is chosen
     readonly property real cardRaise: 1.15
     readonly property real cardChosenScale: 1.1

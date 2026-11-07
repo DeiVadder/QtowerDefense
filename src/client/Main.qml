@@ -28,9 +28,12 @@ Window {
 
         anchors.fill: parent
         game: session
+        coinUnit: hud.unit
     }
 
     Hud {
+        id: hud
+
         anchors.fill: parent
         game: session
         scene: gameScene

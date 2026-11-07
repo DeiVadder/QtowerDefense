@@ -5,7 +5,8 @@ qt_add_library(qtd_core STATIC
     json_reader.cpp json_reader.h
     random.cpp random.h
     replay.cpp replay.h
-    simulation.cpp simulation.h
+    simulation.cpp
+    simulation_cards.cpp simulation.h
     state_hash.cpp state_hash.h
     tick_clock.cpp tick_clock.h
     version.cpp version.h)

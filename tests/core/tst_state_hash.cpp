@@ -67,6 +67,9 @@ SimulationState handmadeState()
                             1,
                             70});
     state.spellCooldowns.push_back(11);
+    state.hand.push_back({1, 35});
+    state.nextCoinId = 4;
+    state.coins.push_back({3, {Fixed::fromRaw(20000), Fixed::fromRaw(30000)}, 2, 8});
     return state;
 }
 
@@ -128,6 +131,16 @@ NamedChanges entityChanges()
         {"tower spent", [](auto &s) { ++s.towers[0].spent; }},
         {"spell cooldown", [](auto &s) { ++s.spellCooldowns[0]; }},
         {"spell added", [](auto &s) { s.spellCooldowns.push_back(0); }},
+        {"card type", [](auto &s) { ++s.hand[0].type; }},
+        {"card paid", [](auto &s) { ++s.hand[0].paid; }},
+        {"card added", [](auto &s) { s.hand.push_back({}); }},
+        {"next coin", [](auto &s) { ++s.nextCoinId; }},
+        {"coin id", [](auto &s) { ++s.coins[0].id; }},
+        {"coin x", [](auto &s) { s.coins[0].place.x = Fixed::fromRaw(1); }},
+        {"coin y", [](auto &s) { s.coins[0].place.y = Fixed::fromRaw(1); }},
+        {"coin value", [](auto &s) { ++s.coins[0].value; }},
+        {"coin time", [](auto &s) { ++s.coins[0].ticksLeft; }},
+        {"coin added", [](auto &s) { s.coins.push_back({}); }},
     };
 }
 
@@ -142,12 +155,12 @@ private slots:
     /// the project. They hold on every compiler and in every process.
     void theStateHashIsPinned()
     {
-        QCOMPARE(stateHash(handmadeState()), 0x0B274E624B8328FEULL);
+        QCOMPARE(stateHash(handmadeState()), 0x42741D6672B8C764ULL);
     }
 
     void theContentHashIsPinned()
     {
-        QCOMPARE(contentHash(contentOf(scenarioJson())), 0xA33437FFBAE4C701ULL);
+        QCOMPARE(contentHash(contentOf(scenarioJson())), 0x409D3F9CE2F2F860ULL);
     }
 
     // The test vectors of the FNV authors.
@@ -176,6 +189,8 @@ private slots:
     {
         SimulationState base = runningGame().state();
         base.spellCooldowns.push_back(3); // the scenario has no spells
+        base.hand.push_back({0, 1});
+        base.coins.push_back({1, {}, 1, 1});
         QVERIFY(base.enemies.size() == 1 && base.towers.size() == 1);
         QCOMPARE(unnoticed(base, fieldChanges()), QStringList());
         QCOMPARE(unnoticed(base, entityChanges()), QStringList());

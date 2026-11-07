@@ -56,8 +56,14 @@ Item {
             }
         }
 
-        function createScene() {
-            return createTemporaryObject(gameComponent, stage).scene;
+        // With the card of this tower chosen, if one is named.
+        function createScene(card) {
+            const scene = createTemporaryObject(gameComponent, stage).scene;
+            if (card !== undefined) {
+                verify(scene.game.buyCard(card));
+                scene.game.chooseCard(0);
+            }
+            return scene;
         }
 
         function createHud() {
@@ -117,7 +123,7 @@ Item {
         }
 
         function test_aTapOnAFreeCellBuildsATower() {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.cellOnScreen(4, 4);
             mouseClick(scene, place.x, place.y);
@@ -153,30 +159,12 @@ Item {
         }
 
         function test_aTapOnBlockedCellsBuildsNothing(data) {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.cellOnScreen(data.x, data.y);
             mouseClick(scene, place.x, place.y);
             compare(scene.game.towerCount, 0);
-            compare(scene.game.gold, 120);
-        }
-
-        // The tap names the cell, the wide tower also takes the cell to its right.
-        function test_theChosenTowerIsBuiltOnTheTappedCell() {
-            const game = createTemporaryObject(gameComponent, stage);
-            waitForRendering(game.scene);
-            const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 3);
-            mouseClick(towerButtons.children[1]);
-            compare(game.scene.game.selectedTower, 1);
-            verify(towerButtons.children[1].highlighted);
-            const place = game.scene.cellOnScreen(4, 4);
-            mouseClick(game.scene, place.x, place.y);
-            compare(game.scene.game.gold, 30);
-            const cells = game.scene.game.towerCells;
-            compare(cells.length, 2);
-            compare(Qt.point(cells[0].x, cells[0].y), Qt.point(4, 4));
-            compare(Qt.point(cells[1].x, cells[1].y), Qt.point(5, 4));
+            compare(scene.game.hand.length, 1);
         }
 
         function test_aTapHitsTheCellUnderTheFinger_data() {
@@ -205,7 +193,7 @@ Item {
         }
 
         function test_aTapHitsTheCellUnderTheFinger(data) {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.cellOnScreen(data.x, data.y);
             scene.parent.hud.visible = false; // the hand lies over the nearest row
@@ -240,7 +228,7 @@ Item {
         }
 
         function test_aTapOnTheTopOfAnObstacleBuildsNothing(data) {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.blockTopOnScreen(data.x, data.y, data.height);
             mouseClick(scene, place.x, place.y);
@@ -250,11 +238,13 @@ Item {
         function test_aTapOnTheTopOfATowerBuildsNothing() {
             const scene = createScene();
             verify(scene.game.buildTower(12, 5));
+            verify(scene.game.buyCard(0));
+            scene.game.chooseCard(0);
             waitForRendering(scene);
             const place = scene.blockTopOnScreen(12, 5, 0.65);
             mouseClick(scene, place.x, place.y);
             compare(scene.game.towerCount, 1);
-            compare(scene.game.gold, 70);
+            compare(scene.game.hand.length, 1);
         }
 
         function test_aTapOnTheTopOfATallModelStaysOnIt() {
@@ -269,7 +259,7 @@ Item {
         }
 
         function test_aTreeTakesATapOnItsTop() {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.blockTopOnScreen(13, 2, 0.9);
             mouseClick(scene, place.x, place.y);
@@ -277,7 +267,7 @@ Item {
         }
 
         function test_theCellsBesideTheTreesKeepTheirTaps() {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             for (let y = 0; y < 3; ++y) {
                 const place = scene.cellOnScreen(15, y);
@@ -303,7 +293,7 @@ Item {
         }
 
         function test_theCellBehindATreeTakesATap() {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.blockTopOnScreen(12.7, 1, 0.04);
             mouseClick(scene, place.x, place.y);
@@ -475,7 +465,7 @@ Item {
         }
 
         function test_aTouchOnACellBuildsATower() {
-            const scene = createScene();
+            const scene = createScene(0);
             waitForRendering(scene);
             const place = scene.cellOnScreen(4, 4);
             const touch = touchEvent(scene);
@@ -544,6 +534,13 @@ Item {
             const corner = pause.mapToItem(hud, pause.width, 0);
             verify(corner.y >= stats.y + stats.height || corner.x <= stats.x);
             verify(stats.x + stats.width <= findChild(hud, "waveButton").x, stats.width);
+            // qmllint disable unqualified
+            // A context property of tst_qml.cpp, no type knows it.
+            hud.game.startNewGame(richMap);
+            // qmllint enable unqualified
+            for (let card = 0; card < hud.game.handLimit; ++card) {
+                verify(hud.game.buyCard(card));
+            }
             const towerButtons = findChild(hud, "towerButtons");
             tryVerify(() => towerButtons.children.length > 3);
             const list = findChild(hud, "towerList");

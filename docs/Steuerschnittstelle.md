@@ -19,6 +19,10 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | `advance` | `ticks` (0 to 1000000) | Runs that many ticks, it stops at the end of the game |
 | `observe` | none | Reports the state, changes nothing |
 | `callWave` | none | Runs the command: the next wave comes at the next tick, for gold. The answer adds `result`, `noWaveWaiting` while no wave waits |
+| `rollCard` | none | Runs the command: a random card for `rollCost` gold. The answer adds `result`, `handFull` with five cards |
+| `buyCard` | `towerType` (index) | Runs the command: that card at the full price of the tower. The answer adds `result` |
+| `discardCard` | `slot` (an index into `hand`) | Runs the command: the card is gone, its gold too. The answer adds `result`, `unknownCard` without such a card |
+| `collectCoin` | `coin` (the id of a coin) | Runs the command: the coin pays its `value`. The answer adds `result`, `unknownCoin` once it is gone |
 | `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay. This is also how a game is saved |
 | `loadGame` | `map` (file), `file` | Goes on with a saved game and drops the current one. Needs no running game. If it fails, the current game stays |
 | `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points |

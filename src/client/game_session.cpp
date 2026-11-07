@@ -112,7 +112,14 @@ void GameSession::showNewGame()
     paused_ = false;
     chosenTower_ = 0;
     selectedTower_ = 0;
+    chosenCard_ = -1;
     selectedRotation_ = core::Rotation::None;
+    // Ids start anew with every game, what lay on the old map is gone whatever its id.
+    for (const qint64 coin : std::exchange(shownCoins_, {})) {
+        emit coinGone(static_cast<int>(coin));
+    }
+    reportCoins();
+    emit handChanged();
     emit mapChanged();
     emit selectionChanged();
     emit towersChanged();
@@ -131,6 +138,8 @@ bool GameSession::buildTower(int x, int y)
     emit stateChanged();
     emit towerBuilt(x, y);
     emit cue(Cue::Build);
+    forgetCard();
+    emit handChanged();
     return true;
 }
 
@@ -277,10 +286,32 @@ core::ReplayRecorder *GameSession::recorder()
     return game_.get();
 }
 
+void GameSession::reportCoins()
+{
+    static const std::vector<core::BonusCoin> none;
+    const std::vector<core::BonusCoin> &coins = game_ ? game_->simulation().state().coins : none;
+    std::erase_if(shownCoins_, [this, &coins](qint64 id) {
+        if (std::ranges::find(coins, id, &core::BonusCoin::id) != coins.end()) {
+            return false;
+        }
+        emit coinGone(static_cast<int>(id));
+        return true;
+    });
+    for (const core::BonusCoin &coin : coins) {
+        if (shownCoins_.insert(coin.id).second) {
+            const QPointF place = mapPlace(coin.place);
+            emit coinDropped(
+                static_cast<int>(coin.id), place.x(), place.y(), static_cast<int>(coin.value));
+        }
+    }
+}
+
 void GameSession::refresh()
 {
     lastPlaces_.clear();
     emit towersChanged();
+    emit handChanged();
+    reportCoins();
     emit stateChanged();
     emit frameChanged();
 }
@@ -302,6 +333,7 @@ void GameSession::advanceTime(qint64 microseconds)
         game_->advance(1);
     }
     if (game_->simulation().state().tick != before) {
+        reportCoins();
         emit stateChanged();
         if (won()) {
             emit cue(Cue::Won);

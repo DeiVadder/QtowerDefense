@@ -3,7 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtowerDefense.Client
 
-// The cards at the bottom edge, a stiff fan on a shared pivot, as tight as it takes to fit. A tap chooses one, for building with
+// The cards of the player at the bottom edge, a stiff fan on a shared pivot, as tight as it takes to fit. A tap chooses one, for building with
 // a tap on the map. A chosen card can also be dragged there, also straight from the hand.
 Item {
     id: root
@@ -12,6 +12,7 @@ Item {
     required property real unit
     required property real maxWidth
     property bool lowered: false // the room above is needed for the buttons of a tower
+    property int heldBack: 0 // the last cards do not show yet
 
     // One card at a time, also with two fingers on the hand.
     property int owner: -1
@@ -20,16 +21,41 @@ Item {
     property point held // the finger during a drag, in the coordinates of the parent
 
     readonly property real cardWidth: unit * Theme.cardWidth
-    readonly property int count: game.towerTypes.length
+    readonly property var shown: game.hand.slice(0, Math.max(0, game.hand.length - heldBack))
+    readonly property int count: slots.count
     readonly property real step: count < 2 ? 0 : Math.min(cardWidth * Theme.cardStep, (maxWidth
                                                                                        - cardWidth)
                                                           / (count - 1))
 
     signal dropped(real x, real y)
 
+    // Keeps the cards that stay: a finger holds on to its card while others come and go.
+    function sync() {
+        // A card that goes takes the drag along, also with the finger still on the next one.
+        if (shown.length < slots.count) {
+            owner = -1;
+            ++games;
+        }
+        while (slots.count > shown.length) {
+            slots.remove(slots.count - 1);
+        }
+        shown.forEach((tower, slot) => {
+            if (slot === slots.count) {
+                slots.append({
+                                 tower: tower
+                             });
+            } else {
+                slots.setProperty(slot, "tower", tower);
+            }
+        });
+    }
+
+    onShownChanged: sync()
+    Component.onCompleted: sync()
+
     // The middle of the chosen card, in the coordinates of the parent.
     function chosenCenter(): point {
-        const card = cards.itemAt(game.selectedTower);
+        const card = cards.itemAt(game.chosenCard);
         return card === null ? Qt.point(x, y) : card.mapToItem(parent, card.width / 2, card.height
                                                                / 2);
     }
@@ -52,6 +78,10 @@ Item {
         }
     }
 
+    ListModel {
+        id: slots
+    }
+
     Item {
         objectName: "towerButtons"
         anchors.fill: parent
@@ -59,19 +89,19 @@ Item {
         Repeater {
             id: cards
 
-            model: root.game.towerTypes
+            model: slots
 
             delegate: TowerCard {
                 id: card
 
                 required property int index
-                required property var modelData
-                readonly property bool chosen: root.game.selectedTower === index
+                required property int tower
+                readonly property bool chosen: root.game.chosenCard === index
                 readonly property bool raised: chosen && !root.lowered
                 readonly property real fan: index - (root.count - 1) / 2
                 readonly property real outerFan: (root.count - 1) / 2
 
-                info: modelData
+                info: root.game.towerTypes[tower]
                 unit: root.unit
                 highlighted: chosen
                 x: index * root.step
@@ -93,7 +123,7 @@ Item {
                     }
                 }
 
-                onPicked: root.game.selectedTower = index
+                onPicked: root.game.chooseCard(index)
 
                 // Not a TapHandler: it only watches, and the map below would take the same click.
                 MouseArea {

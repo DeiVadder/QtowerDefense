@@ -80,6 +80,8 @@ Item {
             const session = game.scene.game;
             const buttons = findChild(game.hud, "priorityButtons");
             verify(!buttons.visible);
+            session.buyCard(0);
+            session.chooseCard(0);
             let place = game.scene.cellOnScreen(4, 4);
             mouseClick(game.scene, place.x, place.y);
             compare(session.towerCount, 1);
@@ -98,6 +100,8 @@ Item {
             compare(session.chosenPriority, -1);
             compare(session.towerCount, 1);
             verify(!buttons.visible);
+            session.buyCard(0);
+            session.chooseCard(0);
             mouseClick(game.scene, place.x, place.y);
             compare(session.towerCount, 2);
         }
@@ -171,6 +175,8 @@ Item {
             compare(session.selectedSpell, -1);
             compare(session.spellSeconds[0], 20);
             verify(buttons.children[0].text.indexOf("20") >= 0);
+            session.buyCard(0);
+            session.chooseCard(0);
             mouseClick(game.scene, place.x, place.y);
             compare(session.towerCount, 1);
         }
@@ -240,9 +246,8 @@ Item {
         function test_theRotateButtonTurnsWhatATapBuilds() {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);
-            const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 3);
-            mouseClick(towerButtons.children[1]);
+            game.scene.game.buyCard(1);
+            game.scene.game.chooseCard(0);
             mouseClick(findChild(game.hud, "rotateButton"));
             const place = game.scene.cellOnScreen(4, 4);
             mouseClick(game.scene, place.x, place.y);
@@ -286,9 +291,7 @@ Item {
         function test_theShapeStandsAsTheTowerWill() {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);
-            const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 3);
-            mouseClick(towerButtons.children[1]);
+            game.scene.game.selectedTower = 1;
             mouseClick(findChild(game.hud, "rotateButton"));
             const shape = findChild(game.hud, "shape");
             tryCompare(shape, "extent", 2);
@@ -304,8 +307,6 @@ Item {
         function test_theShapeShowsEveryCell() {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);
-            const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 3);
             const shape = findChild(game.hud, "shape");
             game.scene.game.selectedTower = 3;
             tryCompare(shape, "extent", 3);

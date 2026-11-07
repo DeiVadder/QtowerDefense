@@ -88,8 +88,9 @@ CommandResult Simulation::check(const BuildTowerCommand &command) const
     if (std::ranges::any_of(cells, [this](Cell cell) { return hasTowerAt(cell); })) {
         return CommandResult::CellOccupied;
     }
-    return state_.gold < type.levels.front().cost ? CommandResult::NotEnoughGold
-                                                  : CommandResult::Accepted;
+    const bool paid = cardOfType(static_cast<std::size_t>(command.towerType)) != state_.hand.end();
+    return !paid && state_.gold < type.levels.front().cost ? CommandResult::NotEnoughGold
+                                                           : CommandResult::Accepted;
 }
 
 const Tower *Simulation::towerWithId(qint64 id) const
@@ -203,8 +204,14 @@ CommandResult Simulation::run(const BuildTowerCommand &command)
     const CommandResult result = check(command);
     if (result == CommandResult::Accepted) {
         const auto type = static_cast<std::size_t>(command.towerType);
-        const qint64 cost = content_.towers[type].levels.front().cost;
-        state_.gold -= cost;
+        qint64 cost = content_.towers[type].levels.front().cost;
+        const std::vector<Card>::const_iterator card = cardOfType(type);
+        if (card != state_.hand.end()) {
+            cost = card->paid;
+            state_.hand.erase(card);
+        } else {
+            state_.gold -= cost;
+        }
         state_.towers.push_back({.id = state_.nextEntityId++,
                                  .type = type,
                                  .cell = command.cell,
@@ -262,6 +269,7 @@ void Simulation::tick()
     std::ranges::transform(state_.spellCooldowns,
                            state_.spellCooldowns.begin(),
                            [](qint64 cooldown) { return std::max<qint64>(cooldown - 1, 0); });
+    fadeCoins();
     moveEnemies();
     spawnEnemies();
     updateHealth();
@@ -456,6 +464,7 @@ void Simulation::hurt(Enemy *enemy, Fixed damage)
     enemy->health = enemy->health - damage;
     if (enemy->health <= Fixed()) {
         state_.gold += content_.enemies[enemy->type].bounty;
+        dropCoin(*enemy);
     }
 }
 

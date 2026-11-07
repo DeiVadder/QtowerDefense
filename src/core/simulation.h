@@ -15,6 +15,9 @@ namespace qtd::core {
 /// The simulation only knows ticks. Whoever drives it decides how fast they run (E-17).
 constexpr int kTicksPerSecond = 30;
 
+/// The cards a player can hold at once.
+constexpr std::size_t kHandLimit = 5;
+
 enum class GameStatus : quint8 {
     Running,
     Won,
@@ -50,6 +53,22 @@ struct Tower
     qint64 spent = 0;      // all the gold it cost so far
 };
 
+/// A tower that is already paid for, whatever the card cost is what selling it counts.
+struct Card
+{
+    std::size_t type = 0;
+    qint64 paid = 0;
+};
+
+/// What a defeated enemy leaves behind, for whoever collects it in time.
+struct BonusCoin
+{
+    qint64 id = 0;
+    Point place;
+    qint64 value = 0;
+    qint64 ticksLeft = 0;
+};
+
 /// All that changes during a game. stateHash() must cover every field. Enemies and towers stay in
 /// the order of their ids, and every rule walks them in that order.
 struct SimulationState
@@ -67,8 +86,12 @@ struct SimulationState
     std::vector<Enemy> enemies;
     std::vector<Tower> towers;
     std::vector<qint64> spellCooldowns; // ticks until each spell of the content can be cast
+    std::vector<Card> hand;             // at most kHandLimit, in the order they came
+    qint64 nextCoinId = 1;              // apart from the entities: coins must not move their ids
+    std::vector<BonusCoin> coins;
 };
 
+/// Takes a card of this type from the hand if there is one, else pays the full price.
 struct BuildTowerCommand
 {
     Cell cell;
@@ -103,13 +126,39 @@ struct CallWaveCommand
 {
 };
 
+/// A random card for less than any tower costs.
+struct RollCardCommand
+{
+};
+
+/// The card of this type, at its full price.
+struct BuyCardCommand
+{
+    qint64 towerType = 0;
+};
+
+/// Throws a card away, its gold is lost.
+struct DiscardCardCommand
+{
+    qint64 slot = 0; // an index into the hand
+};
+
+struct CollectCoinCommand
+{
+    qint64 coin = 0; // the id of a coin in the game
+};
+
 /// What a player, human or bot, can ask for. New commands join this list.
 using Command = std::variant<BuildTowerCommand,
                              SetTargetPriorityCommand,
                              UpgradeTowerCommand,
                              SellTowerCommand,
                              CastSpellCommand,
-                             CallWaveCommand>;
+                             CallWaveCommand,
+                             RollCardCommand,
+                             BuyCardCommand,
+                             DiscardCardCommand,
+                             CollectCoinCommand>;
 
 enum class CommandResult : quint8 {
     Accepted,
@@ -124,6 +173,9 @@ enum class CommandResult : quint8 {
     UnknownSpell,
     SpellCooling,
     NoWaveWaiting,
+    HandFull,
+    UnknownCard,
+    UnknownCoin,
 };
 
 /// One game. Same content, seed and commands at the same ticks give the same states, bit by bit.
@@ -149,6 +201,10 @@ public:
     CommandResult check(const SellTowerCommand &command) const;
     CommandResult check(const CastSpellCommand &command) const;
     CommandResult check(const CallWaveCommand &command) const;
+    CommandResult check(const RollCardCommand &command) const;
+    CommandResult check(const BuyCardCommand &command) const;
+    CommandResult check(const DiscardCardCommand &command) const;
+    CommandResult check(const CollectCoinCommand &command) const;
 
     /// The gold for calling the next wave right now: the ticks it would still wait, in gold.
     qint64 waveCallBonus() const;
@@ -156,8 +212,8 @@ public:
     /// Applies a command between two ticks. Anything but Accepted leaves the state untouched.
     CommandResult execute(const Command &command);
 
-    /// Runs one tick: spells cool down, enemies move, new ones spawn, poison and regeneration work,
-    /// towers fire, then the game may end. Does nothing once the game is over.
+    /// Runs one tick: spells cool down, coins fade, enemies move, new ones spawn, poison and
+    /// regeneration work, towers fire, then the game may end. Does nothing once the game is over.
     void tick();
 
     /// Runs up to the given number of ticks, fewer if the game ends.
@@ -188,9 +244,17 @@ private:
     CommandResult run(const SellTowerCommand &command);
     CommandResult run(const CastSpellCommand &command);
     CommandResult run(const CallWaveCommand &command);
+    CommandResult run(const RollCardCommand &command);
+    CommandResult run(const BuyCardCommand &command);
+    CommandResult run(const DiscardCardCommand &command);
+    CommandResult run(const CollectCoinCommand &command);
     /// GameOver, UnknownTower or Accepted, what all commands on a tower check first.
     CommandResult checkTowerCommand(qint64 id) const;
     bool hasTowerAt(Cell cell) const;
+    /// The first card of this tower type, the end of the hand if there is none.
+    std::vector<Card>::const_iterator cardOfType(std::size_t type) const;
+    void fadeCoins();
+    void dropCoin(const Enemy &enemy);
     void moveEnemies();
     void spawnEnemies();
     void updateHealth();

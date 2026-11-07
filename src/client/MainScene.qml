@@ -10,6 +10,7 @@ View3D {
     required property GameSession game
 
     readonly property real fieldSize: 50
+    property real coinUnit: Theme.smallestUnit // the HUD knows how large a finger is
     readonly property real fieldOfView: 60
     readonly property real groundWidth: (game.gridSize.width + 2) * fieldSize
     readonly property real groundDepth: (game.gridSize.height + 2) * fieldSize
@@ -78,7 +79,7 @@ View3D {
     // Where a card lands. It means to build, whatever was chosen before.
     function dropCardAt(x: real, y: real): bool {
         const cell = cellOf(pick(x, y));
-        if (cell === undefined || !game.buildTower(cell.x, cell.y)) {
+        if (game.chosenCard < 0 || cell === undefined || !game.buildTower(cell.x, cell.y)) {
             return false;
         }
         game.clearChosenTower();
@@ -102,7 +103,7 @@ View3D {
             return false;
         }
         const cell = cellOf(hit);
-        return cell !== undefined && game.buildTower(cell.x, cell.y);
+        return game.chosenCard >= 0 && cell !== undefined && game.buildTower(cell.x, cell.y);
     }
 
     camera: sceneCamera
@@ -379,6 +380,15 @@ View3D {
     // The middle of a cell on the screen.
     function cellOnScreen(cellX: int, cellY: int): vector3d {
         return blockTopOnScreen(cellX, cellY, 0);
+    }
+
+    // Over the map, under the HUD: the HUD asks for its children under a dropped card.
+    CoinLayer {
+        objectName: "coins"
+        anchors.fill: parent
+        game: root.game
+        scene: root
+        unit: root.coinUnit
     }
 
     // The middle of the top of a block on a cell, its height in shares of a field.

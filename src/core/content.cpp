@@ -167,4 +167,11 @@ Point Path::positionAt(Fixed travelled) const
     return {from.x + (to.x - from.x) * along / segment, from.y + (to.y - from.y) * along / segment};
 }
 
+qint64 rollCost(const Content &content)
+{
+    const TowerType &cheapest = std::ranges::min(
+        content.towers, {}, [](const TowerType &type) { return type.levels.front().cost; });
+    return cheapest.levels.front().cost * content.rollPercent / 100;
+}
+
 } // namespace qtd::core

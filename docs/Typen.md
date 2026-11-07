@@ -88,13 +88,19 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `ReplayRecorder` | class | `replay.h` | Plays a game and writes down all that is needed to repeat it, rejected commands too. |
 | `ResumeResult` | struct | `replay.h` | A game that goes on, or the reason why it cannot. |
 | `ActiveStatus` | struct | `simulation.h` | A status effect on an enemy, for the ticks that are left. |
-| `BuildTowerCommand` | struct | `simulation.h` |  |
+| `BonusCoin` | struct | `simulation.h` | What a defeated enemy leaves behind, for whoever collects it in time. |
+| `BuildTowerCommand` | struct | `simulation.h` | Takes a card of this type from the hand if there is one, else pays the full price. |
+| `BuyCardCommand` | struct | `simulation.h` | The card of this type, at its full price. |
 | `CallWaveCommand` | struct | `simulation.h` | Lets the next wave start at the next tick, for gold. |
+| `Card` | struct | `simulation.h` | A tower that is already paid for, whatever the card cost is what selling it counts. |
 | `CastSpellCommand` | struct | `simulation.h` |  |
+| `CollectCoinCommand` | struct | `simulation.h` |  |
 | `Command` | using | `simulation.h` | What a player, human or bot, can ask for. |
 | `CommandResult` | enum class | `simulation.h` |  |
+| `DiscardCardCommand` | struct | `simulation.h` | Throws a card away, its gold is lost. |
 | `Enemy` | struct | `simulation.h` |  |
 | `GameStatus` | enum class | `simulation.h` |  |
+| `RollCardCommand` | struct | `simulation.h` | A random card for less than any tower costs. |
 | `SellTowerCommand` | struct | `simulation.h` |  |
 | `SetTargetPriorityCommand` | struct | `simulation.h` |  |
 | `Simulation` | class | `simulation.h` | One game. |

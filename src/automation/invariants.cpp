@@ -57,7 +57,11 @@ QString checkLevel(const core::Content &content, const core::Tower &tower)
                         levels.begin() + static_cast<std::ptrdiff_t>(tower.level) + 1,
                         qint64{0},
                         [](qint64 sum, const core::TowerLevel &level) { return sum + level.cost; });
-    return tower.spent == paid ? QString() : u"tower %1: its gold does not add up"_s.arg(tower.id);
+    // A rolled card stands in for the price of the tower.
+    const qint64 rolled = paid - levels.front().cost + core::rollCost(content);
+    return tower.spent == paid || tower.spent == rolled
+               ? QString()
+               : u"tower %1: its gold does not add up"_s.arg(tower.id);
 }
 
 QString checkTowers(const core::Content &content, const core::SimulationState &state)
@@ -102,6 +106,33 @@ QString checkTowers(const core::Content &content, const core::SimulationState &s
     return {};
 }
 
+QString checkCards(const core::Content &content, const core::SimulationState &state)
+{
+    if (state.hand.size() > core::kHandLimit) {
+        return u"too many cards: %1"_s.arg(state.hand.size());
+    }
+    for (const core::Card &card : state.hand) {
+        if (card.type >= content.towers.size()) {
+            return u"a card of an unknown tower: %1"_s.arg(card.type);
+        }
+        if (card.paid < 0) {
+            return u"a card that paid gold: %1"_s.arg(card.paid);
+        }
+    }
+    for (const core::BonusCoin &coin : state.coins) {
+        if (coin.id >= state.nextCoinId) {
+            return u"coin %1: an id from the future"_s.arg(coin.id);
+        }
+        if (coin.value <= 0) {
+            return u"coin %1: worth nothing"_s.arg(coin.id);
+        }
+        if (coin.ticksLeft <= 0 || coin.ticksLeft > content.coinTicks) {
+            return u"coin %1: impossible time left"_s.arg(coin.id);
+        }
+    }
+    return {};
+}
+
 } // namespace
 
 QString checkInvariants(const core::Content &content, const core::SimulationState &state)
@@ -120,6 +151,10 @@ QString checkInvariants(const core::Content &content, const core::SimulationStat
         if (cooldown < 0 || cooldown > content.spells[index].cooldownTicks) {
             return u"spell %1: impossible cooldown"_s.arg(index);
         }
+    }
+    QString cards = checkCards(content, state);
+    if (!cards.isEmpty()) {
+        return cards;
     }
     const QString enemies = checkEnemies(content, state);
     return enemies.isEmpty() ? checkTowers(content, state) : enemies;

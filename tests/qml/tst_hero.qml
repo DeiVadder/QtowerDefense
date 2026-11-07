@@ -315,7 +315,7 @@ Item {
 
         function test_everyMomentHasWordsAndAMood() {
             const voice = create().voice;
-            compare(voice.lines.length, HeroVoice.Moment.SpellChosen + 1);
+            compare(voice.lines.length, HeroVoice.Moment.Broke + 1);
             compare(voice.moods.length, voice.lines.length);
             compare(voice.spoken.length, voice.lines.length);
         }

@@ -213,6 +213,9 @@ struct Content
     qint64 startLives = 1;
     qint64 sellPercent = 70;          // of all the gold a tower cost, rounded down
     qint64 earlyCallTicksPerGold = 0; // a wave called early pays per so many ticks, 0 pays nothing
+    qint64 rollPercent = 80;          // a roll of the dice, of the cheapest tower, rounded down
+    qint64 coinPercent = 25;          // a bonus coin, of the bounty, rounded down
+    qint64 coinTicks = 120;           // until a bonus coin is gone
     Grid grid;
     Path path;
     std::vector<TowerType> towers;
@@ -220,5 +223,9 @@ struct Content
     std::vector<SpawnGroup> wave;
     std::vector<SpellType> spells;
 };
+
+/// The gold for a roll of the dice, below the cheapest tower unless that one is free. Content
+/// has at least one tower.
+qint64 rollCost(const Content &content);
 
 } // namespace qtd::core

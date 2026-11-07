@@ -100,6 +100,7 @@ struct FuzzRecord
     std::set<CommandResult> sellResults;
     std::set<CommandResult> spellResults;
     std::set<CommandResult> waveResults;
+    std::set<CommandResult> cardResults;
 
     void note(const qtd::core::Command &command, CommandResult result)
     {
@@ -114,6 +115,11 @@ struct FuzzRecord
             spellResults.insert(result);
         } else if (std::holds_alternative<qtd::core::CallWaveCommand>(command)) {
             waveResults.insert(result);
+        } else if (std::holds_alternative<qtd::core::RollCardCommand>(command) ||
+                   std::holds_alternative<qtd::core::BuyCardCommand>(command) ||
+                   std::holds_alternative<qtd::core::DiscardCardCommand>(command) ||
+                   std::holds_alternative<qtd::core::CollectCoinCommand>(command)) {
+            cardResults.insert(result);
         } else {
             sellResults.insert(result);
         }
@@ -126,7 +132,8 @@ void playFuzzGame(quint64 seed, FuzzRecord *record)
         "damageMin": "1", "damageMax": "1", "damageType": "ice"}], "wave")";
     QByteArray json = editedJson(R"("wave")", spell);
     json.replace(R"("count": 2)", R"("count": 30)"); // long enough to meet a spell that cools down
-    json.replace(R"("delayTicks": 0)", R"("delayTicks": 3)"); // a wave to call
+    json.replace(R"("delayTicks": 0)", R"("delayTicks": 3)");    // a wave to call
+    json.replace(R"("startGold": 100)", R"("startGold": 1000)"); // enough for a full hand
     Simulation game(contentOf(json), seed);
     const std::unique_ptr<qtd::automation::Bot> bot =
         qtd::automation::makeBot(qtd::automation::BotKind::Fuzz, seed);
@@ -303,6 +310,10 @@ private slots:
         QVERIFY(record.spellResults.contains(CommandResult::UnknownSpell));
         QVERIFY(record.waveResults.contains(CommandResult::Accepted));
         QVERIFY(record.waveResults.contains(CommandResult::NoWaveWaiting));
+        QVERIFY(record.cardResults.contains(CommandResult::Accepted));
+        QVERIFY(record.cardResults.contains(CommandResult::HandFull));
+        QVERIFY(record.cardResults.contains(CommandResult::UnknownCard));
+        QVERIFY(record.cardResults.contains(CommandResult::UnknownCoin));
     }
 
     void damageIsFound()

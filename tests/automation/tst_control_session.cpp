@@ -170,6 +170,38 @@ private slots:
         QCOMPARE(again["result"_L1].toString(), u"noWaveWaiting"_s);
     }
 
+    void cardsComeAndGo()
+    {
+        ControlSession session;
+        start(session);
+        const QJsonObject before = advance(session, 0);
+        QVERIFY(before["hand"_L1].toArray().isEmpty());
+        const qint64 cost = before["rollCost"_L1].toInteger();
+        QVERIFY(cost > 0);
+        const QJsonObject rolled = ask(session, {{"action"_L1, "rollCard"_L1}});
+        QCOMPARE(rolled["result"_L1].toString(), u"accepted"_s);
+        QCOMPARE(rolled["gold"_L1].toInteger(), before["gold"_L1].toInteger() - cost);
+        QCOMPARE(rolled["hand"_L1].toArray().at(0).toObject()["paid"_L1].toInteger(), cost);
+        const QJsonObject bought = ask(session, {{"action"_L1, "buyCard"_L1}, {"towerType"_L1, 0}});
+        QCOMPARE(bought["result"_L1].toString(), u"accepted"_s);
+        QCOMPARE(bought["hand"_L1].toArray().size(), 2);
+        const QJsonObject thrown = ask(session, {{"action"_L1, "discardCard"_L1}, {"slot"_L1, 0}});
+        QCOMPARE(thrown["hand"_L1].toArray().size(), 1);
+        const QJsonObject none = ask(session, {{"action"_L1, "discardCard"_L1}, {"slot"_L1, 1}});
+        QCOMPARE(none["result"_L1].toString(), u"unknownCard"_s);
+        const QJsonObject wrong = ask(session, {{"action"_L1, "rollCard"_L1}, {"z"_L1, 1}});
+        QCOMPARE(wrong["ok"_L1].toBool(), false);
+    }
+
+    void onlyACoinThatLiesCanBeCollected()
+    {
+        ControlSession session;
+        start(session);
+        QVERIFY(advance(session, 0)["coins"_L1].toArray().isEmpty());
+        const QJsonObject none = ask(session, {{"action"_L1, "collectCoin"_L1}, {"coin"_L1, 1}});
+        QCOMPARE(none["result"_L1].toString(), u"unknownCoin"_s);
+    }
+
     void aSavedGameGoesOn()
     {
         const QTemporaryDir folder;

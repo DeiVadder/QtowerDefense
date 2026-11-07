@@ -334,6 +334,16 @@ ContentLoadResult parseContent(QByteArrayView json)
     if (root.has("earlyCallTicksPerGold"_L1)) {
         content.earlyCallTicksPerGold = root.integer("earlyCallTicksPerGold"_L1, 1, kMaxInteger);
     }
+    if (root.has("rollPercent"_L1)) {
+        // Below all: a roll is always cheaper than the card it may give.
+        content.rollPercent = root.integer("rollPercent"_L1, 1, kMaxPercent - 1);
+    }
+    if (root.has("coinPercent"_L1)) {
+        content.coinPercent = root.integer("coinPercent"_L1, 0, kMaxPercent);
+    }
+    if (root.has("coinTicks"_L1)) {
+        content.coinTicks = root.integer("coinTicks"_L1, 1, kMaxInteger);
+    }
     readGrid(root, &content);
     if (!root.failed()) {
         readPath(root, &content);

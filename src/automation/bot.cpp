@@ -19,6 +19,8 @@ constexpr quint32 kCommandValues = 3; // x, y and the tower type
 constexpr quint32 kTowerCommandOneIn = 10;
 constexpr quint32 kSpellCommandOneIn = 30;
 constexpr quint32 kWaveCommandOneIn = 60;
+constexpr quint32 kCardCommandOneIn = 12;
+constexpr quint32 kCardCommands = 6;  // buy, discard, collect a coin, and three times a roll
 constexpr quint32 kTowerCommands = 8; // upgrade, sell, and six times the target priority
 
 /// A game draws how often a command is well-formed, one in so many. 0 means never: such a game
@@ -121,6 +123,9 @@ public:
             return core::CallWaveCommand{};
         }
         const core::Content &content = game.content();
+        if (random_.nextBelow(kCardCommandOneIn) == 0) {
+            return cardCommand(game, wellFormed);
+        }
         if (random_.nextBelow(kSpellCommandOneIn) == 0) {
             return spellCommand(content, wellFormed);
         }
@@ -142,6 +147,25 @@ private:
         const qint64 x = pick(content.grid.width(), broken != 0);
         const qint64 y = pick(content.grid.height(), broken != 1);
         return {pick(spells, broken != 2 && spells > 0), {x, y}};
+    }
+
+    core::Command cardCommand(const core::Simulation &game, bool valid)
+    {
+        const core::SimulationState &state = game.state();
+        switch (random_.nextBelow(kCardCommands)) {
+        case 0:
+            return core::BuyCardCommand{
+                pick(static_cast<qint64>(game.content().towers.size()), valid)};
+        case 1:
+            return core::DiscardCardCommand{
+                pick(static_cast<qint64>(state.hand.size()), valid && !state.hand.empty())};
+        case 2:
+            return core::CollectCoinCommand{valid && !state.coins.empty()
+                                                ? state.coins.front().id
+                                                : pick(state.nextCoinId, false)};
+        default:
+            return core::RollCardCommand{};
+        }
     }
 
     /// One of the commands on a tower that stands.

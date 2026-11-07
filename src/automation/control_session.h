@@ -43,6 +43,8 @@ public:
     virtual QString quit();
 };
 
+enum class Action : quint8;
+
 /// The control interface without its transport: one JSON request in, one JSON answer out. See
 /// docs/Steuerschnittstelle.md. A session plays one game at a time and records it, and it goes
 /// through the same commands as a human.
@@ -67,9 +69,10 @@ private:
     QByteArray setTargetPriority(core::ObjectReader &request);
     QByteArray castSpell(core::ObjectReader &request);
     QByteArray callWave(const core::ObjectReader &request);
+    QByteArray cardAction(Action action, core::ObjectReader &request);
     QByteArray loadGame(core::ObjectReader &request);
-    template <typename TowerCommand>
-    QByteArray commandOnTower(core::ObjectReader &request);
+    template <typename NumberCommand>
+    QByteArray commandWithNumber(core::ObjectReader &request, QLatin1StringView key);
     /// Runs a command that passed its checks of form and reports what the game made of it.
     QByteArray execute(const core::Command &command);
     QByteArray advance(core::ObjectReader &request);

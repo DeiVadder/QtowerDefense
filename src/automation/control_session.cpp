@@ -16,10 +16,6 @@ using namespace Qt::StringLiterals;
 
 namespace qtd::automation {
 
-namespace {
-
-constexpr qint64 kMaxTicksPerRequest = 1'000'000;
-
 enum class Action : quint8 {
     StartMap,
     BuildTower,
@@ -28,6 +24,10 @@ enum class Action : quint8 {
     SellTower,
     CastSpell,
     CallWave,
+    RollCard,
+    BuyCard,
+    DiscardCard,
+    CollectCoin,
     LoadGame,
     Advance,
     Observe,
@@ -37,6 +37,10 @@ enum class Action : quint8 {
     Resume,
     Quit,
 };
+
+namespace {
+
+constexpr qint64 kMaxTicksPerRequest = 1'000'000;
 
 std::optional<Action> actionFromName(const QString &name)
 {
@@ -60,6 +64,18 @@ std::optional<Action> actionFromName(const QString &name)
     }
     if (name == "callWave"_L1) {
         return Action::CallWave;
+    }
+    if (name == "rollCard"_L1) {
+        return Action::RollCard;
+    }
+    if (name == "buyCard"_L1) {
+        return Action::BuyCard;
+    }
+    if (name == "discardCard"_L1) {
+        return Action::DiscardCard;
+    }
+    if (name == "collectCoin"_L1) {
+        return Action::CollectCoin;
     }
     if (name == "loadGame"_L1) {
         return Action::LoadGame;
@@ -96,6 +112,29 @@ QByteArray failure(const QString &message)
 QJsonObject statusReport(const core::ActiveStatus &status)
 {
     return {{"ticks"_L1, status.ticks}, {"strength"_L1, core::toString(status.strength)}};
+}
+
+QJsonArray handReport(const core::SimulationState &state)
+{
+    QJsonArray hand;
+    for (const core::Card &card : state.hand) {
+        hand.append(
+            QJsonObject{{"type"_L1, static_cast<qint64>(card.type)}, {"paid"_L1, card.paid}});
+    }
+    return hand;
+}
+
+QJsonArray coinReport(const core::SimulationState &state)
+{
+    QJsonArray coins;
+    for (const core::BonusCoin &coin : state.coins) {
+        coins.append(QJsonObject{{"id"_L1, coin.id},
+                                 {"x"_L1, core::toString(coin.place.x)},
+                                 {"y"_L1, core::toString(coin.place.y)},
+                                 {"value"_L1, coin.value},
+                                 {"ticksLeft"_L1, coin.ticksLeft}});
+    }
+    return coins;
 }
 
 QJsonObject observationOf(const core::Simulation &game)
@@ -139,6 +178,9 @@ QJsonObject observationOf(const core::Simulation &game)
                               {"callBonus"_L1, game.waveCallBonus()}});
     answer.insert("towers"_L1, towers);
     answer.insert("enemies"_L1, enemies);
+    answer.insert("hand"_L1, handReport(state));
+    answer.insert("rollCost"_L1, core::rollCost(game.content()));
+    answer.insert("coins"_L1, coinReport(state));
     return answer;
 }
 
@@ -238,13 +280,18 @@ QByteArray ControlSession::handle(QByteArrayView request)
     case Action::SetTargetPriority:
         return setTargetPriority(reader);
     case Action::UpgradeTower:
-        return commandOnTower<core::UpgradeTowerCommand>(reader);
+        return commandWithNumber<core::UpgradeTowerCommand>(reader, "tower"_L1);
     case Action::SellTower:
-        return commandOnTower<core::SellTowerCommand>(reader);
+        return commandWithNumber<core::SellTowerCommand>(reader, "tower"_L1);
     case Action::CastSpell:
         return castSpell(reader);
     case Action::CallWave:
         return callWave(reader);
+    case Action::RollCard:
+    case Action::BuyCard:
+    case Action::DiscardCard:
+    case Action::CollectCoin:
+        return cardAction(*action, reader);
     case Action::LoadGame:
         return loadGame(reader);
     case Action::Advance:
@@ -336,16 +383,15 @@ QByteArray ControlSession::setTargetPriority(core::ObjectReader &request)
     return execute(core::SetTargetPriorityCommand{tower, *priority});
 }
 
-template <typename TowerCommand>
-QByteArray ControlSession::commandOnTower(core::ObjectReader &request)
+template <typename NumberCommand>
+QByteArray ControlSession::commandWithNumber(core::ObjectReader &request, QLatin1StringView key)
 {
-    const qint64 tower =
-        request.integer("tower"_L1, -core::kMaxExactInteger, core::kMaxExactInteger);
+    const qint64 number = request.integer(key, -core::kMaxExactInteger, core::kMaxExactInteger);
     request.rejectUnknownKeys();
     if (request.failed()) {
         return failure(request.error());
     }
-    return execute(TowerCommand{tower});
+    return execute(NumberCommand{number});
 }
 
 QByteArray ControlSession::castSpell(core::ObjectReader &request)
@@ -377,6 +423,22 @@ QByteArray ControlSession::callWave(const core::ObjectReader &request)
         return failure(request.error());
     }
     return execute(core::CallWaveCommand{});
+}
+
+QByteArray ControlSession::cardAction(Action action, core::ObjectReader &request)
+{
+    switch (action) {
+    case Action::BuyCard:
+        return commandWithNumber<core::BuyCardCommand>(request, "towerType"_L1);
+    case Action::DiscardCard:
+        return commandWithNumber<core::DiscardCardCommand>(request, "slot"_L1);
+    case Action::CollectCoin:
+        return commandWithNumber<core::CollectCoinCommand>(request, "coin"_L1);
+    default:
+        break;
+    }
+    request.rejectUnknownKeys();
+    return request.failed() ? failure(request.error()) : execute(core::RollCardCommand{});
 }
 
 QByteArray ControlSession::loadGame(core::ObjectReader &request)

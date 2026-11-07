@@ -43,6 +43,12 @@ Item {
             },
             Sound {
                 name: "lost"
+            },
+            Sound {
+                name: "upgrade"
+            },
+            Sound {
+                name: "sell"
             }
         ]
     }

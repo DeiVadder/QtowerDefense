@@ -43,6 +43,9 @@ Reihenfolge in einem Tick: Zauber kühlen ab, Gegner laufen (wer das Pfadende er
 - `towers`: `id`, `cost`, `range`, `cooldownTicks`, `damageMin`, `damageMax`, `damageType` (`physical`, `magic`, `fire`, `ice`), optional `splashRadius` (um das Ziel), optional `effects` (je Art höchstens einmal: `kind` `slow` oder `poison`, `strength`, `durationTicks`), `footprint` (Felder `{x, y}` relativ zum Standfeld, mit `0, 0`, je Richtung höchstens 8; beim Bauen drehbar, E-27), optional `upgrades`: je Stufe `cost` und nur, was sich ändert, aus `range`, `cooldownTicks`, `damageMin`, `damageMax`, `splashRadius`, `effects` (E-29)
 - `enemies`: `id`, `health`, `speedPerTick`, `bounty`, `lifeCost`, optional `resistances` (`damageType`, `share` von -1 bis 1, E-28), `regeneration` (Leben je Tick), `boss` (`true` oder `false`, E-29)
 - `wave`: Gruppen aus `enemy`, `count`, `delayTicks` (Wartezeit vor dem ersten Gegner), `intervalTicks`
+- `rollPercent`, optional (1 bis 99, Standard 80): Ein Wurf kostet so viel Prozent des billigsten Turms, abgerundet, also immer weniger als jede Karte.
+- `coinPercent`, optional (0 bis 100, Standard 25): Eine Bonusmünze ist so viel Prozent des Kopfgelds wert, abgerundet. Bei 0 Gold fällt keine Münze.
+- `coinTicks`, optional (ab 1, Standard 120): So lange bleibt eine Münze liegen.
 - `earlyCallTicksPerGold`, optional: Eine vorgezogene Welle zahlt je so viele gesparte Ticks ein Gold, ohne den Schlüssel nichts (E-31)
 - `spells`, optional: `id`, `cooldownTicks`, `radius`, `damageMin`, `damageMax` (dürfen 0 sein), `damageType`, optional `effects` wie bei Türmen (E-30)
 
