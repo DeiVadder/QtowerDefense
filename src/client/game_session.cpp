@@ -58,19 +58,16 @@ GameSession::GameSession(QObject *parent) : QObject(parent)
 
 GameSession::~GameSession() = default;
 
-void GameSession::startNewGame(const QString &fileName)
+void GameSession::startNewGame(const QString &fileName, bool endless)
 {
-    startGame(fileName, QRandomGenerator::global()->generate64());
-}
-
-int GameSession::ticksPerSecond()
-{
-    return core::kTicksPerSecond;
+    startGame(fileName,
+              QRandomGenerator::global()->generate64(),
+              endless ? core::GameMode::Endless : core::GameMode::Campaign);
 }
 
 void GameSession::restart()
 {
-    startNewGame(fileName_);
+    startNewGame(fileName_, endless());
 }
 
 void GameSession::startGame(const QString &fileName, quint64 seed, core::GameMode mode)

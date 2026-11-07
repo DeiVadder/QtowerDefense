@@ -85,6 +85,22 @@ private slots:
         QCOMPARE(game.gold(), 120);
     }
 
+    // Without towers the first round of an endless game takes all lives (E-36).
+    void anEndlessGameStaysEndlessWhenPlayedAgain()
+    {
+        GameSession game;
+        game.startNewGame(mapFile(), true);
+        QVERIFY(game.endless());
+        runTicks(game, 5000);
+        QVERIFY(game.lost());
+        QCOMPARE(game.round(), 0);
+        game.restart();
+        QVERIFY(game.endless());
+        QCOMPARE(game.tick(), 0);
+        game.startNewGame(mapFile());
+        QVERIFY(!game.endless());
+    }
+
     void aBrokenMapLeavesAnErrorAndNoGame()
     {
         GameSession game;

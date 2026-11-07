@@ -33,8 +33,8 @@ public:
     const QString &error() const;
 
     /// For each section: id, name, landscape, x and y from 0 to 1, color, landmarks (model and
-    /// size in fields), open, stars
-    /// and playable (open and with a map).
+    /// size in fields), open, stars, playable (open and with a map), best (the most rounds of its
+    /// endless game) and endlessOpen (won and with a map, E-36).
     QVariantList sections() const;
     /// The ways as `from` and `to`, section numbers, each way once.
     QVariantList links() const;
@@ -46,6 +46,9 @@ public:
     Q_INVOKABLE QString mapFile(int section) const;
     /// Keeps the stars of a won game and saves them. Gives false if they could not be saved.
     Q_INVOKABLE bool recordGame(int section, int stars);
+    /// Keeps the rounds of an endless game and saves them if they are the most so far. Gives
+    /// false if they are not or could not be saved.
+    Q_INVOKABLE bool recordRounds(int section, int rounds);
 
 signals:
     void worldChanged();
@@ -56,6 +59,8 @@ private:
     void load();
     /// The first open section with a map that is not won yet, else the start.
     int nextSection() const;
+    bool knows(int section) const;
+    bool save() const;
 
     QString worldFile_;
     QString progressFile_;

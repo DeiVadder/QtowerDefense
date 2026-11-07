@@ -2,9 +2,10 @@
 
 ## Stand
 
-- **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
+- **Etappe:** 0 bis 11 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
-- **Dazu aus `feature/11-endlos-kern`:** Endlosmodus in Core: die Welle kommt immer wieder und jedes Mal stärker, kein Sieg, gezählt werden Runden. Im Replay, in `qtd_headless --mode` und in `startMap` (E-36). Im Client fehlt er noch.
+- **Dazu aus `feature/11-endlos-ui`:** Schild „Endless" im Menü, Weltkarte im Endlosmodus mit Bestwert je Abschnitt, Runde im HUD, Runden und Bestwert auf der Endtafel (E-36).
+- **Dazu aus `feature/11-endlos-kern`:** Endlosmodus in Core: die Welle kommt immer wieder und jedes Mal stärker, kein Sieg, gezählt werden Runden. Im Replay, in `qtd_headless --mode` und in `startMap` (E-36).
 - **Dazu aus `feature/11-menue`:** Das Spiel öffnet im Hauptmenü wie Demo A mit Kampagne, Einstellungen und Beenden. Einstellungen für Lautstärke, Sprüche des Helden und Vollbild bleiben in `settings.ini`. Der Held kommentiert auf der Weltkarte den gewählten Abschnitt (E-35).
 - **Dazu aus `feature/11-portrait`:** Portrait wie Demo A auf dem Eisenschild, Sprüche auf einem Hängeschild, Pause und Tempo im Bogen um das Portrait (E-34).
 - **Dazu aus `feature/11-karten-welt`:** Sieben neue Karten, je eine für Wald, Heide, Ödland, Hochland, Hügelgräber, Frost und Aschenland. Alle neun Abschnitte der Weltkarte sind spielbar (E-32). Noch zu leicht, Balancing folgt in Etappe 12.
@@ -25,7 +26,7 @@
 - **Dazu aus `feature/raster`:** Schachbrett-Raster statt Bauplätze, Türme mit Formen, Hindernisse, Pfad auf dem Raster, Turmauswahl im HUD (E-25).
 - **Dazu aus Etappe 4:** Eine spielbare Karte im 3D-Client mit Platzhaltern: Kamera, Bauen per Maus und Touch, HUD, Pause, Tempo, Interpolation (E-24).
 - **Dazu aus Etappe 3:** `naive` und `fuzz` als Bots, Invarianten, JSON-Steuerschnittstelle über `qtd_headless --control`, Fuzz-Stufe in `verify` (E-23).
-- **Letzter voller `verify`:** grün, 14 bestanden, 1 MISSING (Balancing). Coverage Core 99,3 %, Automation 95,1 %. Hängt die Coverage-Stufe, bremst oft die Speicherintegrität von Windows OpenCppCoverage aus (2026-11-07). Benchmark rund 4.400-fache Echtzeit (`docs/Performance-Verlauf.md`).
+- **Letzter voller `verify`:** grün, 14 bestanden, 1 MISSING (Balancing). Coverage Core 99,3 %, Automation 95,2 % (Etappe 11, 2026-11-07). Hängt die Coverage-Stufe, bremst oft die Speicherintegrität von Windows OpenCppCoverage aus (2026-11-07). Benchmark rund 4.400-fache Echtzeit (`docs/Performance-Verlauf.md`).
 - **Review von Etappe 2:** Erst nicht bestanden, sieben Befunde (`--max-ticks` zog Befehle vor, Seed des Skripts wurde ignoriert, dazu kleinere). Alle behoben, Nachprüfung bestanden, gemergt ist der geprüfte Commit `075137a`.
 - **Review von Etappe 3:** Zwei Runden nicht bestanden: `saveReplay` hing bei NUL und bei rund 32.760 Zeichen im Dateinamen, Ctrl-Z beendete die Sitzung, Invarianten liefen zu selten, der Fehlerpfad hatte keinen Test, dazu doppelte Logik. Alles behoben oder in E-23 und unten begründet, die dritte Runde bestand mit Mutanten (`285e8a2`). Die Coverage von Core maß das Review im frischen Klon mit 882/888 statt 881/888; ungeklärt, ohne Folgen für die Schwelle.
 - **Review von Etappe 4:** Erst nicht bestanden: Klicks gingen durch das HUD auf die Karte, im Hintergrund lief das Spiel auf dem Desktop weiter, das HUD überlappte in kleinen Fenstern, die Interpolation fehlte. Alles behoben, Nachprüfung mit Mutanten bestanden (`68a99ac`).
@@ -33,9 +34,8 @@
 
 ## Nächster Schritt
 
-1. Etappe 11 abschließen: den Endlosmodus im Client mit Highscore je Karte und eigenem Schild im Menü (`feature/11-endlos-ui`).
-2. Danach Etappe 12 (Balancing) mit gemeinsamem Katalog aller Karten (E-32).
-3. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro, Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
+1. Etappe 12 (Balancing) mit gemeinsamem Katalog aller Karten (E-32), dabei Wachstum und Kopfgeld des Endlosmodus prüfen (E-36).
+2. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro, Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
 
 ## Bekannte Mängel und offene Punkte
 
@@ -89,6 +89,6 @@
 | 8 | Zauber und Helden | fertig, in `dev` |
 | 9 | Spielfluss | fertig, in `dev` |
 | 10 | Assets | fertig bis auf Musik und Geländekacheln, in `dev` |
-| 11 | Modi | offen |
+| 11 | Modi | fertig |
 | 12 | Balancing | offen |
 | 13 | Feinschliff | offen |

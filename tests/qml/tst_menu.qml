@@ -16,6 +16,7 @@ Item {
 
         MainMenu {
             property int campaigns: 0
+            property int endlessGames: 0
 
             anchors.fill: parent
             settings: GameSettings {
@@ -24,6 +25,7 @@ Item {
                 // qmllint enable unqualified
             }
             onCampaign: ++campaigns
+            onEndless: ++endlessGames
         }
     }
 
@@ -112,6 +114,43 @@ Item {
             const menu = createMenu();
             tapCenter(findChild(menu, "campaignButton"));
             compare(menu.campaigns, 1);
+        }
+
+        function test_endlessLeadsToTheWorld() {
+            const menu = createMenu();
+            tapCenter(findChild(menu, "endlessButton"));
+            compare(menu.endlessGames, 1);
+            compare(menu.campaigns, 0);
+        }
+
+        // Four signs still hang inside a wide, low window.
+        function test_theLastSignHangsInTheWindow() {
+            stage.width = 1280;
+            stage.height = 720;
+            const menu = createMenu();
+            const quit = findChild(menu, "quitButton");
+            const last = quit.visible ? quit : findChild(menu, "settingsButton");
+            verify(last.mapToItem(menu, 0, last.height).y <= menu.height);
+        }
+
+        // In the endless mode only a won section can be played, it shows its best (E-36).
+        function test_theEndlessWorldOffersTheWonSections() {
+            const made = createTemporaryObject(worldComponent, stage, {
+                                                   file: worldFile(4)
+                                               });
+            made.map.endless = true;
+            made.world.selected = 0;
+            const play = findChild(made.map, "playButton");
+            verify(!play.available);
+            compare(findChild(made.map, "sectionStatus").text, "Not won yet");
+            made.world.recordGame(0, 1);
+            made.world.recordRounds(0, 7);
+            made.world.selected = 0;
+            verify(play.available);
+            compare(findChild(made.map, "sectionStatus").text, "Best: 7 round(s)");
+            made.map.endless = false;
+            verify(play.available);
+            compare(findChild(made.map, "sectionStatus").text, "");
         }
 
         // The signs make room for the settings, one step back brings them again.
@@ -247,10 +286,23 @@ Item {
             compare(menu.settings.volume, 0);
         }
 
-        // Narrow windows give the settings all their width, the slider keeps room for a finger.
-        function test_theSettingsFitASmallWindow() {
+        // In the smallest window the settings stay whole, the slider keeps its width.
+        function test_theSettingsFitALowWindow() {
             stage.width = 480;
             stage.height = 320;
+            const menu = openSettings();
+            const panel = findChild(menu, "settingsPanel");
+            verify(panel.y + panel.height <= menu.height);
+            verify(findChild(menu, "volumeSlider").width >= menu.unit * Theme.settingsTrack);
+            const close = findChild(menu, "closeSettings");
+            const corner = close.mapToItem(menu, close.width, close.height);
+            verify(corner.x <= menu.width && corner.y <= menu.height);
+        }
+
+        // Narrow windows give the settings all their width, the slider keeps room for a finger.
+        function test_theSettingsFitANarrowWindow() {
+            stage.width = 480;
+            stage.height = 480;
             const menu = openSettings();
             const panel = findChild(menu, "settingsPanel");
             compare(panel.width, menu.width - 2 * menu.margin);

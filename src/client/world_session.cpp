@@ -115,6 +115,8 @@ QVariantList WorldSession::sections() const
             {u"open"_s, open},
             {u"stars"_s, static_cast<int>(progress_.stars[index])},
             {u"playable"_s, open && !section.map.isEmpty()},
+            {u"best"_s, static_cast<int>(progress_.best[index])},
+            {u"endlessOpen"_s, core::isEndlessOpen(progress_, index) && !section.map.isEmpty()},
         });
     }
     return list;
@@ -160,12 +162,32 @@ QString WorldSession::mapFile(int section) const
 
 bool WorldSession::recordGame(int section, int stars)
 {
-    if (section < 0 || std::cmp_greater_equal(section, world_.sections.size()) || stars <= 0) {
+    if (!knows(section) || stars <= 0) {
         return false;
     }
     core::recordStars(&progress_, static_cast<std::size_t>(section), stars);
     emit progressChanged();
     setSelected(nextSection()); // the way goes on where the fog has lifted
+    return save();
+}
+
+bool WorldSession::recordRounds(int section, int rounds)
+{
+    if (!knows(section) || rounds <= progress_.best[static_cast<std::size_t>(section)]) {
+        return false;
+    }
+    core::recordRounds(&progress_, static_cast<std::size_t>(section), rounds);
+    emit progressChanged();
+    return save();
+}
+
+bool WorldSession::knows(int section) const
+{
+    return section >= 0 && std::cmp_less(section, world_.sections.size());
+}
+
+bool WorldSession::save() const
+{
     QDir().mkpath(QFileInfo(progressFile_).path());
     QString problem;
     if (!automation::writeFile(progressFile_, core::progressToJson(world_, progress_), &problem)) {

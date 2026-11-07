@@ -98,6 +98,27 @@ private slots:
         QVERIFY(!QFile::exists(world.progressFile()));
     }
 
+    // The endless game of a section opens with its win and keeps the most rounds (E-36).
+    static void theMostRoundsSurviveANewSession()
+    {
+        const QTemporaryDir folder;
+        const QString file = folder.filePath(u"progress.json"_s);
+        WorldSession first;
+        first.setProgressFile(file);
+        QVERIFY(!sectionOf(first, 0)[u"endlessOpen"_s].toBool());
+        QVERIFY(first.recordGame(0, 1));
+        QVERIFY(sectionOf(first, 0)[u"endlessOpen"_s].toBool());
+        QVERIFY(!sectionOf(first, 1)[u"endlessOpen"_s].toBool());
+        QVERIFY(first.recordRounds(0, 6));
+        QVERIFY(!first.recordRounds(0, 4));
+        QVERIFY(!first.recordRounds(0, 6));
+        QVERIFY(!first.recordRounds(9, 8));
+        WorldSession second;
+        second.setProgressFile(file);
+        QCOMPARE(sectionOf(second, 0)[u"best"_s].toInt(), 6);
+        QCOMPARE(sectionOf(second, 1)[u"best"_s].toInt(), 0);
+    }
+
     static void starsStayWhenTheFileCannotBeWritten()
     {
         const QTemporaryDir folder;

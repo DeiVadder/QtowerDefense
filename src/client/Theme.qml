@@ -61,6 +61,7 @@ QtObject {
     readonly property real statsPadding: 0.6
     readonly property real endWidth: 8
     readonly property real endHeight: 3.5
+    readonly property real endRoundsHeight: 1.2
     readonly property real endMargin: 0.5
     readonly property real heroSize: 3.4
     readonly property real dialButton: 0.9 // what stands around the portrait
@@ -172,7 +173,7 @@ QtObject {
     readonly property real darkestBrick: 0.7
     readonly property real brickWidth: 2.1
     readonly property real brickJoint: 0.04
-    readonly property real menuUnitsHigh: 10 // the menu fits a window this many units high
+    readonly property real menuUnitsHigh: 12 // the menu fits a window this many units high
     readonly property real menuTitle: 1.9
     readonly property real menuTitleText: 1.25
     readonly property real menuSign: 1.4
@@ -204,8 +205,9 @@ QtObject {
     readonly property real sliderKnob: 0.55
     readonly property real loudnessRange: 100 // from the quietest step of the slider to the loudest
     readonly property int volumeStep: 10 // percent per press of an arrow key
-    readonly property real settingsWidest:
-        7.5 // narrower halves of the menu give the settings all their width
+    // Narrower halves of the menu give the settings all their width: margins, label, track, percent.
+    readonly property real settingsWidest: 4 * endMargin + settingsLabel + settingsTrack
+                                           + settingsPercent + gap
     readonly property real settingsTrack: 3 // the slider gets at least this, before the label
 
     readonly property real unavailable: 0.5 // the opacity of what cannot be used now

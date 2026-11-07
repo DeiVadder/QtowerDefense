@@ -59,6 +59,8 @@ class GameSession : public QObject
     Q_PROPERTY(bool won READ won NOTIFY stateChanged)
     Q_PROPERTY(bool lost READ lost NOTIFY stateChanged)
     Q_PROPERTY(int stars READ stars NOTIFY stateChanged)
+    Q_PROPERTY(bool endless READ endless NOTIFY mapChanged)
+    Q_PROPERTY(int round READ round NOTIFY stateChanged)
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY clockChanged)
     Q_PROPERTY(int speed READ speed WRITE setSpeed NOTIFY clockChanged)
     Q_PROPERTY(int maxSpeed READ maxSpeed CONSTANT)
@@ -80,13 +82,16 @@ public:
     Q_ENUM(Cue)
 
     explicit GameSession(QObject *parent = nullptr);
-    [[nodiscard]] static int ticksPerSecond();
+    [[nodiscard]] static constexpr int ticksPerSecond()
+    {
+        return core::kTicksPerSecond;
+    }
     ~GameSession() override;
 
-    /// Starts a game with a seed of its own. A map that cannot be loaded leaves no game and an
-    /// error.
-    Q_INVOKABLE void startNewGame(const QString &fileName);
-    /// The same map again.
+    /// Starts a game with a seed of its own, endless or of the campaign (E-36). A map that cannot
+    /// be loaded leaves no game and an error.
+    Q_INVOKABLE void startNewGame(const QString &fileName, bool endless = false);
+    /// The same map again, in the same mode.
     Q_INVOKABLE void restart();
     /// Puts a tower of the selected type on a cell, true if the game took the command.
     Q_INVOKABLE bool buildTower(int x, int y);
@@ -186,6 +191,8 @@ public:
     [[nodiscard]] bool lost() const;
     /// The stars of a won game, none before (E-32).
     [[nodiscard]] int stars() const;
+    [[nodiscard]] bool endless() const;
+    [[nodiscard]] int round() const;
     [[nodiscard]] bool paused() const;
     [[nodiscard]] int speed() const;
     [[nodiscard]] int maxSpeed() const;

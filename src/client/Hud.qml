@@ -16,6 +16,7 @@ Item {
     property var dropPoint: null // while a dropped card builds
     property real density: Screen.pixelDensity
     property bool heroSpeaks: true
+    property int best: 0 // the most rounds of this map's endless game before this game
     readonly property real unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
                                           / Theme.unitsAcross)
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
@@ -134,6 +135,33 @@ Item {
                 font.bold: true
                 font.pixelSize: root.unit * Theme.statText
                 Accessible.name: qsTr("Lives: %1").arg(root.game.lives)
+            }
+
+            Item {
+                visible: root.game.endless
+                width: root.unit * Theme.gap
+                height: 1
+            }
+
+            GameIcon {
+                visible: root.game.endless
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.unit * Theme.iconSize
+                height: width
+                name: "flag"
+                fill: Theme.text
+            }
+
+            Text {
+                objectName: "roundLabel"
+                visible: root.game.endless
+                anchors.verticalCenter: parent.verticalCenter
+                text: root.game.round + 1
+                color: Theme.text
+                font.family: Theme.face
+                font.bold: true
+                font.pixelSize: root.unit * Theme.statText
+                Accessible.name: qsTr("Round: %1").arg(root.game.round + 1)
             }
         }
     }
@@ -528,51 +556,14 @@ Item {
         cardUnit: root.cardUnit
     }
 
-    FramedPanel {
+    EndPanel {
         objectName: "endPanel"
         anchors.centerIn: parent
         visible: root.gameOver || root.failed
-        width: Math.min(parent.width - root.unit, Math.max(root.unit * Theme.endWidth, message.implicitWidth
-                                                           + root.unit))
-        height: root.unit * Theme.endHeight
+        game: root.game
         unit: root.unit
-
-        Text {
-            id: message
-
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.top: parent.top
-            anchors.topMargin: root.unit * Theme.endMargin
-            width: parent.width - root.unit
-            horizontalAlignment: Text.AlignHCenter
-            wrapMode: Text.Wrap
-            text: root.failed ? root.game.error : root.game.won ? qsTr("Victory") : qsTr("Defeat")
-            color: Theme.text
-            font.family: Theme.face
-            font.bold: true
-            font.pixelSize: root.unit * Theme.titleText
-        }
-
-        Row {
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.unit * Theme.endMargin
-            spacing: root.unit * Theme.gap
-
-            HudButton {
-                objectName: "restartButton"
-                visible: !root.failed
-                unit: root.unit
-                text: qsTr("Play again")
-                onClicked: root.game.restart()
-            }
-
-            HudButton {
-                objectName: "worldButton"
-                unit: root.unit
-                text: qsTr("World map")
-                onClicked: root.leave()
-            }
-        }
+        failed: root.failed
+        best: root.best
+        onLeave: root.leave()
     }
 }

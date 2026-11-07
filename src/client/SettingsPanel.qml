@@ -74,7 +74,8 @@ FramedPanel {
 
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(root.unit * Theme.settingsLabel, parent.width - root.unit * (Theme.settingsTrack
-                                                                                             + Theme.settingsPercent))
+                                                                                             + Theme.settingsPercent
+                                                                                             + Theme.gap))
                 text: qsTr("Sound")
             }
 

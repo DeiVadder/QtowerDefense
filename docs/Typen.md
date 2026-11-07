@@ -114,7 +114,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Fnv1a64` | class | `state_hash.h` | FNV-1a with 64 bits. |
 | `TickClock` | class | `tick_clock.h` | Turns the time between two frames into ticks. |
 | `Version` | struct | `version.h` | A semantic version, ordered by major, minor, then patch number. |
-| `CampaignProgress` | struct | `world.h` | What a player has done in the world: the best stars of each section, 0 if not won yet. |
+| `CampaignProgress` | struct | `world.h` | What a player has done in the world: the best stars of each section, 0 if not won yet, and the most rounds of its endless game (E-36), 0 if none. |
 | `World` | struct | `world.h` | The sections of the campaign and the ways between them. |
 | `WorldLoadResult` | struct | `world.h` | Holds the world, or an error text that names the place of the problem. |
 | `WorldSection` | struct | `world.h` | One part of the campaign world (E-32). |

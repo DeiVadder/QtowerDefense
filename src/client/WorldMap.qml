@@ -26,6 +26,7 @@ FramedPanel {
                                            })
 
     property bool heroSpeaks: true
+    property bool endless: false // offers the endless games of the won sections (E-36)
     // What the hero says of a landscape. The words for a section in the fog come first.
     readonly property var landscapeLines: ({
                                                meadow: qsTr("Grass, sheep, goblins. The usual."),
@@ -53,6 +54,9 @@ FramedPanel {
         }
         if (!section.playable) {
             return qsTr("No map of that place yet. I asked.");
+        }
+        if (endless && !section.endlessOpen) {
+            return qsTr("Win it first. Then they never stop coming.");
         }
         if (section.stars >= 3) {
             return qsTr("Done that. Perfectly, thanks to me.");
@@ -88,9 +92,19 @@ FramedPanel {
         return section.playable ? "flag" : "hourglass";
     }
 
+    function canPlay(section: var): bool {
+        return endless ? section.endlessOpen : section.playable;
+    }
+
     function statusOf(section: var): string {
-        if (section.playable) {
+        if (endless && section.endlessOpen) {
+            return qsTr("Best: %n round(s)", "", section.best);
+        }
+        if (canPlay(section)) {
             return "";
+        }
+        if (section.playable) {
+            return qsTr("Not won yet");
         }
         return section.open ? qsTr("Not charted yet") : qsTr("Hidden in the fog");
     }
@@ -229,7 +243,7 @@ FramedPanel {
                 }
 
                 Repeater {
-                    model: 3
+                    model: root.endless ? 0 : 3
 
                     GameIcon {
                         required property int index
@@ -267,7 +281,7 @@ FramedPanel {
             icon: "sword"
             text: qsTr("Play")
             highlighted: available
-            available: root.chosen?.playable ?? false
+            available: root.chosen ? root.canPlay(root.chosen) : false
             onClicked: root.play(root.world.selected)
         }
     }

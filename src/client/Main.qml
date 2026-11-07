@@ -14,6 +14,8 @@ Window {
     // The section of the world that is played, -1 for a map started by other means.
     property int playing: -1
     property bool recorded: false
+    property bool endless: false // the world map offers the endless games of won sections
+    property int best: 0 // the most rounds of the played section before this game
     property int page: Main.Page.Menu
 
     // One step back: from the settings to the menu, from the world map to the menu.
@@ -22,6 +24,14 @@ Window {
             menu.back();
         } else if (page === Main.Page.World) {
             page = Main.Page.Menu;
+        }
+    }
+
+    // Keeps the rounds of an endless game once, when it is lost or left (E-36).
+    function keepRounds() {
+        if (session.endless && !recorded && playing >= 0) {
+            recorded = true;
+            campaign.recordRounds(playing, session.round);
         }
     }
 
@@ -76,7 +86,11 @@ Window {
         game: session
         scene: gameScene
         heroSpeaks: gameSettings.heroSpeaks
-        onLeave: window.page = Main.Page.World
+        best: window.best
+        onLeave: {
+            window.keepRounds();
+            window.page = Main.Page.World;
+        }
     }
 
     WorldMap {
@@ -84,10 +98,11 @@ Window {
         anchors.fill: parent
         visible: window.page === Main.Page.World
         world: campaign
+        endless: window.endless
         heroSpeaks: gameSettings.heroSpeaks
         onPlay: section => {
             window.playing = section;
-            session.startNewGame(campaign.mapFile(section));
+            session.startNewGame(campaign.mapFile(section), window.endless);
         }
         onMenu: window.page = Main.Page.Menu
     }
@@ -99,7 +114,14 @@ Window {
         anchors.fill: parent
         visible: window.page === Main.Page.Menu
         settings: gameSettings
-        onCampaign: window.page = Main.Page.World
+        onCampaign: {
+            window.endless = false;
+            window.page = Main.Page.World;
+        }
+        onEndless: {
+            window.endless = true;
+            window.page = Main.Page.World;
+        }
         onQuit: Qt.quit()
     }
 
@@ -133,11 +155,15 @@ Window {
             if (window.playing >= 0 && campaign.mapFile(window.playing) !== mapFile) {
                 window.playing = -1;
             }
+            window.best = window.playing >= 0 ? campaign.sections[window.playing].best : 0;
         }
         onStateChanged: {
             if (won && !window.recorded && window.playing >= 0) {
                 window.recorded = true;
                 campaign.recordGame(window.playing, stars);
+            }
+            if (lost) {
+                window.keepRounds();
             }
         }
     }

@@ -68,4 +68,15 @@ int GameSession::stars() const
     return game_ ? static_cast<int>(core::starsOfGame(game_->simulation())) : 0;
 }
 
+bool GameSession::endless() const
+{
+    return game_ && game_->simulation().state().mode == core::GameMode::Endless;
+}
+
+// The rounds an endless game has come through, its score (E-36).
+int GameSession::round() const
+{
+    return game_ ? static_cast<int>(game_->simulation().state().round) : 0;
+}
+
 } // namespace qtd::client

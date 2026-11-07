@@ -168,53 +168,94 @@ bool isOpen(const World &world, const CampaignProgress &progress, std::size_t se
            std::ranges::any_of(world.sections[section].neighbors, won);
 }
 
+bool isEndlessOpen(const CampaignProgress &progress, std::size_t section)
+{
+    return section < progress.stars.size() && progress.stars[section] > 0;
+}
+
+namespace {
+
+/// Keeps the larger of the old and the new value, clamped to 0 to the most.
+void recordValue(std::vector<qint64> *values, std::size_t section, qint64 value, qint64 most)
+{
+    if (values->size() <= section) {
+        values->resize(section + 1, 0);
+    }
+    (*values)[section] = std::max((*values)[section], std::clamp<qint64>(value, 0, most));
+}
+
+/// Reads values by section id from 1 to the most, others are left out. Unknown ids go aside.
+void readValues(const QJsonObject &object,
+                const std::map<QString, std::size_t> &ids,
+                qint64 most,
+                std::vector<qint64> *values,
+                QMap<QString, qint64> *others)
+{
+    for (QJsonObject::const_iterator item = object.begin(); item != object.end(); ++item) {
+        const qint64 value = item.value().toInteger();
+        if (value <= 0 || value > most) {
+            continue;
+        }
+        const std::map<QString, std::size_t>::const_iterator known = ids.find(item.key());
+        if (known != ids.end()) {
+            (*values)[known->second] = value;
+        } else {
+            others->insert(item.key(), value);
+        }
+    }
+}
+
+QJsonObject valuesToJson(const World &world,
+                         const std::vector<qint64> &values,
+                         const QMap<QString, qint64> &others)
+{
+    QJsonObject object;
+    for (const auto &[id, value] : others.asKeyValueRange()) {
+        object[id] = value;
+    }
+    for (std::size_t section = 0; section < world.sections.size(); ++section) {
+        if (section < values.size() && values[section] > 0) {
+            object[world.sections[section].id] = values[section];
+        }
+    }
+    return object;
+}
+
+} // namespace
+
 void recordStars(CampaignProgress *progress, std::size_t section, qint64 stars)
 {
-    if (progress->stars.size() <= section) {
-        progress->stars.resize(section + 1, 0);
-    }
-    progress->stars[section] =
-        std::max(progress->stars[section], std::clamp<qint64>(stars, 0, kMaxStars));
+    recordValue(&progress->stars, section, stars, kMaxStars);
+}
+
+void recordRounds(CampaignProgress *progress, std::size_t section, qint64 rounds)
+{
+    recordValue(&progress->best, section, rounds, kMostRounds);
 }
 
 CampaignProgress parseProgress(const World &world, QByteArrayView json)
 {
     CampaignProgress progress;
     progress.stars.assign(world.sections.size(), 0);
-    const QJsonObject stars =
-        QJsonDocument::fromJson(json.toByteArray()).object()["stars"_L1].toObject();
+    progress.best.assign(world.sections.size(), 0);
+    const QJsonObject root = QJsonDocument::fromJson(json.toByteArray()).object();
     std::map<QString, std::size_t> ids;
     for (std::size_t section = 0; section < world.sections.size(); ++section) {
         ids.emplace(world.sections[section].id, section);
     }
-    for (QJsonObject::const_iterator item = stars.begin(); item != stars.end(); ++item) {
-        const qint64 value = item.value().toInteger();
-        if (value <= 0 || value > kMaxStars) {
-            continue;
-        }
-        const std::map<QString, std::size_t>::const_iterator known = ids.find(item.key());
-        if (known != ids.end()) {
-            progress.stars[known->second] = value;
-        } else {
-            progress.others.insert(item.key(), value);
-        }
-    }
+    readValues(root["stars"_L1].toObject(), ids, kMaxStars, &progress.stars, &progress.others);
+    readValues(root["best"_L1].toObject(), ids, kMostRounds, &progress.best, &progress.otherBest);
     return progress;
 }
 
 QByteArray progressToJson(const World &world, const CampaignProgress &progress)
 {
-    QJsonObject stars;
-    for (const auto &[id, value] : progress.others.asKeyValueRange()) {
-        stars[id] = value;
-    }
-    for (std::size_t section = 0; section < world.sections.size(); ++section) {
-        if (section < progress.stars.size() && progress.stars[section] > 0) {
-            stars[world.sections[section].id] = progress.stars[section];
-        }
-    }
     QJsonObject root;
-    root["stars"_L1] = stars;
+    root["stars"_L1] = valuesToJson(world, progress.stars, progress.others);
+    const QJsonObject best = valuesToJson(world, progress.best, progress.otherBest);
+    if (!best.isEmpty()) {
+        root["best"_L1] = best;
+    }
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 

@@ -20,16 +20,20 @@ Item {
 
     enum Choice {
         Campaign,
+        Endless,
         Settings,
         Quit
     }
 
     signal campaign
+    signal endless
     signal quit
 
     function choose(choice: int) {
         if (choice === MainMenu.Choice.Campaign) {
             campaign();
+        } else if (choice === MainMenu.Choice.Endless) {
+            endless();
         } else if (choice === MainMenu.Choice.Settings) {
             settingsOpen = true;
             say(settingsLines);
@@ -303,6 +307,11 @@ Item {
                     name: "campaignButton",
                     text: qsTr("Campaign"),
                     choice: MainMenu.Choice.Campaign
+                },
+                {
+                    name: "endlessButton",
+                    text: qsTr("Endless"),
+                    choice: MainMenu.Choice.Endless
                 },
                 {
                     name: "settingsButton",

@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QGuiApplication>
 #include <QImage>
+#include <QPoint>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -71,6 +72,23 @@ bool win(qtd::client::GameSession *game)
         game->advanceTime(1'000'000);
     }
     return game->won();
+}
+
+/// Wins the first section, then plays its endless game with two towers into the second round.
+bool playEndless(const QQuickWindow *window, qtd::client::GameSession *game)
+{
+    QObject *menu = window->findChild<QObject *>(u"mainMenu"_s);
+    QObject *world = window->findChild<QObject *>(u"worldMap"_s);
+    if (menu == nullptr || world == nullptr || !win(game) ||
+        !QMetaObject::invokeMethod(menu, "endless") ||
+        !QMetaObject::invokeMethod(world, "play", 0) || !game->endless() ||
+        !game->buildTower(4, 4) || !game->buildTower(10, 6)) {
+        return false;
+    }
+    while (game->round() < 1 && !game->lost()) {
+        game->advanceTime(1'000'000);
+    }
+    return game->round() == 1;
 }
 
 QVariantMap sectionOf(const QQuickWindow *window, int section)
@@ -161,8 +179,11 @@ private slots:
         QCOMPARE(settings->property("volume").toInt(), 30);
         QVERIFY(!settings->property("heroSpeaks").toBool());
         // What reaches the parts that act on it.
-        QVERIFY(!window->findChild<QObject *>(u"hero"_s)->property("speaks").toBool());
-        QCOMPARE(window->findChild<QObject *>(u"gameSounds"_s)->property("volume").toReal(), 0.3);
+        const QObject *hero = window->findChild<QObject *>(u"hero"_s);
+        const QObject *sounds = window->findChild<QObject *>(u"gameSounds"_s);
+        QVERIFY(hero != nullptr && sounds != nullptr);
+        QVERIFY(!hero->property("speaks").toBool());
+        QCOMPARE(sounds->property("volume").toReal(), 0.3);
         QVERIFY(QFile::remove(settingsFile()));
     }
 
@@ -229,6 +250,48 @@ private slots:
         game->startNewGame(QStringLiteral(QTD_CONTENT_DIR "/training_ground.json"));
         QVERIFY(win(game));
         QVERIFY(!QFile::exists(progressFile()));
+    }
+
+    // Towers hold the first round, without them the second takes the lives. The rounds of the
+    // lost game are kept and shown as the best of the next one (E-36).
+    static void anEndlessGameKeepsItsRounds()
+    {
+        QFile::remove(progressFile());
+        QQmlApplicationEngine engine;
+        qtd::client::GameSession *game = openGame(&engine);
+        QVERIFY(game != nullptr);
+        const auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+        const QObject *hud = window->findChild<QObject *>(u"hud"_s);
+        QVERIFY(hud != nullptr);
+        QVERIFY(playEndless(window, game));
+        QCOMPARE(hud->property("best").toInt(), 0);
+        for (const QPoint cell : {QPoint(4, 4), QPoint(10, 6)}) {
+            QVERIFY(game->chooseTowerAt(cell.x(), cell.y()) && game->sellChosenTower());
+        }
+        while (!game->lost()) {
+            game->advanceTime(1'000'000);
+        }
+        const int rounds = game->round();
+        QCOMPARE(sectionOf(window, 0)[u"best"_s].toInt(), rounds);
+        game->restart();
+        QVERIFY(game->endless());
+        QCOMPARE(hud->property("best").toInt(), rounds);
+    }
+
+    // Who leaves an endless game for the world map keeps its rounds as well.
+    static void aLeftEndlessGameKeepsItsRounds()
+    {
+        QFile::remove(progressFile());
+        QQmlApplicationEngine engine;
+        qtd::client::GameSession *game = openGame(&engine);
+        QVERIFY(game != nullptr);
+        const auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+        QObject *hud = window->findChild<QObject *>(u"hud"_s);
+        QVERIFY(hud != nullptr);
+        QVERIFY(playEndless(window, game));
+        QCOMPARE(sectionOf(window, 0)[u"best"_s].toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(hud, "leave"));
+        QCOMPARE(sectionOf(window, 0)[u"best"_s].toInt(), 1);
     }
 
     static void aMinimizedWindowPausesTheGame()

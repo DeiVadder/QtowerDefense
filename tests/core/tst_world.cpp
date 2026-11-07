@@ -276,6 +276,41 @@ private slots:
         QCOMPARE(again.others, progress.others);
     }
 
+    // Rounds of the endless game keep the most. A campaign file without them stays as it was.
+    static void roundsKeepTheMost()
+    {
+        const World world = testWorld();
+        CampaignProgress progress = qtd::core::parseProgress(world, R"({"stars": {"a": 1}})");
+        QVERIFY(!qtd::core::progressToJson(world, progress).contains("best"));
+        qtd::core::recordRounds(&progress, 1, 12);
+        qtd::core::recordRounds(&progress, 1, 7);
+        qtd::core::recordRounds(&progress, 3, qtd::core::kMostRounds + 1);
+        QCOMPARE(progress.best, (std::vector<qint64>{0, 12, 0, qtd::core::kMostRounds}));
+        const CampaignProgress again =
+            qtd::core::parseProgress(world, qtd::core::progressToJson(world, progress));
+        QCOMPARE(again.best, progress.best);
+        QCOMPARE(again.stars, progress.stars);
+    }
+
+    static void roundsOfAPlayerAreReadKindly()
+    {
+        const CampaignProgress progress = qtd::core::parseProgress(
+            testWorld(), R"({"best": {"a": -3, "b": 1000000001, "c": 5, "x": 9}})");
+        QCOMPARE(progress.best, (std::vector<qint64>{0, 0, 5, 0}));
+        QCOMPARE(progress.otherBest, (QMap<QString, qint64>{{QStringLiteral("x"), 9}}));
+        QCOMPARE(progress.stars, (std::vector<qint64>{0, 0, 0, 0}));
+    }
+
+    static void theEndlessGameOpensWithAWin()
+    {
+        CampaignProgress progress;
+        QVERIFY(!qtd::core::isEndlessOpen(progress, 0));
+        qtd::core::recordStars(&progress, 1, 1);
+        QVERIFY(!qtd::core::isEndlessOpen(progress, 0));
+        QVERIFY(qtd::core::isEndlessOpen(progress, 1));
+        QVERIFY(!qtd::core::isEndlessOpen(progress, 2));
+    }
+
     static void starsCountTheLivesKept_data()
     {
         QTest::addColumn<int>("startLives");
