@@ -24,6 +24,8 @@ Window {
     }
 
     MainScene {
+        id: gameScene
+
         anchors.fill: parent
         game: session
     }
@@ -31,6 +33,7 @@ Window {
     Hud {
         anchors.fill: parent
         game: session
+        scene: gameScene
     }
 
     GameSounds {

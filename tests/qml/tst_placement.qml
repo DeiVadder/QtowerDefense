@@ -219,6 +219,7 @@ Item {
             const game = createTemporaryObject(gameComponent, stage);
             waitForRendering(game.scene);
             const session = game.scene.game;
+            game.hud.visible = false; // the moving hand may lie over the tower
             verify(session.buildTower(4, 4));
             verify(session.buildTower(10, 6));
             waitForRendering(game.scene);
@@ -248,65 +249,6 @@ Item {
             const cells = game.scene.game.towerCells;
             compare(cells.length, 2);
             compare(Qt.point(cells[1].x, cells[1].y), Qt.point(4, 5));
-        }
-
-        // The list scrolls, it must not take a second row of the map.
-        function test_theTowerListStaysOneRow() {
-            const game = createTemporaryObject(gameComponent, stage);
-            waitForRendering(game.scene);
-            const list = findChild(game.hud, "towerList");
-            const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 3);
-            verify(list.contentWidth > list.width);
-            compare(towerButtons.height, list.height);
-            const rotation = findChild(game.hud, "rotation");
-            verify(list.x + list.width <= rotation.x);
-        }
-
-        function test_aSwipeOnAButtonScrollsTheList_data() {
-            return [
-                        {
-                            tag: "mouse",
-                            touch: false
-                        },
-                        {
-                            tag: "touch",
-                            touch: true
-                        },
-                    ];
-        }
-
-        function test_aSwipeOnAButtonScrollsTheList(data) {
-            const game = createTemporaryObject(gameComponent, stage);
-            waitForRendering(game.scene);
-            const list = findChild(game.hud, "towerList");
-            const towerButtons = findChild(game.hud, "towerButtons");
-            tryVerify(() => towerButtons.children.length > 3);
-            const y = list.y + list.height / 2;
-            const startX = list.x + towerButtons.children[1].x + 20;
-            const touch = touchEvent(game.hud);
-            if (data.touch) {
-                touch.press(0, game.hud, startX, y).commit();
-            } else {
-                mousePress(game.hud, startX, y);
-            }
-            for (let step = 1; step <= 10; ++step) {
-                wait(20); // Quick merges moves within a frame
-                if (data.touch) {
-                    touch.move(0, game.hud, startX - step * 15, y).commit();
-                } else {
-                    mouseMove(game.hud, startX - step * 15, y);
-                }
-            }
-            verify(list.contentX > 0, list.contentX);
-            compare(game.scene.panX, 0);
-            compare(game.scene.panZ, 0);
-            if (data.touch) {
-                touch.release(0, game.hud, startX - 150, y).commit();
-            } else {
-                mouseRelease(game.hud, startX - 150, y);
-            }
-            compare(game.scene.game.selectedTower, 0);
         }
 
         function test_aDragOnAButtonLeavesTheMap() {

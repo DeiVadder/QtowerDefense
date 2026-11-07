@@ -185,6 +185,7 @@ signals:
     void clockChanged();
     void saveChanged();
     void cue(qtd::client::GameSession::Cue what);
+    void towerBuilt(int x, int y);
     /// A spell has hit this cell, in map units around it.
     void spellCast(int x, int y, double radius, int spell);
     /// Time went on, enemies are somewhere else on the screen.

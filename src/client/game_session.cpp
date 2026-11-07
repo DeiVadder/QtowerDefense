@@ -129,6 +129,7 @@ bool GameSession::buildTower(int x, int y)
     }
     emit towersChanged();
     emit stateChanged();
+    emit towerBuilt(x, y);
     emit cue(Cue::Build);
     return true;
 }
@@ -328,7 +329,16 @@ QVariantList GameSession::towerTypes() const
     QVariantList types;
     if (game_) {
         for (const core::TowerType &type : game_->simulation().content().towers) {
-            types.append(QVariantMap{{u"name"_s, type.id}, {u"cost"_s, type.levels.front().cost}});
+            const core::TowerLevel &first = type.levels.front();
+            types.append(QVariantMap{
+                {u"name"_s, type.id},
+                {u"cost"_s, first.cost},
+                {u"damage"_s, mapUnits(first.damageMin + first.damageMax) / 2},
+                {u"range"_s, mapUnits(first.range)},
+                {u"rate"_s,
+                 static_cast<double>(core::kTicksPerSecond) /
+                     static_cast<double>(first.cooldownTicks)},
+            });
         }
     }
     return types;

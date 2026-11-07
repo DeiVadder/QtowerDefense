@@ -208,6 +208,7 @@ Item {
             const scene = createScene();
             waitForRendering(scene);
             const place = scene.cellOnScreen(data.x, data.y);
+            scene.parent.hud.visible = false; // the hand lies over the nearest row
             mouseClick(scene, place.x, place.y);
             const cells = scene.game.towerCells;
             compare(cells.length, 1);
@@ -326,6 +327,8 @@ Item {
 
         function test_aSpellIsSeenWhereItLands(data) {
             const scene = createScene();
+            waitForRendering(scene);
+            scene.parent.hud.visible = false; // the hand lies over the nearest row
             waitForRendering(scene);
             const place = scene.blockTopOnScreen(data.x, data.y, 0.05);
             const ground = grabImage(scene).pixel(place.x, place.y);

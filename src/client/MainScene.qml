@@ -22,8 +22,10 @@ View3D {
     readonly property real enemyHeight: 15
     readonly property real minZoom: 0.4
     readonly property real maxZoom: 1.6
-    // Until the cards bring a state for building, the grid stays faintly in view (E-34).
-    property real gridStrength: 0.16
+    // Faintly in view for taps, the HUD makes it clear during a drag (E-34).
+    property real gridStrength: Theme.gridFaint
+    // Other fingers must not touch the map then: a finger on a card would pass through to it.
+    property bool cardInHand: false
     property real zoom: 1
     property real panX: 0
     property real panZ: 0
@@ -73,6 +75,16 @@ View3D {
         return Qt.point(hit.instanceIndex % width, Math.floor(hit.instanceIndex / width));
     }
 
+    // Where a card lands. It means to build, whatever was chosen before.
+    function dropCardAt(x: real, y: real): bool {
+        const cell = cellOf(pick(x, y));
+        if (cell === undefined || !game.buildTower(cell.x, cell.y)) {
+            return false;
+        }
+        game.clearChosenTower();
+        return true;
+    }
+
     function tapAt(x: real, y: real): bool {
         const hit = pick(x, y);
         if (game.selectedSpell >= 0) {
@@ -115,6 +127,7 @@ View3D {
     }
 
     DragHandler {
+        enabled: !root.cardInHand
         property point last: Qt.point(0, 0)
 
         target: null
@@ -130,6 +143,7 @@ View3D {
     }
 
     PinchHandler {
+        enabled: !root.cardInHand
         property real last: 1
 
         target: null
@@ -147,6 +161,7 @@ View3D {
     }
 
     TapHandler {
+        enabled: !root.cardInHand
         onTapped: eventPoint => root.tapAt(eventPoint.position.x, eventPoint.position.y)
     }
 

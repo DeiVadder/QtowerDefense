@@ -11,12 +11,41 @@ Item {
     id: root
 
     required property GameSession game
+    property MainScene scene: null // who knows the map under a dropped card
 
+    property var dropPoint: null // while a dropped card builds
     property real density: Screen.pixelDensity
     readonly property real unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
                                           / Theme.unitsAcross)
+    readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
     readonly property bool gameOver: game.won || game.lost
     readonly property bool failed: game.error.length > 0
+
+    Binding {
+        when: root.scene !== null
+        target: root.scene
+        property: "gridStrength"
+        value: towerList.dragging ? Theme.gridHeld : Theme.gridFaint
+    }
+
+    Binding {
+        when: root.scene !== null
+        target: root.scene
+        property: "cardInHand"
+        value: towerList.dragging
+    }
+
+    Connections {
+        target: root.game
+
+        function onTowerBuilt(x: int, y: int) {
+            if (root.scene !== null) {
+                const spot = root.scene.cellOnScreen(x, y);
+                flight.fly(root.game.towerTypes[root.game.selectedTower], root.dropPoint
+                           ?? towerList.chosenCenter(), Qt.point(spot.x, spot.y));
+            }
+        }
+    }
 
     FramedPanel {
         id: stats
@@ -92,11 +121,6 @@ Item {
 
     HudFrame {
         around: priorityButtons
-        unit: root.unit
-    }
-
-    HudFrame {
-        around: towerList
         unit: root.unit
     }
 
@@ -217,43 +241,24 @@ Item {
         }
     }
 
-    // What a tap on the map builds. The row scrolls, so that the list never covers more of the map.
-    Flickable {
+    // What a tap on the map builds, or what gets dragged there.
+    Hand {
         id: towerList
 
         objectName: "towerList"
-        anchors.left: parent.left
+        anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
-        anchors.margins: root.unit * Theme.gap
-        width: Math.min(towerButtons.width, parent.width - placement.width - root.unit * Theme.gap
-                        * 3)
-        height: root.unit
-        contentWidth: towerButtons.width
-        flickableDirection: Flickable.HorizontalFlick
-        boundsBehavior: Flickable.StopAtBounds
-        clip: true
-
-        Row {
-            id: towerButtons
-
-            objectName: "towerButtons"
-            spacing: root.unit * Theme.gap
-
-            Repeater {
-                model: root.game.towerTypes
-
-                delegate: HudButton {
-                    required property int index
-                    required property var modelData
-
-                    unit: root.unit
-                    icon: modelData.name
-                    caption: modelData.cost
-                    captionColor: Theme.gold
-                    text: qsTr("%1: %2 gold").arg(modelData.name).arg(modelData.cost)
-                    highlighted: root.game.selectedTower === index
-                    onClicked: root.game.selectedTower = index
-                }
+        anchors.bottomMargin: root.cardUnit * Theme.cardLift
+        game: root.game
+        unit: root.cardUnit
+        maxWidth: parent.width - 2 * (placement.width + root.unit * Theme.gap * 2)
+        lowered: root.game.chosenSellValue >= 0
+        onDropped: (x, y) => {
+            // A card over the HUD goes back into the hand.
+            if (root.scene !== null && root.childAt(x, y) === null) {
+                root.dropPoint = Qt.point(x, y);
+                root.scene.dropCardAt(x, y);
+                root.dropPoint = null;
             }
         }
     }
@@ -399,8 +404,9 @@ Item {
 
     // Takes what the buttons at the left leave free. Below the size of a button it is not worth it.
     Hero {
-        readonly property real room: root.height - stats.height - root.unit * (Theme.leftRows + (Theme.leftRows
-                                                                                                 + 1) * Theme.gap
+        readonly property real room: root.height - stats.height - root.unit * (Theme.cardPeek + Theme.leftRows
+                                                                               + (Theme.leftRows
+                                                                                  + 1) * Theme.gap
                                                                                + 4 * Theme.inset)
 
         objectName: "hero"
@@ -411,6 +417,15 @@ Item {
         anchors.margins: root.unit * Theme.inset
         game: root.game
         unit: root.unit
+    }
+
+    CardFlight {
+        id: flight
+
+        unit: root.cardUnit
+        holding: towerList.dragging
+        held: towerList.held
+        heldInfo: root.game.towerTypes[root.game.selectedTower] ?? heldInfo
     }
 
     FramedPanel {

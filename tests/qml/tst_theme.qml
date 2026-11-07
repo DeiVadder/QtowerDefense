@@ -69,6 +69,11 @@ Item {
                             back: Theme.text
                         },
                         {
+                            tag: "a price on a card",
+                            front: Theme.gold,
+                            back: Theme.ironDark
+                        },
+                        {
                             tag: "an error on wood",
                             front: Theme.danger,
                             back: Theme.wood
@@ -99,6 +104,10 @@ Item {
         // WCAG asks 3 for what is no text.
         function test_theHeartStandsOutOfTheWood() {
             verify(contrast(Theme.heart, Theme.wood) >= 3);
+        }
+
+        function test_theIconOfACardStandsOutOfTheWood() {
+            verify(contrast(Theme.burnt, Theme.cardWoodDark) >= 3);
         }
 
         function test_aFrameKeepsTapsFromTheMap() {

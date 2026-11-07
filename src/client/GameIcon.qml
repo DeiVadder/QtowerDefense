@@ -16,7 +16,7 @@ Shape {
         scale: Qt.size(root.width / 64, root.height / 64)
         fillColor: root.fill
         strokeColor: Theme.ironDark
-        strokeWidth: 2
+        strokeWidth: root.width * Theme.iconLine
         fillRule: ShapePath.OddEvenFill
 
         PathSvg {
