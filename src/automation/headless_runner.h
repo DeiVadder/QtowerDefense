@@ -28,6 +28,7 @@ struct HeadlessOptions
     QString output;
     qint64 maxTicks = 1'000'000;
     bool benchmark = false;
+    bool statistics = false; // what the balancing measures, for every game
     bool control = false;
     StateCheck check = checkInvariants; // for bots and replays
 };

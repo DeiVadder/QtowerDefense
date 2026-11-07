@@ -14,6 +14,7 @@ enum class BotKind : quint8 {
     Idle,  // does nothing
     Naive, // builds the first tower type beside the path, whenever the gold is there
     Fuzz,  // random commands, many of them invalid
+    Good,  // builds and upgrades where the gold does the most damage, casts into crowds (E-38)
 };
 
 /// Decides what to do. It only reads the game and answers with commands.

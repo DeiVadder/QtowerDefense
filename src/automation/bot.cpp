@@ -1,5 +1,6 @@
 #include "automation/bot.h"
 
+#include "automation/good_bot.h"
 #include "core/json_reader.h"
 #include "core/random.h"
 
@@ -222,6 +223,8 @@ std::unique_ptr<Bot> makeBot(BotKind kind, quint64 seed)
         return std::make_unique<NaiveBot>();
     case BotKind::Fuzz:
         return std::make_unique<FuzzBot>(seed);
+    case BotKind::Good:
+        return makeGoodBot();
     case BotKind::Idle:
         break;
     }

@@ -1,5 +1,6 @@
 #include "../core/scenario.h"
 #include "automation/headless_runner.h"
+#include "automation/statistics.h"
 #include "core/replay.h"
 
 #include <QDir>
@@ -95,7 +96,8 @@ private slots:
                                                 u"idle"_s,
                                                 u"--mode"_s,
                                                 u"endless"_s,
-                                                u"--benchmark"_s}));
+                                                u"--benchmark"_s,
+                                                u"--statistics"_s}));
         QCOMPARE(result.error, QString());
         const HeadlessOptions read = required(result.options);
         QCOMPARE(read.map, u"m"_s);
@@ -106,6 +108,7 @@ private slots:
         QCOMPARE(read.maxTicks, 9);
         QVERIFY(read.mode == qtd::core::GameMode::Endless);
         QVERIFY(read.benchmark);
+        QVERIFY(read.statistics);
     }
 
     void helpAndBuildInfoNeedNoMap()
@@ -134,7 +137,7 @@ private slots:
         QTest::newRow("max ticks") << map + QStringList{u"--max-ticks"_s, u"-1"_s}
                                    << u"--max-ticks must not be negative"_s;
         QTest::newRow("bot") << map + QStringList{u"--bot"_s, u"clever"_s}
-                             << u"unknown bot \"clever\", available: idle, naive, fuzz"_s;
+                             << u"unknown bot \"clever\", available: idle, naive, good, fuzz"_s;
         QTest::newRow("mode") << map + QStringList{u"--mode"_s, u"forever"_s}
                               << u"unknown mode \"forever\", available: campaign, endless"_s;
         QTest::newRow("replay and mode")
@@ -151,6 +154,9 @@ private slots:
             << u"--replay runs to its end and measures nothing"_s;
         QTest::newRow("replay and benchmark")
             << map + QStringList{u"--replay"_s, u"r"_s, u"--benchmark"_s}
+            << u"--replay runs to its end and measures nothing"_s;
+        QTest::newRow("replay and statistics")
+            << map + QStringList{u"--replay"_s, u"r"_s, u"--statistics"_s}
             << u"--replay runs to its end and measures nothing"_s;
         QTest::newRow("bot and script")
             << map + QStringList{u"--bot"_s, u"naive"_s, u"--script"_s, u"s"_s}
@@ -475,6 +481,48 @@ private slots:
         QCOMPARE(report["ticks"_L1].toInteger(), 681); // the idle game of training_ground
         QVERIFY(report["nanoseconds"_L1].toInteger() > 0);
         QVERIFY(report["ticksPerSecond"_L1].toInteger() > 0);
+    }
+
+    // The naive bot builds only the first tower type, the ballista, and never upgrades: 50 gold
+    // each on the training ground. The curve starts after the commands of tick 0: of the 120 gold
+    // the bot has built two ballistas at once. Then one entry every 300 ticks.
+    void theStatisticsCountGoldByTower()
+    {
+        HeadlessOptions game = options();
+        game.bot = qtd::automation::BotKind::Naive;
+        game.statistics = true;
+        const QJsonObject report =
+            parsed(runHeadless(game).json)["games"_L1].toArray().first().toObject();
+        const QJsonObject statistics = report["statistics"_L1].toObject();
+        const QJsonObject spent = statistics["spent"_L1].toObject();
+        QCOMPARE(spent.size(), 7);
+        const qint64 ballistas = spent["ballista"_L1].toInteger();
+        QVERIFY(ballistas > 0);
+        QCOMPARE(ballistas % 50, 0);
+        for (QJsonObject::const_iterator other = spent.begin(); other != spent.end(); ++other) {
+            QVERIFY(other.key() == "ballista"_L1 || other.value().toInteger() == 0);
+        }
+        const QJsonArray curve = statistics["goldCurve"_L1].toArray();
+        QCOMPARE(curve.first().toInteger(), 20);
+        QCOMPARE(curve.size(), 1 + (report["tick"_L1].toInteger() + 299) / 300);
+        QCOMPARE(curve.last().toInteger(), report["gold"_L1].toInteger());
+        QVERIFY(
+            !parsed(runHeadless(options()).json)["games"_L1].toArray().first().toObject().contains(
+                "statistics"_L1));
+    }
+
+    // A replay whose checkpoint no longer matches stops there, the statistics say why.
+    void aBrokenReplayGivesStatisticsWithItsError()
+    {
+        const qtd::core::Content content = qtd::tests::contentOf(qtd::tests::scenarioJson());
+        qtd::core::ReplayRecorder recorder(content, u"scenario.json"_s, 1);
+        recorder.advance(90);
+        qtd::core::Replay replay = recorder.replay();
+        QVERIFY(!replay.checkpoints.empty());
+        replay.checkpoints.front().hash ^= 1U;
+        const QJsonObject statistics = qtd::automation::gameStatistics(content, replay);
+        QVERIFY(!statistics["error"_L1].toString().isEmpty());
+        QVERIFY(!qtd::automation::gameStatistics(content, recorder.replay()).contains("error"_L1));
     }
 
     void theReportGoesToAFile()

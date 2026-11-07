@@ -333,3 +333,12 @@ Vom Menschen am 2026-11-06 aus vier Demos gewählt, ergänzt E-32 und den Auftra
 - **Hash und Replays:** Der Inhalts-Hash rechnet über die geladenen Inhalte, nicht über die Datei. Gleiche Werte geben denselben Hash, die Golden Replays bleiben gültig. Ein Replay nennt weiter nur die Karte.
 - **Grenze:** Wer eine Karte an einen anderen Ort kopiert, muss den Katalog mitnehmen. Ein Katalog kann keinen weiteren nennen.
 
+## E-38 Der gute Bot und was das Balancing misst
+
+- **Aufgabe:** Der Auftrag verlangt Balancing-Läufe mit einem naiven und einem guten Bot. Der gute Bot ist die Messlatte für „mit Verstand gespielt", nicht der beste denkbare Spieler.
+- **Bauen:** Der Bot schätzt für jeden Turmtyp auf jedem freien Feld den Wert je Gold: Punkte des Pfads in Reichweite (alle halbe Felder) mal Schaden je Tick. Der Schaden ist der mittlere Wurf durch die Abklingzeit, mal eins plus Flächenradius, mal eins plus Verlangsamung, plus Gift über seine Dauer, mal dem Anteil, den die Welle der Karte von dieser Schadensart nimmt (nach Gesundheit gewichtet). Upgrades zählen den Zuwachs je Gold. Er spart auf den besten Plan und denkt ihn jede Sekunde neu. Drehen probiert er nur, damit ein Turm passt. Ein Turm, der nur verlangsamt und keinen Schaden macht, ist ihm nichts wert. Seine Schätzungen rechnet er in `double`: Er gehört nicht zu den Regeln, braucht kein Festkomma und bleibt auf derselben Maschine wiederholbar.
+- **Zauber:** Abkühlende Zauber übergeht er. Bereit gewirkt in die dichteste Gruppe ab drei Gegnern im Radius, oder auf einen Gegner im letzten Viertel des Pfads.
+- **Nicht:** Er verkauft nicht, nutzt keine Karten, Würfel und Münzen und zieht keine Wellen vor. Das bleibt Spielern überlassen und kann später dazukommen.
+- **Messen:** `qtd_headless --statistics` ergänzt je Spiel das Gold je Turmtyp der stehenden Türme und eine Goldkurve. Die Werte entstehen aus dem Replay nach dem Spiel, der Bot wird beim Spielen nicht beobachtet. Die Zielkorridore und die Prüfstufe folgen mit dem Abstimmen der Werte.
+- **Befund vor dem Abstimmen:** Naiver und guter Bot gewinnen alle neun Karten mit jedem geprüften Seed, oft mit gleich vielen Leben. Die Karten sind zu leicht (vgl. E-29).
+

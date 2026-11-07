@@ -80,7 +80,7 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | `--map <Datei>` | Inhaltsdatei, Pflicht |
 | `--seed <Zahl>` | Seed des ersten Spiels. Standard: der Seed des Skripts, ohne Skript 1 |
 | `--runs <Zahl>` | Anzahl Spiele, die Seeds zählen hoch |
-| `--bot <Name>` | Wer spielt: `idle`, `naive` oder `fuzz`. Schließt `--script` aus. Verletzt ein Spiel eine Invariante, endet der Lauf mit Exit-Code 1 und das Spiel liegt als Replay in `--record` oder `failure-<Seed>.replay.json`. `fuzz` nennt jeden Seed vorab auf der Fehlerausgabe, denn ein Absturz hinterlässt kein Replay |
+| `--bot <Name>` | Wer spielt: `idle`, `naive`, `good` (E-38) oder `fuzz`. Schließt `--script` aus. Verletzt ein Spiel eine Invariante, endet der Lauf mit Exit-Code 1 und das Spiel liegt als Replay in `--record` oder `failure-<Seed>.replay.json`. `fuzz` nennt jeden Seed vorab auf der Fehlerausgabe, denn ein Absturz hinterlässt kein Replay |
 | `--mode <Name>` | `campaign` (Standard) oder `endless` (E-36). Standard: der Modus des Skripts. Der Bericht nennt bei `endless` zusätzlich `mode` und `rounds` |
 | `--script <Datei>` | Spielt die Befehle der Datei |
 | `--replay <Datei>` | Prüft ein Replay gegen `--map` bis zu seinem Ende, Tick für Tick auch die Invarianten (Bericht `"invariant"`, Exit-Code 1). Schließt `--seed`, `--mode`, `--runs`, `--bot`, `--script`, `--record`, `--max-ticks` und `--benchmark` aus |
@@ -88,6 +88,7 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | `--output <Datei>` | Schreibt den Bericht zusätzlich in eine Datei |
 | `--max-ticks <Zahl>` | Beendet ein Spiel spätestens bei diesem Tick, spätere Befehle entfallen. Standard 1000000 |
 | `--benchmark` | Ergänzt gemessene Tick-Dauern, sonst ist der Bericht je Eingabe gleich |
+| `--statistics` | Ergänzt je Spiel `statistics`: `spent` (Gold je Turmtyp der stehenden Türme, mit Upgrades) und `goldCurve` (Gold nach den Befehlen von Tick 0, dann alle 300 Ticks und am Ende, E-38). Schließt `--replay` aus |
 | `--control` | Spricht das JSON-Protokoll auf Standard-Ein- und -Ausgabe (`docs/Steuerschnittstelle.md`). Schließt alle anderen Optionen aus. Standardmäßig aus |
 | `--build-info` | Programm und Version als JSON |
 

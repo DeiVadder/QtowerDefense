@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 11 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/12-guter-bot`:** Der gute Bot (`--bot good`) und `qtd_headless --statistics` mit Gold je Turmtyp und Goldkurve (E-38). Beide Bots gewinnen noch jede Karte.
 - **Dazu aus `feature/12-katalog`:** Türme, Gegner und Zauber der Kampagnenkarten in einem gemeinsamen `content/catalog.json` (E-37). Hashes und Golden Replays unverändert.
 - **Dazu aus `feature/11-endlos-ui`:** Schild „Endless" im Menü, Weltkarte im Endlosmodus mit Bestwert je Abschnitt, Runde im HUD, Runden und Bestwert auf der Endtafel (E-36).
 - **Dazu aus `feature/11-endlos-kern`:** Endlosmodus in Core: die Welle kommt immer wieder und jedes Mal stärker, kein Sieg, gezählt werden Runden. Im Replay, in `qtd_headless --mode` und in `startMap` (E-36).

@@ -16,6 +16,8 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `HeadlessGame` | class | `control_session.cpp` | A game without a window, for qtd_headless. |
 | `ControlSession` | class | `control_session.h` | The control interface without its transport: one JSON request in, one JSON answer out. |
 | `ControlledGame` | class | `control_session.h` | Where a controlled game lives: on its own in qtd_headless, on the screen in the real game. |
+| `GoodBot` | class | `good_bot.cpp` |  |
+| `Plan` | struct | `good_bot.cpp` | Something to spend gold on and what it is worth, in damage on the path per gold. |
 | `CommandLine` | struct | `headless_runner.cpp` | The options of the command line. |
 | `HeadlessArguments` | struct | `headless_runner.h` | Holds the options, or an error text. |
 | `HeadlessOptions` | struct | `headless_runner.h` | What a run of qtd_headless should do, see docs/Architektur.md. |

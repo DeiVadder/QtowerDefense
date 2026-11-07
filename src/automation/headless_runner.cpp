@@ -1,6 +1,7 @@
 #include "automation/headless_runner.h"
 
 #include "automation/report.h"
+#include "automation/statistics.h"
 #include "core/content_loader.h"
 #include "core/replay.h"
 #include "core/simulation.h"
@@ -214,7 +215,11 @@ HeadlessOutcome playGames(const HeadlessOptions &options, const core::Content &c
         if (!problem.isEmpty()) {
             return keepBrokenGame(problem, replay, options.record);
         }
-        games.append(gameReport(recorder.simulation(), replay, seed));
+        QJsonObject report = gameReport(recorder.simulation(), replay, seed);
+        if (options.statistics) {
+            report.insert("statistics"_L1, gameStatistics(content, replay));
+        }
+        games.append(report);
 
         QString error;
         if (!options.record.isEmpty() && !writeFile(options.record, core::toJson(replay), &error)) {
@@ -246,7 +251,7 @@ QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
                            options.script.isEmpty() && options.record.isEmpty() &&
                            options.output.isEmpty() && !options.seed && !options.mode &&
                            options.runs == 1 && options.bot == BotKind::Idle && !maxTicksGiven &&
-                           !options.benchmark;
+                           !options.benchmark && !options.statistics;
         return alone ? QString() : u"--control takes its games from the protocol"_s;
     }
     if (options.map.isEmpty()) {
@@ -269,7 +274,7 @@ QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
          !options.script.isEmpty() || !options.record.isEmpty())) {
         return u"--replay brings its own seed and commands"_s;
     }
-    if (!options.replay.isEmpty() && (maxTicksGiven || options.benchmark)) {
+    if (!options.replay.isEmpty() && (maxTicksGiven || options.benchmark || options.statistics)) {
         return u"--replay runs to its end and measures nothing"_s;
     }
     return {};
@@ -308,6 +313,9 @@ std::optional<BotKind> botFromName(const QString &name)
     if (name == "fuzz"_L1) {
         return BotKind::Fuzz;
     }
+    if (name == "good"_L1) {
+        return BotKind::Good;
+    }
     return std::nullopt;
 }
 
@@ -321,7 +329,8 @@ struct CommandLine
         u"seed"_s, u"Seed of the first game, default: of the script, or 1."_s, u"number"_s};
     QCommandLineOption runs{
         u"runs"_s, u"Number of games, seeds count up, default 1."_s, u"number"_s};
-    QCommandLineOption bot{u"bot"_s, u"Who plays: idle, the default, naive or fuzz."_s, u"name"_s};
+    QCommandLineOption bot{
+        u"bot"_s, u"Who plays: idle, the default, naive, good or fuzz."_s, u"name"_s};
     QCommandLineOption mode{u"mode"_s,
                             u"campaign, the default, or endless: the wave comes again, stronger."_s,
                             u"name"_s};
@@ -332,6 +341,8 @@ struct CommandLine
     QCommandLineOption maxTicks{
         u"max-ticks"_s, u"Stop a game at this tick, default 1000000."_s, u"number"_s};
     QCommandLineOption benchmark{u"benchmark"_s, u"Add measured tick durations."_s};
+    QCommandLineOption statistics{
+        u"statistics"_s, u"Add gold spent by tower type and the gold curve of every game."_s};
     QCommandLineOption control{u"control"_s, u"Speak the JSON protocol on stdin and stdout."_s};
 };
 
@@ -346,12 +357,13 @@ void readOptions(const QCommandLineParser &parser,
     options.record = parser.value(line.record);
     options.output = parser.value(line.output);
     options.benchmark = parser.isSet(line.benchmark);
+    options.statistics = parser.isSet(line.statistics);
     options.control = parser.isSet(line.control);
     if (parser.isSet(line.bot)) {
         const QString name = parser.value(line.bot);
         const std::optional<BotKind> bot = botFromName(name);
         if (!bot) {
-            result->error = u"unknown bot \"%1\", available: idle, naive, fuzz"_s.arg(name);
+            result->error = u"unknown bot \"%1\", available: idle, naive, good, fuzz"_s.arg(name);
             return;
         }
         options.bot = *bot;
@@ -395,6 +407,7 @@ HeadlessArguments parseHeadlessArguments(const QStringList &arguments)
                        line.output,
                        line.maxTicks,
                        line.benchmark,
+                       line.statistics,
                        line.control});
 
     HeadlessArguments result;
