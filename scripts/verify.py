@@ -30,6 +30,7 @@ TIDY_JOBS = 6
 FUZZ_MAPS = ("training_ground.json", "mire_siege.json", "benchmark_arena.json")
 FUZZ_RUNS = 40
 FUZZ_TIMEOUT_SECONDS = 300
+BALANCING_RUNS = 50
 FIRST_WINDOWS_EXCEPTION = 0xC0000000
 TIMED_OUT = -1
 TIDY_TIMEOUT_SECONDS = 300
@@ -189,7 +190,7 @@ FULL_STAGES = [
     ("UBSan", stage_build_and_test("ubsan")),
     ("coverage", stage_coverage),
     ("fuzz bot (ASan, UBSan)", stage_fuzz),
-    ("balancing runs", missing("arrives with stage 12 (balancing)")),
+    ("balancing runs", stage_script(SCRIPTS / "balancing.py", "--runs", BALANCING_RUNS)),
     ("smoke test with screenshot", stage_script(SCRIPTS / "smoke_test.py")),
 ]
 

@@ -4,7 +4,7 @@
         {
             "id": "ballista",
             "cost": 50,
-            "range": "3.5",
+            "range": "4",
             "cooldownTicks": 20,
             "damageMin": "2",
             "damageMax": "4.5",
@@ -12,13 +12,13 @@
             "footprint": [{ "x": 0, "y": 0 }],
             "upgrades": [
                 { "cost": 40, "damageMin": "3", "damageMax": "6" },
-                { "cost": 70, "range": "4", "damageMin": "4.5", "damageMax": "8" }
+                { "cost": 70, "range": "4.5", "damageMin": "4.5", "damageMax": "8" }
             ]
         },
         {
             "id": "twin_ballista",
-            "cost": 90,
-            "range": "4",
+            "cost": 85,
+            "range": "4.5",
             "cooldownTicks": 20,
             "damageMin": "3",
             "damageMax": "6",
@@ -31,11 +31,11 @@
         },
         {
             "id": "bastion",
-            "cost": 120,
+            "cost": 110,
             "range": "4.5",
             "cooldownTicks": 30,
-            "damageMin": "6",
-            "damageMax": "9",
+            "damageMin": "7",
+            "damageMax": "10",
             "damageType": "fire",
             "footprint": [{ "x": 0, "y": 0 }, { "x": 1, "y": 0 }, { "x": 0, "y": 1 }],
             "upgrades": [
@@ -45,11 +45,11 @@
         },
         {
             "id": "horseshoe",
-            "cost": 150,
+            "cost": 140,
             "range": "5",
             "cooldownTicks": 25,
-            "damageMin": "6",
-            "damageMax": "10",
+            "damageMin": "7",
+            "damageMax": "11",
             "damageType": "physical",
             "footprint": [
                 { "x": -1, "y": -1 },
@@ -87,29 +87,29 @@
         },
         {
             "id": "venom_spire",
-            "cost": 60,
-            "range": "3",
+            "cost": 55,
+            "range": "3.75",
             "cooldownTicks": 40,
             "damageMin": "0.5",
             "damageMax": "1",
             "damageType": "magic",
-            "effects": [{ "kind": "poison", "strength": "0.05", "durationTicks": 90 }],
+            "effects": [{ "kind": "poison", "strength": "0.14", "durationTicks": 90 }],
             "footprint": [{ "x": 0, "y": 0 }],
             "upgrades": [
                 {
                     "cost": 50,
-                    "effects": [{ "kind": "poison", "strength": "0.08", "durationTicks": 120 }]
+                    "effects": [{ "kind": "poison", "strength": "0.19", "durationTicks": 120 }]
                 },
                 {
                     "cost": 80,
-                    "range": "3.5",
-                    "effects": [{ "kind": "poison", "strength": "0.12", "durationTicks": 150 }]
+                    "range": "4.25",
+                    "effects": [{ "kind": "poison", "strength": "0.25", "durationTicks": 150 }]
                 }
             ]
         },
         {
             "id": "catapult",
-            "cost": 110,
+            "cost": 100,
             "range": "5",
             "cooldownTicks": 60,
             "damageMin": "5",
@@ -126,7 +126,7 @@
     "enemies": [
         {
             "id": "mire_goblin",
-            "health": "12",
+            "health": "31",
             "speedPerTick": "0.05",
             "bounty": 8,
             "lifeCost": 1,
@@ -137,7 +137,7 @@
         },
         {
             "id": "stone_troll",
-            "health": "30",
+            "health": "78",
             "speedPerTick": "0.035",
             "bounty": 20,
             "lifeCost": 2,
@@ -149,14 +149,14 @@
         },
         {
             "id": "swamp_rat",
-            "health": "6",
+            "health": "16",
             "speedPerTick": "0.09",
             "bounty": 4,
             "lifeCost": 1
         },
         {
             "id": "iron_beetle",
-            "health": "22",
+            "health": "57",
             "speedPerTick": "0.04",
             "bounty": 14,
             "lifeCost": 1,
@@ -167,7 +167,7 @@
         },
         {
             "id": "ember_imp",
-            "health": "14",
+            "health": "36",
             "speedPerTick": "0.065",
             "bounty": 10,
             "lifeCost": 1,
@@ -178,7 +178,7 @@
         },
         {
             "id": "frost_wraith",
-            "health": "16",
+            "health": "42",
             "speedPerTick": "0.055",
             "bounty": 11,
             "lifeCost": 1,
@@ -190,7 +190,7 @@
         },
         {
             "id": "moss_shaman",
-            "health": "18",
+            "health": "47",
             "speedPerTick": "0.045",
             "bounty": 13,
             "lifeCost": 1,
@@ -199,7 +199,7 @@
         },
         {
             "id": "hex_warden",
-            "health": "24",
+            "health": "62",
             "speedPerTick": "0.04",
             "bounty": 15,
             "lifeCost": 2,
@@ -210,7 +210,7 @@
         },
         {
             "id": "bog_titan",
-            "health": "220",
+            "health": "572",
             "speedPerTick": "0.025",
             "bounty": 120,
             "lifeCost": 3,
@@ -223,7 +223,7 @@
         },
         {
             "id": "cinder_drake",
-            "health": "180",
+            "health": "468",
             "speedPerTick": "0.04",
             "bounty": 150,
             "lifeCost": 3,

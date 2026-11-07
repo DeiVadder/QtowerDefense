@@ -7,8 +7,10 @@
 #include <cstddef>
 #include <iterator>
 #include <map>
+#include <numeric>
 #include <optional>
 #include <tuple>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -35,6 +37,44 @@ struct Plan
     core::Command command;
     qint64 cost = 0;
     double value = 0;
+};
+
+/// The best plan, and the best one the gold pays for now. Waiting for the better one only pays
+/// when it is clearly better: the wave does not wait.
+class Choice
+{
+public:
+    explicit Choice(qint64 gold) : gold_(gold) {}
+
+    [[nodiscard]] bool wants(double value, qint64 cost) const
+    {
+        return value > 0 && (!best_ || value > best_->value ||
+                             (cost <= gold_ && (!affordable_ || value > affordable_->value)));
+    }
+
+    void offer(const Plan &plan)
+    {
+        if (!best_ || plan.value > best_->value) {
+            best_ = plan;
+        }
+        if (plan.cost <= gold_ && (!affordable_ || plan.value > affordable_->value)) {
+            affordable_ = plan;
+        }
+    }
+
+    [[nodiscard]] std::optional<Plan> pick() const
+    {
+        if (affordable_ && best_ && affordable_->value * kPatience >= best_->value) {
+            return affordable_;
+        }
+        return best_;
+    }
+
+private:
+    static constexpr double kPatience = 1.5; // waits for a plan worth half as much again
+    qint64 gold_ = 0;
+    std::optional<Plan> best_;
+    std::optional<Plan> affordable_;
 };
 
 /// Points along the path, where the enemies will be.
@@ -67,25 +107,48 @@ std::array<double, core::kDamageTypes> waveShares(const core::Content &content)
 }
 
 /// Damage a tower of this level does per tick on each point of the path it reaches, before the
-/// resistances. A tower that only slows is worth nothing here, see E-38.
-double damagePerTick(const core::TowerLevel &level)
+/// resistances: its hits, and its poison apart, because the poisons of two towers do not add up.
+/// The strongest one works (E-28).
+struct Damage
+{
+    double hit = 0;
+    double poison = 0;
+};
+
+/// Poison counts for as long as it works between two shots: the tower mostly hits the same enemy
+/// again.
+Damage damagePerTick(const core::TowerLevel &level, double share)
 {
     const auto cooldown = static_cast<double>(level.cooldownTicks);
-    double damage = (real(level.damageMin) + real(level.damageMax)) / 2 / cooldown;
-    damage *= 1 + real(level.splashRadius);
+    const double hit = (real(level.damageMin) + real(level.damageMax)) / 2 / cooldown;
+    const double poison = std::accumulate(
+        level.effects.begin(),
+        level.effects.end(),
+        0.0,
+        [&level, cooldown](double strongest, const core::StatusEffect &effect) {
+            if (effect.kind != core::StatusKind::Poison) {
+                return strongest;
+            }
+            const qint64 working = std::min(effect.durationTicks, level.cooldownTicks);
+            return std::max(strongest,
+                            real(effect.strength) * static_cast<double>(working) / cooldown);
+        });
+    const double spread = share * (1 + real(level.splashRadius));
+    return {hit * spread, poison * spread};
+}
+
+/// How much longer the enemies stay on a point a tower of this level slows: at half the speed,
+/// twice as long, so every other tower there does twice the damage.
+double slowGain(const core::TowerLevel &level, double share)
+{
+    double gain = 0;
     for (const core::StatusEffect &effect : level.effects) {
-        switch (effect.kind) {
-        case core::StatusKind::Slow:
-            damage *= 1 + real(effect.strength);
-            break;
-        case core::StatusKind::Poison:
-            damage += real(effect.strength) *
-                      static_cast<double>(std::min(effect.durationTicks, level.cooldownTicks)) /
-                      cooldown;
-            break;
+        if (effect.kind == core::StatusKind::Slow) {
+            const double strength = std::min(real(effect.strength) * share, real(core::maxSlow()));
+            gain = std::max(gain, strength / (1 - strength));
         }
     }
-    return damage;
+    return gain;
 }
 
 class GoodBot : public Bot
@@ -123,54 +186,91 @@ public:
 
 private:
     /// The points of the path a tower on this cell reaches.
-    qint64 coverage(core::Cell cell, core::Fixed range)
+    const std::vector<std::size_t> &pointsInRange(core::Cell cell, core::Fixed range)
     {
         const std::tuple<qint64, qint64, qint64> key{cell.x, cell.y, range.raw()};
-        const std::map<std::tuple<qint64, qint64, qint64>, qint64>::const_iterator known =
-            coverage_.find(key);
-        if (known != coverage_.end()) {
+        const std::map<std::tuple<qint64, qint64, qint64>, std::vector<std::size_t>>::iterator
+            known = reach_.find(key);
+        if (known != reach_.end()) {
             return known->second;
         }
         const core::Point centre = core::centreOf(cell);
-        const core::Fixed reach = range * range;
-        const qint64 count = std::ranges::count_if(samples_, [&](core::Point point) {
-            return core::distanceSquared(centre, point) <= reach;
-        });
-        coverage_.emplace(key, count);
-        return count;
+        const core::Fixed limit = range * range;
+        std::vector<std::size_t> points;
+        for (std::size_t index = 0; index < samples_.size(); ++index) {
+            if (core::distanceSquared(centre, samples_[index]) <= limit) {
+                points.push_back(index);
+            }
+        }
+        return reach_.emplace(key, std::move(points)).first->second;
     }
 
+    /// What the towers that stand do on each point of the path: hits, the strongest poison and
+    /// how much they slow. A tower that is to be upgraded counts here with its old level.
+    void mapTowers(const core::Simulation &game)
+    {
+        hitAt_.assign(samples_.size(), 0);
+        poisonAt_.assign(samples_.size(), 0);
+        slowAt_.assign(samples_.size(), 0);
+        for (const core::Tower &tower : game.state().towers) {
+            const core::TowerType &type = game.content().towers[tower.type];
+            const core::TowerLevel &stats = type.levels[tower.level];
+            const double share = shares_[static_cast<std::size_t>(type.damageType)];
+            const Damage damage = damagePerTick(stats, share);
+            const double slow = slowGain(stats, share);
+            for (const std::size_t point : pointsInRange(tower.cell, stats.range)) {
+                hitAt_[point] += damage.hit;
+                poisonAt_[point] = std::max(poisonAt_[point], damage.poison);
+                slowAt_[point] = std::max(slowAt_[point], slow);
+            }
+        }
+    }
+
+    /// The damage a tower adds on the path: its hits and the poison beyond the strongest there,
+    /// longer where others slow, and the damage of the others where it slows more than they do.
     double worth(const core::TowerType &type, std::size_t level, core::Cell cell)
     {
         const core::TowerLevel &stats = type.levels[level];
-        return damagePerTick(stats) * shares_[static_cast<std::size_t>(type.damageType)] *
-               static_cast<double>(coverage(cell, stats.range));
+        const double share = shares_[static_cast<std::size_t>(type.damageType)];
+        const Damage damage = damagePerTick(stats, share);
+        const double slow = slowGain(stats, share);
+        const std::vector<std::size_t> &points = pointsInRange(cell, stats.range);
+        return std::accumulate(
+            points.begin(), points.end(), 0.0, [&](double sum, std::size_t point) {
+                const double own = damage.hit + std::max(0.0, damage.poison - poisonAt_[point]);
+                const double others = hitAt_[point] + poisonAt_[point];
+                return sum + own * (1 + slowAt_[point]) +
+                       others * std::max(0.0, slow - slowAt_[point]);
+            });
     }
 
     std::optional<Plan> bestPlan(const core::Simulation &game)
     {
-        std::optional<Plan> best = bestUpgrade(game);
+        mapTowers(game);
+        Choice choice(game.state().gold);
+        offerUpgrades(game, &choice);
         for (std::size_t type = 0; type < game.content().towers.size(); ++type) {
-            improveWithBuild(game, type, &best);
+            offerBuilds(game, type, &choice);
         }
-        return best;
+        return choice.pick();
     }
 
-    /// Replaces the plan with a tower of this type where it is worth more per gold.
-    void improveWithBuild(const core::Simulation &game, std::size_t type, std::optional<Plan> *best)
+    /// Offers a tower of this type where it is worth more per gold.
+    void offerBuilds(const core::Simulation &game, std::size_t type, Choice *choice)
     {
         const core::Content &content = game.content();
         const core::TowerType &tower = content.towers[type];
-        const auto cost = static_cast<double>(std::max<qint64>(tower.levels.front().cost, 1));
+        const qint64 cost = tower.levels.front().cost;
         for (qint64 y = 0; y < content.grid.height(); ++y) {
             for (qint64 x = 0; x < content.grid.width(); ++x) {
-                const double value = worth(tower, 0, {x, y}) / cost;
-                if (value <= 0 || (*best && value <= (*best)->value)) {
+                const double value =
+                    worth(tower, 0, {x, y}) / static_cast<double>(std::max<qint64>(cost, 1));
+                if (!choice->wants(value, cost)) {
                     continue;
                 }
                 if (const std::optional<core::BuildTowerCommand> build =
                         placement(game, type, {x, y})) {
-                    *best = Plan{*build, tower.levels.front().cost, value};
+                    choice->offer(Plan{*build, cost, value});
                 }
             }
         }
@@ -192,9 +292,8 @@ private:
         return std::nullopt;
     }
 
-    std::optional<Plan> bestUpgrade(const core::Simulation &game)
+    void offerUpgrades(const core::Simulation &game, Choice *choice)
     {
-        std::optional<Plan> best;
         for (const core::Tower &tower : game.state().towers) {
             const core::TowerType &type = game.content().towers[tower.type];
             if (tower.level + 1 >= type.levels.size()) {
@@ -204,11 +303,10 @@ private:
             const double gain =
                 worth(type, tower.level + 1, tower.cell) - worth(type, tower.level, tower.cell);
             const double value = gain / static_cast<double>(std::max<qint64>(cost, 1));
-            if (value > 0 && (!best || value > best->value)) {
-                best = Plan{core::UpgradeTowerCommand{tower.id}, cost, value};
+            if (choice->wants(value, cost)) {
+                choice->offer(Plan{core::UpgradeTowerCommand{tower.id}, cost, value});
             }
         }
-        return best;
     }
 
     /// A ready spell into the thickest crowd, or on an enemy that is about to get through.
@@ -266,7 +364,10 @@ private:
 
     std::vector<core::Point> samples_;
     std::array<double, core::kDamageTypes> shares_{};
-    std::map<std::tuple<qint64, qint64, qint64>, qint64> coverage_;
+    std::map<std::tuple<qint64, qint64, qint64>, std::vector<std::size_t>> reach_;
+    std::vector<double> hitAt_;
+    std::vector<double> poisonAt_;
+    std::vector<double> slowAt_;
     std::optional<Plan> plan_;
     qint64 replanTick_ = 0;
 };

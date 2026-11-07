@@ -9,6 +9,7 @@
 #include <QTest>
 
 #include <cstddef>
+#include <cstdlib>
 #include <memory>
 #include <optional>
 #include <variant>
@@ -66,7 +67,7 @@ private slots:
         }
     }
 
-    // The bar is low on purpose: the balance of the maps comes with stage 12.
+    // How often the naive bot wins is a corridor of docs/Balancing.md, not a rule of the game.
     static void everyMapOfTheWorldCanBeWonButNotWithoutTowers()
     {
         QFETCH(const QString, map);
@@ -86,7 +87,6 @@ private slots:
                 .toObject()[QLatin1StringView("status")]
                 .toString();
         };
-        QCOMPARE(statusWith(BotKind::Naive), QStringLiteral("won"));
         QCOMPARE(statusWith(BotKind::Good), QStringLiteral("won"));
         QCOMPARE(statusWith(BotKind::Idle), QStringLiteral("lost"));
     }
@@ -187,6 +187,45 @@ private slots:
         QCOMPARE(game.state().towers.size(), std::size_t{1});
         const Command next = qtd::tests::required(bot->nextCommand(game));
         QCOMPARE(std::get<UpgradeTowerCommand>(next).tower, game.state().towers.front().id);
+    }
+
+    // A tower that only slows does nothing alone. Next to the arrow it doubles the time the
+    // enemies spend there, worth the whole damage of the arrow, more per gold than a second one.
+    static void theGoodBotSlowsWhereItsTowersShoot()
+    {
+        Simulation game(qtd::tests::contentOf(qtd::tests::editedJson(R"("towers": [{)",
+                                                                     R"("towers": [{
+            "id": "frost", "cost": 30, "range": "3", "cooldownTicks": 4, "damageMin": "0.1",
+            "damageMax": "0.1", "damageType": "ice", "footprint": [{"x": 0, "y": 0}],
+            "effects": [{"kind": "slow", "strength": "0.5", "durationTicks": 10}]}, {)")),
+                        1);
+        const std::unique_ptr<Bot> bot = qtd::automation::makeBot(BotKind::Good, 1);
+        const Command first = qtd::tests::required(bot->nextCommand(game));
+        QCOMPARE(std::get<BuildTowerCommand>(first).towerType, 1);
+        game.execute(first);
+        const BuildTowerCommand second =
+            std::get<BuildTowerCommand>(qtd::tests::required(bot->nextCommand(game)));
+        QCOMPARE(second.towerType, 0);
+        QVERIFY(std::abs(second.cell.x - 3) <= 1);
+    }
+
+    // With 40 gold, a cannon for 60 must pay half as much again per gold to be worth the wait.
+    static void theGoodBotWaitsOnlyForAClearlyBetterTower()
+    {
+        const auto firstWith = [](const char *damage) {
+            const QByteArray cannon = QByteArray(R"("towers": [{
+                "id": "cannon", "cost": 60, "range": "3", "cooldownTicks": 4, "damageMin": "D",
+                "damageMax": "D", "damageType": "physical", "footprint": [{"x": 0, "y": 0}]}, {)")
+                                          .replace("D", damage);
+            const Simulation game(
+                qtd::tests::contentOf(qtd::tests::editedJson(R"("towers": [{)", cannon)
+                                          .replace(R"("startGold": 100)", R"("startGold": 40)")),
+                1);
+            return qtd::automation::makeBot(BotKind::Good, 1)->nextCommand(game);
+        };
+        const std::optional<Command> slightlyBetter = firstWith("3.5");
+        QCOMPARE(std::get<BuildTowerCommand>(qtd::tests::required(slightlyBetter)).towerType, 1);
+        QVERIFY(!firstWith("6").has_value());
     }
 
     // Two enemies make no crowd. The spell waits until the runner reaches the last quarter of the

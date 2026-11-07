@@ -24,9 +24,9 @@ cmd /c ".\scripts\setup-hooks.cmd"
 ## `scripts/verify`
 
 - `--quick`: Build und Tests (debug), Format, Quellregeln (Länge, Schichten, Determinismus, Selbsttests der Skripte), qmllint, clang-tidy auf geänderten Dateien, Golden Replays.
-- voll: zusätzlich clang-tidy gesamt, cppcheck, Release, ASan, UBSan, Coverage, Fuzz, Balancing, Smoke-Test.
+- voll: zusätzlich clang-tidy gesamt, cppcheck, Release, ASan, UBSan, Coverage, Fuzz, Balancing (`scripts/balancing.py` mit den Korridoren aus `docs/Balancing.md`, E-39), Smoke-Test.
 - Golden Replays laufen als CTest-Label `golden`. Nach einer gewollten Regeländerung: `cmd /c ".\scripts\env.cmd && python scripts\update_golden.py"`, in einem eigenen, begründeten Commit, dazu den Hash in `tests/CMakeLists.txt` anpassen.
-- Jede Stufe endet als PASS, FAIL oder MISSING. MISSING heißt: Das Geprüfte gibt es noch nicht (Balancing). Es lässt den Lauf nicht scheitern, wird aber angezeigt und am Ende gezählt.
+- Jede Stufe endet als PASS, FAIL oder MISSING. MISSING heißt: Das Geprüfte gibt es noch nicht. Es lässt den Lauf nicht scheitern, wird aber angezeigt und am Ende gezählt.
 - Protokolle je Stufe: `build/verify-logs/`.
 
 ## Installierte Werkzeuge

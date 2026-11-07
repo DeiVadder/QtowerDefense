@@ -16,6 +16,8 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `HeadlessGame` | class | `control_session.cpp` | A game without a window, for qtd_headless. |
 | `ControlSession` | class | `control_session.h` | The control interface without its transport: one JSON request in, one JSON answer out. |
 | `ControlledGame` | class | `control_session.h` | Where a controlled game lives: on its own in qtd_headless, on the screen in the real game. |
+| `Choice` | class | `good_bot.cpp` | The best plan, and the best one the gold pays for now. |
+| `Damage` | struct | `good_bot.cpp` | Damage a tower of this level does per tick on each point of the path it reaches, before the resistances: its hits, and its poison apart, because the poisons of two towers do not add up. |
 | `GoodBot` | class | `good_bot.cpp` |  |
 | `Plan` | struct | `good_bot.cpp` | Something to spend gold on and what it is worth, in damage on the path per gold. |
 | `CommandLine` | struct | `headless_runner.cpp` | The options of the command line. |

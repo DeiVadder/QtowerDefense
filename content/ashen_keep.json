@@ -1,7 +1,7 @@
 {
     "formatVersion": 1,
-    "startGold": 300,
-    "startLives": 10,
+    "startGold": 320,
+    "startLives": 12,
     "earlyCallTicksPerGold": 15,
     "gridWidth": 17,
     "gridHeight": 11,
