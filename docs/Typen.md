@@ -33,6 +33,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `GroundField::Exit` | struct | `ground_field.h` | Where a path leaves the grid: it goes straight on from the cell, in the direction. |
 | `GroundField::Surface` | struct | `ground_field.h` | What decides the color of a place, without the fine grain. |
 | `GroundField::Tint` | struct | `ground_field.h` |  |
+| `Landmark` | struct | `landscape.h` | A model that marks a landscape on the world map. |
 | `Landscape` | struct | `landscape.h` | How a map looks. |
 | `SceneryItem` | struct | `landscape.h` | One kind of scenery. |
 | `SceneryZone` | enum class | `landscape.h` | Where a kind of scenery may stand. |
@@ -51,6 +52,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `TerrainMesh` | class | `terrain_mesh.h` | The ground as one mesh, in the coordinates of the map: the board and the land around it. |
 | `GridCellPicture` | class | `terrain_picture.h` | One cell of the grid that shows where towers go: a thin frame, the rest is clear. |
 | `TerrainPicture` | class | `terrain_picture.h` | The colors of the ground. |
+| `WorldSession` | class | `world_session.h` | The campaign world for QML: its sections, which are open and the stars won (E-32). |
 
 ## core
 
@@ -111,3 +113,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Fnv1a64` | class | `state_hash.h` | FNV-1a with 64 bits. |
 | `TickClock` | class | `tick_clock.h` | Turns the time between two frames into ticks. |
 | `Version` | struct | `version.h` | A semantic version, ordered by major, minor, then patch number. |
+| `CampaignProgress` | struct | `world.h` | What a player has done in the world: the best stars of each section, 0 if not won yet. |
+| `World` | struct | `world.h` | The sections of the campaign and the ways between them. |
+| `WorldLoadResult` | struct | `world.h` | Holds the world, or an error text that names the place of the problem. |
+| `WorldSection` | struct | `world.h` | One part of the campaign world (E-32). |

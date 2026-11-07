@@ -1,0 +1,200 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+import QtQuick.Window
+import QtowerDefense.Client
+
+// The campaign as one world in the fog (E-32): a framed map with a marker on every section, below
+// it a sign with the chosen section and the button to play it.
+FramedPanel {
+    id: root
+
+    required property WorldSession world
+    property real density: Screen.pixelDensity
+    readonly property var chosen: world.sections[world.selected] ?? null
+    readonly property var landscapeNames: ({
+                                               meadow: qsTr("Meadow"),
+                                               swamp: qsTr("Swamp"),
+                                               forest: qsTr("Forest"),
+                                               highland: qsTr("Highland"),
+                                               heath: qsTr("Heath"),
+                                               badlands: qsTr("Badlands"),
+                                               barrows: qsTr("Barrows"),
+                                               frost: qsTr("Frost"),
+                                               ashlands: qsTr("Ashlands")
+                                           })
+
+    signal play(int section)
+
+    unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
+                   / Theme.unitsAcross)
+
+    function iconOf(section: var): string {
+        if (section.stars > 0) {
+            return "check";
+        }
+        if (!section.open) {
+            return "lock";
+        }
+        return section.playable ? "flag" : "hourglass";
+    }
+
+    function statusOf(section: var): string {
+        if (section.playable) {
+            return "";
+        }
+        return section.open ? qsTr("Not charted yet") : qsTr("Hidden in the fog");
+    }
+
+    Rectangle {
+        id: frame
+
+        anchors.fill: parent
+        anchors.margins: root.unit * Theme.gap
+        anchors.bottomMargin: root.unit * (Theme.worldPanel + Theme.gap * 2)
+        color: Theme.ironDark
+        border.color: Theme.iron
+        border.width: Math.max(1, root.unit * Theme.chosenBorder)
+
+        WorldScene {
+            id: scene
+
+            objectName: "worldScene"
+            anchors.fill: parent
+            anchors.margins: frame.border.width
+            world: root.world
+        }
+
+        Repeater {
+            model: root.world.sections
+
+            Rectangle {
+                id: marker
+
+                required property var modelData
+                required property int index
+
+                readonly property bool selected: index === root.world.selected
+                // Read again when the view changes its size, the camera stays where it is.
+                readonly property vector3d place: scene.camera && scene.width + scene.height > 0
+                                                  ? scene.mapFrom3DScene(scene.placeOf(modelData,
+                                                                                       Theme.worldMarkerHeight)) :
+                                                    Qt.vector3d(0, 0, 0)
+
+                objectName: "section_" + modelData.id
+                x: scene.x + place.x - width / 2
+                y: scene.y + place.y - height / 2
+                width: root.unit * Theme.worldMarker
+                height: width
+                rotation: 45
+                radius: width * Theme.corner
+                color: modelData.open ? Theme.iron : Theme.ironDark
+                border.color: selected ? Theme.accent : Theme.ironDark
+                border.width: selected ? Math.max(Theme.thinnestChosenBorder, root.unit
+                                                  * Theme.chosenBorder) * 2 : 1
+
+                GameIcon {
+                    anchors.centerIn: parent
+                    width: parent.width * Theme.iconSize
+                    height: width
+                    rotation: -45
+                    name: root.iconOf(marker.modelData)
+                    fill: marker.modelData.stars > 0 ? Theme.gold : Theme.text
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    Accessible.role: Accessible.Button
+                    Accessible.name: marker.modelData.name
+                    onClicked: root.world.selected = marker.index
+                }
+            }
+        }
+    }
+
+    FramedPanel {
+        id: sign
+
+        objectName: "worldSign"
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: root.unit * Theme.gap
+        height: root.unit * Theme.worldPanel
+        unit: root.unit
+        seed: Theme.signSeed
+        visible: root.chosen !== null
+
+        Column {
+            anchors.left: parent.left
+            anchors.leftMargin: root.unit * Theme.endMargin
+            anchors.right: playButton.left
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: root.unit * Theme.iconGap
+
+            Text {
+                objectName: "sectionName"
+                width: parent.width
+                elide: Text.ElideRight
+                text: root.chosen?.name ?? ""
+                color: Theme.text
+                font.family: Theme.face
+                font.bold: true
+                font.pixelSize: root.unit * Theme.titleText
+            }
+
+            Row {
+                spacing: root.unit * Theme.gap
+
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.landscapeNames[root.chosen?.landscape] ?? ""
+                    color: Theme.gold
+                    font.family: Theme.face
+                    font.pixelSize: root.unit * Theme.bodyText
+                }
+
+                Repeater {
+                    model: 3
+
+                    GameIcon {
+                        required property int index
+
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: root.unit * Theme.worldStar
+                        height: width
+                        name: "star"
+                        fill: index < (root.chosen?.stars ?? 0) ? Theme.gold : Theme.starOff
+                    }
+                }
+
+                Text {
+                    objectName: "sectionStatus"
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: root.chosen ? root.statusOf(root.chosen) : ""
+                    color: Theme.text
+                    font.family: Theme.face
+                    font.italic: true
+                    font.pixelSize: root.unit * Theme.bodyText
+                }
+            }
+        }
+
+        HudButton {
+            id: playButton
+
+            objectName: "playButton"
+            anchors.right: parent.right
+            anchors.rightMargin: root.unit * Theme.endMargin
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.unit * Theme.worldPlay
+            height: width
+            unit: root.unit
+            icon: "sword"
+            text: qsTr("Play")
+            highlighted: available
+            available: root.chosen?.playable ?? false
+            onClicked: root.play(root.world.selected)
+        }
+    }
+}

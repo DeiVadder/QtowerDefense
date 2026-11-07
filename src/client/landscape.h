@@ -3,6 +3,7 @@
 #include <QByteArray>
 #include <QColor>
 #include <QString>
+#include <QStringList>
 
 #include <vector>
 
@@ -26,6 +27,13 @@ struct SceneryItem
     float maxSize = 1;
 };
 
+/// A model that marks a landscape on the world map. Its size is in fields of a map.
+struct Landmark
+{
+    QString model;
+    float size = 1;
+};
+
 /// How a map looks. Only the client knows it, the simulation has no landscapes (E-34).
 struct Landscape
 {
@@ -43,7 +51,14 @@ struct Landscape
     QString treeModel = QStringLiteral("tree");
     QString rockModel = QStringLiteral("rock");
     std::vector<SceneryItem> scenery;
+    std::vector<Landmark> landmarks; ///< what rises out of the fog of the world map
 };
+
+/// A landscape by its name in `landscapes.json`, the plain default for an unknown name.
+[[nodiscard]] Landscape landscapeNamed(const QString &name);
+
+/// The names of all landscapes in `landscapes.json`.
+[[nodiscard]] QStringList landscapeNames();
 
 /// The landscape of a map file, by its name in `landscapes.json`. Other maps get the fallback.
 [[nodiscard]] Landscape landscapeOfMap(const QString &mapFile);

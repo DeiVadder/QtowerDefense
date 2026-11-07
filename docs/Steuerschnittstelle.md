@@ -25,11 +25,11 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | `collectCoin` | `coin` (the id of a coin) | Runs the command: the coin pays its `value`. The answer adds `result`, `unknownCoin` once it is gone |
 | `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay. This is also how a game is saved |
 | `loadGame` | `map` (file), `file` | Goes on with a saved game and drops the current one. Needs no running game. If it fails, the current game stays |
-| `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points |
+| `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG, before a game it shows the world map. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points |
 | `pause`, `resume` | none | Real game only. Stops or starts real time |
 | `quit` | none | Real game only. Ends the program after the answer |
 
-Everything but `startMap`, `loadGame` and `quit` needs a game, which may have ended.
+Everything but `startMap`, `loadGame`, `screenshot` and `quit` needs a game, which may have ended. A screenshot before a game answers only `ok` and `screenshot`.
 
 A rejected command is not an error: the answer has `"ok": true`, a `result` such as `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold` or `unknownTower`, and the state stays as it was.
 
@@ -50,7 +50,7 @@ All answers with `"ok": true` report the state:
 
 ## In the real game
 
-The requests play the game on the screen. The game starts with time standing still, and `startMap` stops it again: only `advance` moves the game until `resume` lets it run. The observation adds `frameCosts` with `frames`, `cpuMicroseconds` and `gpuMicroseconds`, sums over all frames so far (the GPU time needs `QSG_RHI_PROFILE=1`, the CPU time is the wall clock of the render thread, including its waits, and a screenshot adds GPU time without a frame, so compare sums from before a screenshot), and `paused` and `frames`, the number of frames shown so far. As without a window, everything but `startMap` and `quit` needs a game from `startMap`: the game that the window opened with has a seed of its own. The end of the input ends the program. Qt writes its messages to the debugger unless `QT_FORCE_STDERR_LOGGING=1` is set.
+The requests play the game on the screen. The game starts with time standing still, and `startMap` stops it again: only `advance` moves the game until `resume` lets it run. The observation adds `frameCosts` with `frames`, `cpuMicroseconds` and `gpuMicroseconds`, sums over all frames so far (the GPU time needs `QSG_RHI_PROFILE=1`, the CPU time is the wall clock of the render thread, including its waits, and a screenshot adds GPU time without a frame, so compare sums from before a screenshot), and `paused` and `frames`, the number of frames shown so far. The window opens on the world map without a game. As without a window, everything but `startMap`, `screenshot` and `quit` needs a game from `startMap`. The end of the input ends the program. Qt writes its messages to the debugger unless `QT_FORCE_STDERR_LOGGING=1` is set.
 
 ## Example
 

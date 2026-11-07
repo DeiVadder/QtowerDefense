@@ -43,6 +43,9 @@ QStringList modelsOf(const Landscape &landscape)
     for (const SceneryItem &item : landscape.scenery) {
         models.append(item.model);
     }
+    for (const Landmark &landmark : landscape.landmarks) {
+        models.append(landmark.model);
+    }
     return models;
 }
 
@@ -123,11 +126,26 @@ private slots:
         QCOMPARE(landscape.scenery[0].maxSize, 2.0F);
     }
 
+    static void thereIsALandscapeForEachSectionOfTheWorld()
+    {
+        QCOMPARE(landscapeNames().size(), 9);
+    }
+
+    static void everyModelOfALandscapeIsThere_data()
+    {
+        QTest::addColumn<QString>("name");
+        for (const QString &name : landscapeNames()) {
+            QTest::newRow(qPrintable(name)) << name;
+        }
+    }
+
     static void everyModelOfALandscapeIsThere()
     {
-        const QStringList models =
-            modelsOf(landscapeOfMap(meadowMap())) + modelsOf(landscapeOfMap(swampMap()));
-        QVERIFY(std::ranges::all_of(models, hasFiles));
+        QFETCH(const QString, name);
+        const Landscape landscape = landscapeNamed(name);
+        QVERIFY(!landscape.scenery.empty());
+        QCOMPARE(landscape.landmarks.size(), std::size_t{3}); // the world map has room for three
+        QVERIFY(std::ranges::all_of(modelsOf(landscape), hasFiles));
     }
 
     static void theGroundIsFlatOnlyWhereThePlayerBuilds()

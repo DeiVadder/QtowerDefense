@@ -150,6 +150,20 @@ private slots:
         QVERIFY(picture["colors"_L1].toInt() > 8);
     }
 
+    // Before a game the window shows the world map, an agent may look at it.
+    static void aScreenshotNeedsNoGame()
+    {
+        const QTemporaryDir folder;
+        const ControlledWindow window;
+        QVERIFY(window.isOnScreen());
+        const QString file = folder.filePath(u"world.png"_s);
+        const QJsonObject answer =
+            ask(window.control(), {{"action"_L1, "screenshot"_L1}, {"file"_L1, file}});
+        QVERIFY(answer["ok"_L1].toBool());
+        QVERIFY(!answer.contains("tick"_L1));
+        QVERIFY(answer["screenshot"_L1].toObject()["colors"_L1].toInt() > 8);
+    }
+
     static void aBadScreenshotNameIsAnAnswer()
     {
         const ControlledWindow window;

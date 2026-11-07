@@ -43,6 +43,13 @@ qtd_add_test(tst_core_cards
     LIBS qtd_core
     LABELS core)
 
+qtd_add_test(tst_core_world
+    SOURCES core/scenario.h core/tst_world.cpp
+    LIBS qtd_core
+    LABELS core)
+target_compile_definitions(tst_core_world PRIVATE
+    QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
 qtd_add_test(tst_core_waves
     SOURCES core/scenario.h core/tst_waves.cpp
     LIBS qtd_core
@@ -142,6 +149,8 @@ if(NOT QTD_ENABLE_UBSAN)
         SOURCES client/tst_window.cpp
         LIBS qtd_client qtd_clientplugin
         LABELS client)
+    target_compile_definitions(tst_client_window PRIVATE
+        QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
     # Needs the GPU as well: requests play the real window.
     qtd_add_test(tst_client_screen_control
@@ -157,6 +166,11 @@ if(NOT QTD_ENABLE_UBSAN)
         LABELS client)
     target_compile_definitions(tst_client_game_session PRIVATE
         QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
+
+    qtd_add_test(tst_client_world_session
+        SOURCES client/tst_world_session.cpp
+        LIBS qtd_client
+        LABELS client)
 
     qtd_add_test(tst_client_landscape
         SOURCES client/tst_landscape.cpp

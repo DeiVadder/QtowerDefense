@@ -9,7 +9,8 @@ qt_add_library(qtd_core STATIC
     simulation_cards.cpp simulation.h
     state_hash.cpp state_hash.h
     tick_clock.cpp tick_clock.h
-    version.cpp version.h)
+    version.cpp version.h
+    world.cpp world.h)
 target_include_directories(qtd_core PUBLIC "${PROJECT_SOURCE_DIR}/src")
 target_compile_definitions(qtd_core PRIVATE
     QTD_VERSION_MAJOR=${PROJECT_VERSION_MAJOR}

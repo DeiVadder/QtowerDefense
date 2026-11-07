@@ -8,13 +8,15 @@ Item {
     id: root
 
     required property real unit
-    property var heldInfo: ({
-                                name: "",
-                                cost: 0,
-                                damage: 0,
-                                range: 0,
-                                rate: 0
-                            })
+    // A card without a tower, while no map is loaded.
+    readonly property var noTower: ({
+                                        name: "",
+                                        cost: 0,
+                                        damage: 0,
+                                        range: 0,
+                                        rate: 0
+                                    })
+    property var heldInfo: noTower
     property bool holding: false
     property point held
 

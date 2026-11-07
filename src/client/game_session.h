@@ -27,6 +27,7 @@ class GameSession : public QObject
     Q_OBJECT
     QML_ELEMENT
     Q_PROPERTY(QString error READ error NOTIFY mapChanged)
+    Q_PROPERTY(QString mapFile READ mapFile NOTIFY mapChanged)
     Q_PROPERTY(QSize gridSize READ gridSize NOTIFY mapChanged)
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
     Q_PROPERTY(QStringList towerModels READ towerModels NOTIFY mapChanged)
@@ -57,6 +58,7 @@ class GameSession : public QObject
     Q_PROPERTY(int enemyCount READ enemyCount NOTIFY stateChanged)
     Q_PROPERTY(bool won READ won NOTIFY stateChanged)
     Q_PROPERTY(bool lost READ lost NOTIFY stateChanged)
+    Q_PROPERTY(int stars READ stars NOTIFY stateChanged)
     Q_PROPERTY(bool paused READ paused WRITE setPaused NOTIFY clockChanged)
     Q_PROPERTY(int speed READ speed WRITE setSpeed NOTIFY clockChanged)
     Q_PROPERTY(int maxSpeed READ maxSpeed CONSTANT)
@@ -180,6 +182,8 @@ public:
     [[nodiscard]] int enemyCount() const;
     [[nodiscard]] bool won() const;
     [[nodiscard]] bool lost() const;
+    /// The stars of a won game, none before (E-32).
+    [[nodiscard]] int stars() const;
     [[nodiscard]] bool paused() const;
     [[nodiscard]] int speed() const;
     [[nodiscard]] int maxSpeed() const;

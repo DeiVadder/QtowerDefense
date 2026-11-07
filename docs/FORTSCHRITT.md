@@ -5,6 +5,7 @@
 - **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
 - **Dazu aus `feature/11-portrait`:** Portrait wie Demo A auf dem Eisenschild, Sprüche auf einem Hängeschild, Pause und Tempo im Bogen um das Portrait (E-34).
+- **Dazu aus `feature/11-weltkarte`:** Das Spiel öffnet auf einer Weltkarte im Nebel mit neun Abschnitten, Sterne und Freischalten nach E-32, Fortschritt in `progress.json`. Sieben Abschnitte haben noch keine Karte.
 - **Dazu aus `feature/11-dice`:** Hand mit höchstens fünf bezahlten Karten, Würfel, Laden und Papierkorb, Bonusmünzen auf der Karte, alles als Befehle in Core (E-34). Die Hand beginnt leer.
 - **Dazu aus `feature/11-karten`:** Türme als aufgefächerte Karten mit Werten, Ziehen auf die Karte oder Tippen, Raster beim Ziehen deutlich, Karte fällt auf ihr Feld (E-34).
 - **Dazu aus `feature/11-held`:** Portrait mit Blinzeln, Blick aufs Brett, Stimmungen und Sprechblase, der Held hält den Zauber in der Hand (E-34). Die Sprachausgabe fehlt noch.
@@ -32,7 +33,7 @@
 1. Etappe 11, zuvor das UI-Thema. Die übrigen Landschaften kommen mit ihren Abschnitten dazu (E-32, E-34).
 2. Vor Etappe 11: das UI-Thema nach E-34, als letzter Schritt die Weltkarte.
 3. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro.
-4. In Etappe 11: Weltkarte im Nebel mit neun Abschnitten als eigenes Feature (E-32). Das weicht vom Auftrag ab, der 3 bis 5 Karten und ein Freischalten nacheinander nennt.
+4. In Etappe 11: die sieben fehlenden Karten der Weltkarte (E-32), je Landschaft aus `landscapes.json`. Danach Menü, Einstellungen und der Held auf der Weltkarte.
 
 ## Bekannte Mängel und offene Punkte
 

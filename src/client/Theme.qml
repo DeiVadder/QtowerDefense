@@ -102,6 +102,7 @@ QtObject {
     readonly property real cardTilt: 4.5 // degrees from one card to the next
     readonly property real cardSag:
         0.067 // how far the outer cards hang, by the square of the place
+
     readonly property real cardPlank: 0.84
     readonly property real cardLift: 0.4 // the fan above the edge of the window
     readonly property real handShare: 16 // the unit of a card is at most this share of the height
@@ -130,6 +131,33 @@ QtObject {
 
     // The unit of the HUD: a finger in millimeters, at least some pixels, and a share of a window.
     readonly property real fingerSize: 9
+
+    // The world map (E-32): muted land on a grey sea, the fog covers what is not open.
+    readonly property color worldSea: "#3f565c"
+    readonly property color worldShore: "#b9a77e"
+    readonly property color worldWay: "#e2cd98"
+    readonly property color worldFog: "#e8ebe8"
+    readonly property color starOff: "#2b2f33"
+    readonly property real worldWidth: 16 // in the units of the 3D scene
+    readonly property real worldDepth: 9
+    readonly property real worldLand: 0.085 // the radius of a section, of the width of the world
+    readonly property real worldWayWidth: 0.006
+    readonly property real worldLandmark: 0.45 // of the size of a model in its landscape
+    // Where the three landmarks of a section stand, from its middle, in the units of the scene.
+    readonly property list<vector3d> worldLandmarkPlaces: [Qt.vector3d(0, 0, -0.35), Qt.vector3d(-0.8, 0,
+                                                                                                 0.3), Qt.vector3d(
+            0.8, 0, 0.4)]
+    readonly property color worldAmbient: "#737373"
+    readonly property real worldFogMiddle: 0.85 // the opacity of a cloud halfway out
+    readonly property real worldFogSize: 4.4 // the width of one cloud
+    readonly property real worldFogTop: 1.25 // the highest layer, taller models rise above it
+    readonly property real worldFogOpacity: 0.62
+    readonly property real worldMarker: 0.95
+    readonly property real worldMarkerHeight: 2.3 // above the land, in the units of the scene
+    readonly property real worldPanel: 2.6
+    readonly property real worldStar: 0.5
+    readonly property real worldPlay: 1.5
+    readonly property int worldPicture: 1600 // the width of the painted land in pixels
     readonly property real smallestUnit: 40
     readonly property real unitsAcross: 14
 

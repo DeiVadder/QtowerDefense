@@ -267,8 +267,9 @@ QByteArray ControlSession::handle(QByteArrayView request)
     if (!action) {
         return failure(u"unknown action \"%1\""_s.arg(name));
     }
-    const bool needsNoGame =
-        *action == Action::StartMap || *action == Action::LoadGame || *action == Action::Quit;
+    // A screenshot also shows the world map, before any game.
+    const bool needsNoGame = *action == Action::StartMap || *action == Action::LoadGame ||
+                             *action == Action::Quit || *action == Action::Screenshot;
     if (!needsNoGame && game_->recorder() == nullptr) {
         return failure(u"no game, use startMap first"_s);
     }
@@ -495,7 +496,8 @@ QByteArray ControlSession::saveScreenshot(core::ObjectReader &request)
     if (!problem.isEmpty()) {
         return failure(problem);
     }
-    QJsonObject answer = observation();
+    QJsonObject answer =
+        game_->recorder() != nullptr ? observation() : QJsonObject{{"ok"_L1, true}};
     answer.insert("screenshot"_L1, picture);
     return compact(answer);
 }

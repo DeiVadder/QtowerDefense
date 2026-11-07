@@ -1,15 +1,22 @@
 #include "client/game_session.h"
 #include "client/graphics.h"
+#include "client/world_session.h"
 
+#include <QFile>
 #include <QGuiApplication>
 #include <QImage>
 #include <QQmlApplicationEngine>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QSet>
+#include <QStandardPaths>
 #include <QTest>
+#include <QVariantMap>
 #include <QtQml/qqmlextensionplugin.h>
 
 Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)
+
+using namespace Qt::StringLiterals;
 
 namespace {
 
@@ -26,14 +33,44 @@ qsizetype distinctColors(const QImage &image)
     return colors.size();
 }
 
-/// The game of the real window, once that is on the screen.
-const qtd::client::GameSession *openGame(QQmlApplicationEngine *engine)
+QQuickWindow *openWindow(QQmlApplicationEngine *engine)
 {
     engine->loadFromModule("QtowerDefense.Client", "Main");
     auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().constFirst());
-    return window != nullptr && QTest::qWaitForWindowExposed(window)
-               ? window->findChild<qtd::client::GameSession *>()
-               : nullptr;
+    return window != nullptr && QTest::qWaitForWindowExposed(window) ? window : nullptr;
+}
+
+/// The game of the real window, with the first section of the world chosen on its map.
+qtd::client::GameSession *openGame(QQmlApplicationEngine *engine)
+{
+    const QQuickWindow *window = openWindow(engine);
+    QObject *world = window != nullptr ? window->findChild<QObject *>(u"worldMap"_s) : nullptr;
+    if (world == nullptr || !QMetaObject::invokeMethod(world, "play", 0)) {
+        return nullptr;
+    }
+    return window->findChild<qtd::client::GameSession *>();
+}
+
+QString progressFile()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/progress.json"_s;
+}
+
+/// Plays a game of the training ground to its end with two towers that hold it.
+bool win(qtd::client::GameSession *game)
+{
+    if (!game->buildTower(4, 4) || !game->buildTower(10, 6)) {
+        return false;
+    }
+    while (!game->won() && !game->lost()) {
+        game->advanceTime(1'000'000);
+    }
+    return game->won();
+}
+
+QVariantMap sectionOf(const QQuickWindow *window, int section)
+{
+    return window->findChild<qtd::client::WorldSession *>()->sections().at(section).toMap();
 }
 
 } // namespace
@@ -70,6 +107,53 @@ private slots:
         QVERIFY(!game->paused());
     }
 
+    static void theWindowOpensOnTheWorld()
+    {
+        QQmlApplicationEngine engine;
+        const QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        QVERIFY(window->findChild<QQuickItem *>(u"worldMap"_s)->isVisible());
+        QVERIFY(window->findChild<qtd::client::GameSession *>()->mapFile().isEmpty());
+        QVERIFY(window->findChild<qtd::client::WorldSession *>()->error().isEmpty());
+    }
+
+    // Stars are written to the progress of the test mode, a fresh one each time.
+    static void aWonSectionKeepsItsStarsAndOpensTheWay()
+    {
+        QFile::remove(progressFile());
+        QQmlApplicationEngine engine;
+        qtd::client::GameSession *game = openGame(&engine);
+        QVERIFY(game != nullptr);
+        const auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().constFirst());
+        QVERIFY(!window->findChild<QQuickItem *>(u"worldMap"_s)->isVisible());
+        QVERIFY(game->mapFile().endsWith(u"training_ground.json"_s));
+        QVERIFY(!sectionOf(window, 1)[u"open"_s].toBool());
+        QVERIFY(win(game));
+        QCOMPARE(sectionOf(window, 0)[u"stars"_s].toInt(), game->stars());
+        QVERIFY(game->stars() > 0);
+        QVERIFY(sectionOf(window, 1)[u"open"_s].toBool());
+        QVERIFY(QFile::exists(progressFile()));
+        QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(u"hud"_s), "leave"));
+        QVERIFY(window->findChild<QQuickItem *>(u"worldMap"_s)->isVisible());
+    }
+
+    // The file only appears again when the second game counts.
+    static void aRestartCountsAgainAnotherMapDoesNot()
+    {
+        QQmlApplicationEngine engine;
+        qtd::client::GameSession *game = openGame(&engine);
+        QVERIFY(game != nullptr);
+        QVERIFY(win(game));
+        QVERIFY(QFile::remove(progressFile()));
+        game->restart();
+        QVERIFY(win(game));
+        QVERIFY(QFile::remove(progressFile()));
+        // The same map from elsewhere is no section of the world.
+        game->startNewGame(QStringLiteral(QTD_CONTENT_DIR "/training_ground.json"));
+        QVERIFY(win(game));
+        QVERIFY(!QFile::exists(progressFile()));
+    }
+
     static void aMinimizedWindowPausesTheGame()
     {
         QQmlApplicationEngine engine;
@@ -84,6 +168,7 @@ int main(int argc, char *argv[])
 {
     qtd::client::configureGraphics();
     const QGuiApplication app(argc, argv);
+    QStandardPaths::setTestModeEnabled(true); // the progress of a player stays as it is
     TestWindow test;
     return QTest::qExec(&test, argc, argv);
 }

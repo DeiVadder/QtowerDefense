@@ -17,8 +17,9 @@ qt_add_qml_module(qtd_client
         screen_control.cpp screen_control.h
         terrain_mesh.cpp terrain_mesh.h
         terrain_picture.cpp terrain_picture.h
+        world_session.cpp world_session.h
     QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml
-        IconPaths.js Main.qml MainScene.qml Theme.qml TowerCard.qml)
+        IconPaths.js Main.qml MainScene.qml Theme.qml TowerCard.qml WorldMap.qml WorldPainting.qml WorldScene.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
 # rhi/qrhi.h, only for the GPU time of a frame.
 target_link_libraries(qtd_client PRIVATE Qt6::GuiPrivate)
@@ -31,7 +32,8 @@ qt_add_resources(qtd_client "qtd_content"
     FILES
         "${PROJECT_SOURCE_DIR}/content/landscapes.json"
         "${PROJECT_SOURCE_DIR}/content/training_ground.json"
-        "${PROJECT_SOURCE_DIR}/content/mire_siege.json")
+        "${PROJECT_SOURCE_DIR}/content/mire_siege.json"
+        "${PROJECT_SOURCE_DIR}/content/world.json")
 
 file(GLOB qtd_assets CONFIGURE_DEPENDS "assets/*.mesh" "assets/*.png" "assets/*.ogg")
 qt_add_resources(qtd_client "qtd_assets"

@@ -1,6 +1,7 @@
 #include "automation/report.h"
 #include "client/game_session.h"
 #include "core/replay.h"
+#include "core/world.h"
 
 #include <QDir>
 #include <QFileInfo>
@@ -59,6 +60,12 @@ bool GameSession::hasSave() const
 const QString &GameSession::saveError() const
 {
     return saveError_;
+}
+
+// The stars count for the world map, which keeps them with the progress (E-32).
+int GameSession::stars() const
+{
+    return game_ ? static_cast<int>(core::starsOfGame(game_->simulation())) : 0;
 }
 
 } // namespace qtd::client

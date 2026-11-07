@@ -21,6 +21,8 @@ Item {
     readonly property bool gameOver: game.won || game.lost
     readonly property bool failed: game.error.length > 0
 
+    signal leave // back to the world map
+
     Binding {
         when: root.scene !== null
         target: root.scene
@@ -501,7 +503,7 @@ Item {
         unit: root.cardUnit
         holding: towerList.dragging
         held: towerList.held
-        heldInfo: root.game.towerTypes[root.game.selectedTower] ?? heldInfo
+        heldInfo: root.game.towerTypes[root.game.selectedTower] ?? noTower
     }
 
     DiceRoll {
@@ -548,15 +550,26 @@ Item {
             font.pixelSize: root.unit * Theme.titleText
         }
 
-        HudButton {
-            objectName: "restartButton"
+        Row {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: root.unit * Theme.endMargin
-            visible: !root.failed
-            unit: root.unit
-            text: qsTr("Play again")
-            onClicked: root.game.restart()
+            spacing: root.unit * Theme.gap
+
+            HudButton {
+                objectName: "restartButton"
+                visible: !root.failed
+                unit: root.unit
+                text: qsTr("Play again")
+                onClicked: root.game.restart()
+            }
+
+            HudButton {
+                objectName: "worldButton"
+                unit: root.unit
+                text: qsTr("World map")
+                onClicked: root.leave()
+            }
         }
     }
 }
