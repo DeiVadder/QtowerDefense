@@ -161,6 +161,53 @@ QtObject {
     readonly property real smallestUnit: 40
     readonly property real unitsAcross: 14
 
+    // The main menu: a wall of bricks, the gate with the hero, torches, signs on chains.
+    readonly property color wallStone: "#4e4943"
+    readonly property color wallJoint: "#14100d"
+    readonly property color wallLight: "#00000000"
+    readonly property color wallShadow: "#c7000000"
+    readonly property color gateArch: "#3d3833"
+    readonly property int wallSeed: 41
+    readonly property int menuSeed: 40
+    readonly property real darkestBrick: 0.7
+    readonly property real brickWidth: 2.1
+    readonly property real brickJoint: 0.04
+    readonly property real menuUnitsHigh: 10 // the menu fits a window this many units high
+    readonly property real menuTitle: 1.9
+    readonly property real menuTitleText: 1.25
+    readonly property real menuSign: 1.4
+    readonly property real menuSignWidth: 7
+    readonly property real menuText: 0.55
+    readonly property real menuTorch: 0.9
+    readonly property real torchStick: 0.25 // of the flame
+    readonly property real torchGlowSize: 3.2
+    readonly property color torchGlow: "#59e8702a"
+    readonly property real torchStretch: 1.4
+    readonly property real torchHeight: 0.3 // of the gate, from its top
+    readonly property real flameHigh: 1.14
+    readonly property real flameLow: 0.92
+    readonly property int flameMillis: 130
+    readonly property real gateAspect: 0.85 // width by height
+    readonly property real gateStone: 0.08 // of the width of the gate
+    readonly property int gatePlanks: 7
+    readonly property real gateBand: 0.035
+    readonly property list<real> gateBands: [0.45, 0.85] // from the top, in shares of the height
+    readonly property real menuHero: 0.42 // of the width of the gate
+    readonly property real menuHeroTop: 0.22
+    readonly property int settingsSeed: 9
+    readonly property real settingsHeight: 6.4
+    readonly property real settingsRow: 1.1
+    readonly property real settingsLabel: 2.2
+    readonly property real settingsPercent: 1.6
+    readonly property real settingsToggle: 1.8
+    readonly property real sliderTrack: 0.2
+    readonly property real sliderKnob: 0.55
+    readonly property real loudnessRange: 100 // from the quietest step of the slider to the loudest
+    readonly property int volumeStep: 10 // percent per press of an arrow key
+    readonly property real settingsWidest:
+        7.5 // narrower halves of the menu give the settings all their width
+    readonly property real settingsTrack: 3 // the slider gets at least this, before the label
+
     readonly property real unavailable: 0.5 // the opacity of what cannot be used now
 
     // How long the hero talks, and how long it keeps small talk to itself, in seconds of play.

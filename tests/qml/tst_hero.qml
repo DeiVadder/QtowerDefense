@@ -77,6 +77,7 @@ Item {
         function create() {
             const made = createTemporaryObject(heroComponent, stage);
             return {
+                hero: made.hero,
                 game: made.session,
                 map: made.map,
                 voice: findChild(made.hero, "heroVoice"),
@@ -104,6 +105,19 @@ Item {
             verify(hero.bubble.visible);
             verify(hero.words.text.length > 0);
             compare(hero.voice.mood, HeroVoice.Mood.Glad);
+        }
+
+        // The settings can turn the words off: no sign, no moving mouth, the hero still looks.
+        function test_aSilentHeroShowsNoWords() {
+            const hero = create();
+            hero.hero.speaks = false;
+            verify(hero.game.buildTower(4, 4));
+            verify(hero.voice.line.length > 0, "the hero still has something to say");
+            verify(!hero.bubble.visible);
+            verify(!hero.face.talking);
+            hero.hero.speaks = true;
+            verify(hero.bubble.visible);
+            verify(hero.face.talking);
         }
 
         function test_aLineGoesAwayWithGameTime() {

@@ -15,6 +15,7 @@ Item {
 
     property var dropPoint: null // while a dropped card builds
     property real density: Screen.pixelDensity
+    property bool heroSpeaks: true
     readonly property real unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
                                           / Theme.unitsAcross)
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
@@ -52,6 +53,8 @@ Item {
     // In the corner, as large as the buttons at the left leave room for.
     Hero {
         id: hero
+
+        speaks: root.heroSpeaks
 
         readonly property real ring: root.unit * (Theme.dialGap + Theme.dialButton / 2)
         readonly property real room: root.height - root.cardUnit * Theme.cardPeek - root.unit * (Theme.leftRows

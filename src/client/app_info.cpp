@@ -16,4 +16,13 @@ QString AppInfo::windowTitle() const
     return tr("QtowerDefense %1").arg(version());
 }
 
+bool AppInfo::windowed()
+{
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+    return false;
+#else
+    return true;
+#endif
+}
+
 } // namespace qtd::client

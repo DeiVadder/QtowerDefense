@@ -56,6 +56,11 @@ QString progressFile()
     return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/progress.json"_s;
 }
 
+QString settingsFile()
+{
+    return QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/settings.ini"_s;
+}
+
 /// Plays a game of the training ground to its end with two towers that hold it.
 bool win(qtd::client::GameSession *game)
 {
@@ -80,6 +85,12 @@ class TestWindow : public QObject
     Q_OBJECT
 
 private slots:
+    // A test that ends early must not leave its settings to the next, full screen above all.
+    static void init()
+    {
+        QFile::remove(settingsFile());
+    }
+
     static void rendersTheScene()
     {
         QQmlApplicationEngine engine;
@@ -107,14 +118,80 @@ private slots:
         QVERIFY(!game->paused());
     }
 
-    static void theWindowOpensOnTheWorld()
+    // The menu leads to the world map and the world map back, by its button or the Back key.
+    static void theWindowOpensOnTheMenu()
+    {
+        QQmlApplicationEngine engine;
+        QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        auto *menu = window->findChild<QQuickItem *>(u"mainMenu"_s);
+        auto *world = window->findChild<QQuickItem *>(u"worldMap"_s);
+        QVERIFY(menu->isVisible());
+        QVERIFY(!world->isVisible());
+        QVERIFY(window->findChild<qtd::client::GameSession *>()->mapFile().isEmpty());
+        QVERIFY(window->findChild<qtd::client::WorldSession *>()->error().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(menu, "campaign"));
+        QVERIFY(world->isVisible());
+        QVERIFY(!menu->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(world, "menu"));
+        QVERIFY(menu->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(menu, "campaign"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QVERIFY(menu->isVisible());
+    }
+
+    // The settings of the test mode, a fresh file each time.
+    static void settingsAreKeptForTheNextStart()
+    {
+        {
+            QQmlApplicationEngine engine;
+            const QQuickWindow *window = openWindow(&engine);
+            QVERIFY(window != nullptr);
+            QObject *settings = window->findChild<QObject *>(u"gameSettings"_s);
+            QVERIFY(settings != nullptr);
+            QCOMPARE(settings->property("volume").toInt(), 80);
+            QVERIFY(settings->setProperty("volume", 30));
+            QVERIFY(settings->setProperty("heroSpeaks", false));
+        }
+        QVERIFY(QFile::exists(settingsFile()));
+        QQmlApplicationEngine engine;
+        const QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        const QObject *settings = window->findChild<QObject *>(u"gameSettings"_s);
+        QCOMPARE(settings->property("volume").toInt(), 30);
+        QVERIFY(!settings->property("heroSpeaks").toBool());
+        // What reaches the parts that act on it.
+        QVERIFY(!window->findChild<QObject *>(u"hero"_s)->property("speaks").toBool());
+        QCOMPARE(window->findChild<QObject *>(u"gameSounds"_s)->property("volume").toReal(), 0.3);
+        QVERIFY(QFile::remove(settingsFile()));
+    }
+
+    // The file belongs to the player, whatever is in it.
+    static void brokenSettingsAreReadKindly()
+    {
+        QFile file(settingsFile());
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write("[General]\nvolume=500\nheroSpeaks=perhaps\n");
+        file.close();
+        QQmlApplicationEngine engine;
+        const QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        const QObject *settings = window->findChild<QObject *>(u"gameSettings"_s);
+        QVERIFY(settings != nullptr);
+        QCOMPARE(settings->property("volume").toInt(), 100);
+    }
+
+    static void theSettingTurnsTheFullScreenOnAndOff()
     {
         QQmlApplicationEngine engine;
         const QQuickWindow *window = openWindow(&engine);
         QVERIFY(window != nullptr);
-        QVERIFY(window->findChild<QQuickItem *>(u"worldMap"_s)->isVisible());
-        QVERIFY(window->findChild<qtd::client::GameSession *>()->mapFile().isEmpty());
-        QVERIFY(window->findChild<qtd::client::WorldSession *>()->error().isEmpty());
+        QObject *settings = window->findChild<QObject *>(u"gameSettings"_s);
+        QCOMPARE(window->visibility(), QWindow::Windowed);
+        QVERIFY(settings->setProperty("fullScreen", true));
+        QVERIFY(QTest::qWaitFor([window] { return window->visibility() == QWindow::FullScreen; }));
+        QVERIFY(settings->setProperty("fullScreen", false));
+        QVERIFY(QTest::qWaitFor([window] { return window->visibility() == QWindow::Windowed; }));
     }
 
     // Stars are written to the progress of the test mode, a fresh one each time.

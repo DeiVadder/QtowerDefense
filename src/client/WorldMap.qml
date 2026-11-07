@@ -5,7 +5,8 @@ import QtQuick.Window
 import QtowerDefense.Client
 
 // The campaign as one world in the fog (E-32): a framed map with a marker on every section, below
-// it a sign with the chosen section and the button to play it.
+// it a sign with the chosen section and the button to play it. The hero at its left says what it
+// thinks of the chosen section.
 FramedPanel {
     id: root
 
@@ -24,7 +25,55 @@ FramedPanel {
                                                ashlands: qsTr("Ashlands")
                                            })
 
+    property bool heroSpeaks: true
+    // What the hero says of a landscape. The words for a section in the fog come first.
+    readonly property var landscapeLines: ({
+                                               meadow: qsTr("Grass, sheep, goblins. The usual."),
+                                               swamp: qsTr(
+                                                          "A swamp. Bring boots. Or a spare pair of legs."),
+                                               forest: qsTr("Trees whisper here. Mostly insults."),
+                                               highland: qsTr("Thin air, thick trolls."),
+                                               heath: qsTr(
+                                                          "Heather and ponds. Lovely, until the rats come."),
+                                               badlands: qsTr(
+                                                             "Red rock and fire imps. Bring water."),
+                                               barrows: qsTr("Old graves. Let us not wake anyone."),
+                                               frost: qsTr(
+                                                          "Cold enough to freeze a wraith. Almost."),
+                                               ashlands: qsTr(
+                                                             "Ash, lava and a dragon. My favourite.")
+                                           })
+
     signal play(int section)
+    signal menu
+
+    function lineOf(section: var): string {
+        if (!section.open) {
+            return qsTr("Nobody goes into that fog. Not even me.");
+        }
+        if (!section.playable) {
+            return qsTr("No map of that place yet. I asked.");
+        }
+        if (section.stars >= 3) {
+            return qsTr("Done that. Perfectly, thanks to me.");
+        }
+        return landscapeLines[section.landscape] ?? "";
+    }
+
+    function comment() {
+        if (heroSpeaks && chosen !== null) {
+            words.line = "";
+            words.line = lineOf(chosen);
+            silence.restart();
+        }
+    }
+
+    onChosenChanged: comment()
+    onVisibleChanged: {
+        if (visible) {
+            comment();
+        }
+    }
 
     unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
                    / Theme.unitsAcross)
@@ -63,6 +112,18 @@ FramedPanel {
             anchors.fill: parent
             anchors.margins: frame.border.width
             world: root.world
+        }
+
+        HudButton {
+            objectName: "menuButton"
+            anchors.left: parent.left
+            anchors.top: parent.top
+            anchors.margins: root.unit * Theme.gap
+            z: 1
+            unit: root.unit
+            icon: "menu"
+            text: qsTr("Menu")
+            onClicked: root.menu()
         }
 
         Repeater {
@@ -125,8 +186,21 @@ FramedPanel {
         seed: Theme.signSeed
         visible: root.chosen !== null
 
-        Column {
+        HeroFace {
+            id: hero
+
+            objectName: "worldHero"
             anchors.left: parent.left
+            anchors.leftMargin: root.unit * Theme.gap
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.height - root.unit * Theme.gap
+            height: width
+            mood: HeroVoice.Mood.Glad
+            talking: words.visible
+        }
+
+        Column {
+            anchors.left: hero.right
             anchors.leftMargin: root.unit * Theme.endMargin
             anchors.right: playButton.left
             anchors.verticalCenter: parent.verticalCenter
@@ -196,5 +270,24 @@ FramedPanel {
             available: root.chosen?.playable ?? false
             onClicked: root.play(root.world.selected)
         }
+    }
+
+    WordSign {
+        id: words
+
+        objectName: "worldWords"
+        wordsName: "worldLine"
+        x: sign.x + root.unit * Theme.gap
+        y: frame.y + frame.height - height - root.unit * Theme.gap
+        width: Math.min(root.unit * Theme.bubbleWidth, frame.width / 2)
+        unit: root.unit
+        visible: root.heroSpeaks && line.length > 0
+    }
+
+    Timer {
+        id: silence
+
+        interval: Theme.speechSeconds * 1000
+        onTriggered: words.line = ""
     }
 }

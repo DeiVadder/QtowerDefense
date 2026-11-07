@@ -1,0 +1,194 @@
+pragma ComponentBehavior: Bound
+
+import QtQuick
+
+// The settings on a board: the loudness of the sounds, the words of the hero and, where windows exist,
+// the full screen. Every change is kept at once.
+FramedPanel {
+    id: root
+
+    required property GameSettings settings
+    readonly property real row: unit * Theme.settingsRow
+
+    signal close
+
+    seed: Theme.settingsSeed
+
+    component Label: Text {
+        color: Theme.text
+        font.family: Theme.face
+        font.bold: true
+        font.pixelSize: root.unit * Theme.bodyText
+        elide: Text.ElideRight
+    }
+
+    // A plate that says On or Off.
+    component Toggle: HudButton {
+        property bool on: false
+
+        unit: root.unit
+        width: root.unit * Theme.settingsToggle
+        text: on ? qsTr("On") : qsTr("Off")
+        highlighted: on
+        Accessible.checkable: true
+        Accessible.checked: on
+    }
+
+    Label {
+        id: title
+
+        anchors.horizontalCenter: parent.horizontalCenter
+        y: root.unit * Theme.gap * 2
+        text: qsTr("Settings")
+        color: Theme.gold
+        font.pixelSize: root.unit * Theme.titleText
+    }
+
+    HudButton {
+        objectName: "closeSettings"
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.margins: root.unit * Theme.gap * 2
+        unit: root.unit
+        icon: "close"
+        text: qsTr("Close")
+        onClicked: root.close()
+    }
+
+    // Rows placed by hand, they stand where they belong before the first frame.
+    Item {
+        id: rows
+
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: title.bottom
+        anchors.margins: root.unit * Theme.endMargin * 2
+        height: 3 * (root.row + root.unit * Theme.gap)
+
+        Item {
+            width: parent.width
+            height: root.row
+
+            Label {
+                id: soundLabel
+
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.min(root.unit * Theme.settingsLabel, parent.width - root.unit * (Theme.settingsTrack
+                                                                                             + Theme.settingsPercent))
+                text: qsTr("Sound")
+            }
+
+            Rectangle {
+                id: track
+
+                objectName: "volumeSlider"
+                anchors.left: soundLabel.right
+                anchors.right: percent.left
+                anchors.rightMargin: root.unit * Theme.gap
+                anchors.verticalCenter: parent.verticalCenter
+                height: root.unit * Theme.sliderTrack
+                radius: height / 2
+                color: Theme.ironDark
+                border.color: Theme.iron
+                activeFocusOnTab: true
+                Accessible.role: Accessible.Slider
+                Accessible.name: soundLabel.text + " " + percent.text
+                Keys.onLeftPressed: root.settings.volume = Math.max(0, root.settings.volume
+                                                                    - Theme.volumeStep)
+                Keys.onRightPressed: root.settings.volume = Math.min(100, root.settings.volume
+                                                                     + Theme.volumeStep)
+
+                Rectangle {
+                    width: parent.width * root.settings.volume / 100
+                    height: parent.height
+                    radius: parent.radius
+                    color: Theme.accent
+                }
+
+                Rectangle {
+                    x: parent.width * root.settings.volume / 100 - width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: root.unit * Theme.sliderKnob
+                    height: width
+                    radius: width / 2
+                    color: Theme.iron
+                    border.color: Theme.ironLight
+                    border.width: Math.max(Theme.thinnestChosenBorder, root.unit
+                                           * Theme.chosenBorder)
+                }
+
+                // A finger needs more than the thin track.
+                MouseArea {
+                    function take(x: real) {
+                        root.settings.volume = Math.round(Math.max(0, Math.min(1, x / track.width))
+                                                          * 100);
+                    }
+
+                    anchors.fill: parent
+                    anchors.topMargin: -root.row / 2
+                    anchors.bottomMargin: -root.row / 2
+                    preventStealing: true
+                    onPressed: mouse => take(mouse.x)
+                    onPositionChanged: mouse => take(mouse.x)
+                }
+            }
+
+            Label {
+                id: percent
+
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                width: root.unit * Theme.settingsPercent
+                horizontalAlignment: Text.AlignRight
+                text: qsTr("%1 %").arg(root.settings.volume)
+            }
+        }
+
+        Item {
+            y: (root.row + root.unit * Theme.gap)
+            width: parent.width
+            height: root.row
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: heroToggle.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Words of the hero")
+            }
+
+            Toggle {
+                id: heroToggle
+
+                objectName: "heroSpeaksToggle"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                on: root.settings.heroSpeaks
+                onClicked: root.settings.heroSpeaks = !root.settings.heroSpeaks
+            }
+        }
+
+        Item {
+            y: 2 * (root.row + root.unit * Theme.gap)
+            width: parent.width
+            height: root.row
+            visible: AppInfo.windowed
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: screenToggle.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Full screen")
+            }
+
+            Toggle {
+                id: screenToggle
+
+                objectName: "fullScreenToggle"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                on: root.settings.fullScreen
+                onClicked: root.settings.fullScreen = !root.settings.fullScreen
+            }
+        }
+    }
+}

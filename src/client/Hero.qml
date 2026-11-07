@@ -16,6 +16,7 @@ Item {
     property real bubbleTop: 0
     property int spell: 0
     property point target: Qt.point(0.5, 0.5)
+    property bool speaks: true // the player may turn the words off
 
     implicitWidth: size
     implicitHeight: size
@@ -46,7 +47,7 @@ Item {
         objectName: "heroFace"
         anchors.fill: parent
         mood: voice.mood
-        talking: voice.line.length > 0
+        talking: root.speaks && voice.line.length > 0
         spell: root.game.spellNames[root.spell] ?? ""
         spellColor: Theme.spellColor(root.spell)
         focused: voice.line.length > 0 && voice.moment === HeroVoice.Moment.Spell
@@ -58,97 +59,12 @@ Item {
         anchors.fill: parent
     }
 
-    Item {
-        id: bubble
-
-        readonly property real chain: root.unit * Theme.signChain
-        readonly property real padding: root.unit * Theme.gap
-
+    WordSign {
         objectName: "heroBubble"
         x: root.bubbleLeft
         y: root.bubbleTop
-        visible: voice.line.length > 0
-        width: root.unit * Theme.bubbleWidth
-        height: words.height + 2 * padding + chain
-        transformOrigin: Item.Top
-
-        Repeater {
-            model: 2
-
-            delegate: Rectangle {
-                required property int index
-
-                x: (index === 0 ? Theme.chainInset : 1 - Theme.chainInset) * bubble.width - width
-                   / 2
-                width: root.unit * Theme.bracketBar
-                height: bubble.chain + width
-                color: Theme.ironDark
-                border.color: Theme.ironLight
-            }
-        }
-
-        FramedPanel {
-            y: bubble.chain
-            width: parent.width
-            height: parent.height - bubble.chain
-            unit: root.unit * Theme.signBracket
-            tone: Theme.signWood
-            seed: Theme.signSeed
-            takesTaps: false
-        }
-
-        Text {
-            id: words
-
-            objectName: "heroLine"
-            x: bubble.padding
-            y: bubble.chain + bubble.padding
-            width: bubble.width - 2 * bubble.padding
-            wrapMode: Text.Wrap
-            text: voice.line
-            color: Theme.burnt
-            font.family: Theme.face
-            font.bold: true
-            font.pixelSize: root.unit * Theme.signText
-            Accessible.role: Accessible.StaticText
-            Accessible.name: text
-        }
-
-        // A new line drops in and swings out.
-        SequentialAnimation {
-            id: swing
-
-            NumberAnimation {
-                target: bubble
-                property: "rotation"
-                from: Theme.swingStart
-                to: Theme.swingOut
-                duration: Theme.swingTime
-                easing.type: Easing.OutQuad
-            }
-            NumberAnimation {
-                target: bubble
-                property: "rotation"
-                to: Theme.swingBack
-                duration: Theme.swingTime
-                easing.type: Easing.InOutQuad
-            }
-            NumberAnimation {
-                target: bubble
-                property: "rotation"
-                to: 0
-                duration: Theme.swingRest
-            }
-        }
-
-        Connections {
-            target: voice
-
-            function onLineChanged() {
-                if (voice.line.length > 0) {
-                    swing.restart();
-                }
-            }
-        }
+        unit: root.unit
+        wordsName: "heroLine"
+        line: root.speaks ? voice.line : ""
     }
 }

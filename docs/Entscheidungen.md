@@ -243,9 +243,9 @@ Je Eintrag: Was, Warum, verworfene Alternative.
 - **Grenze:** Ändern sich Regeln oder Inhalte, lässt sich ein alter Spielstand nicht mehr laden. Das Laden prüft Inhalts-Hash, jedes Befehlsergebnis und den letzten Zustands-Hash und meldet den Fehler. Ein Stand aus einer älteren Version geht also verloren, er spielt aber nie falsch weiter. Muss das einmal anders werden, bleibt ein Zustandsformat als spätere Ergänzung möglich.
 - **Ein Platz:** Der Client hat eine Datei `running_game.json` unter `QStandardPaths::AppDataLocation`. Der Spielstand nennt seine Karte, die Karten liegen nebeneinander im selben Ordner. Geladen wird pausiert.
 - **Wann:** Von Hand in der Pause, von selbst, wenn die App in den Hintergrund geht. Von selbst nur, wenn es noch keinen Spielstand gibt oder die Datei dieses Spiel hält, denn das Programm startet immer ein neues Spiel und darf den gespeicherten Stand beim Weggehen nicht überschreiben. Windows sendet diese Zustände nach bisheriger Kenntnis nicht, und beim Schließen wird nicht gespeichert: Auf dem Desktop speichert nur der Spieler. Ein beendetes Spiel wird nicht gespeichert. Mit `--control` hat der Client keinen Platz, die Steuerung nennt ihre Dateien selbst und die Tests fassen nichts außerhalb des Projekts an.
-- **Knöpfe:** Speichern und Laden stehen nur in der Pause da, denn am Rand verdecken sie Felder und den Anfang des Pfades. Ein Menü kommt mit Etappe 11.
+- **Knöpfe:** Speichern und Laden stehen nur in der Pause da, denn am Rand verdecken sie Felder und den Anfang des Pfades. Das Hauptmenü beschreibt E-35.
 - **Bots:** Der Fuzz-Bot ruft Wellen, der naive nicht. Ihn mutiger zu machen, gehört zum guten Bot aus Etappe 12.
-- **Noch offen:** Kampagnenfortschritt, Highscores und Einstellungen aus dem Auftrag kommen mit Etappe 11, denn es gibt sie noch nicht. Das Spieltempo merkt sich der Spielstand nicht.
+- **Noch offen:** Highscores aus dem Auftrag kommen mit dem Endlosmodus in Etappe 11. Kampagnenfortschritt (E-32) und Einstellungen (E-35) gibt es. Das Spieltempo merkt sich der Spielstand nicht.
 - **Formatversion:** Bleibt 1, der neue Schlüssel ist optional.
 
 ## E-32 Weltkarte der Kampagne
@@ -266,7 +266,7 @@ Vom Menschen am 2026-11-06 festgelegt, ergänzt den Auftrag.
 - **Die sieben neuen Karten:** Jede hat einen eigenen Pfad, Hindernisse passend zur Landschaft und Wellen mit passenden Gegnern. Türme, Gegner und Zauber sind dieselben wie im Sumpf. Gold, Leben und Wellen steigen grob mit dem Abstand vom Start, gemessen an der Summe der Lebenspunkte aller Gegner (Heide 432, Ödland 720, Hügelgräber 880, Wald 1056, Hochland 1164, Frost 1320, Aschenland 1596; der Sumpf hat 956). Der Nordweg über den Sumpf ist also der schwerere. Neben dem Sumpf haben nur Hochland, Hügelgräber, Frost und Aschenland Bosse. Es gibt nur zwei Bossmodelle, der `bog_titan` steht deshalb auch für Riesen in Hochland und Frost. Gegner, die nur zu einer Landschaft passen, kommen mit neuen Modellen. Ein Test verlangt nur, dass der naive Bot jede Karte gewinnt und ein Spieler ohne Türme sie verliert. Heute gewinnt der naive Bot überall mit allen Leben, die Karten sind also zu leicht. Das richtet Etappe 12 (Balancing).
 - **Felsen je Landschaft:** Das Modell `boulder` ist eine Scholle mit Gras, auf Schnee und im Gebirge passt es nicht. Hochland, Ödland und Frost nutzen darum `rock` als Hindernis und in der Umgebung.
 - **Ohne Karte:** Ein Abschnitt ohne `map` zeigt „Not charted yet" und lässt sich nicht spielen. Das bleibt für künftige Abschnitte, heute hat jeder eine Karte.
-- **Start des Fensters:** Das Spiel öffnet auf der Weltkarte ohne laufendes Spiel. Ein Screenshot über die Steuerschnittstelle geht deshalb auch ohne Spiel. Wer eine Karte startet, egal wie, sieht sie. Das Ende-Schild führt zurück zur Weltkarte. Die Namen der Abschnitte stehen in den Daten und sind noch nicht übersetzbar.
+- **Start des Fensters:** Das Spiel öffnet seit E-35 im Hauptmenü, von dort geht es zur Weltkarte, ohne laufendes Spiel. Ein Screenshot über die Steuerschnittstelle geht deshalb auch ohne Spiel. Wer eine Karte startet, egal wie, sieht sie. Das Ende-Schild führt zurück zur Weltkarte. Die Namen der Abschnitte stehen in den Daten und sind noch nicht übersetzbar.
 
 ## E-33 Assets
 
@@ -278,7 +278,7 @@ Vom Menschen am 2026-11-06 festgelegt, ergänzt den Auftrag.
 - **Gegner:** Blockfiguren aus Blocky Characters sind Platzhalter, ein CC0-Paket mit Fantasy-Monstern fehlt noch. Bosse sind nur größer.
 - **Schüsse:** Sie sind nur ein Bild. Die Simulation trifft sofort und nennt ihr Ziel nicht, ein Schuss fliegt zum nächsten Gegner, nicht immer zum echten Ziel.
 - **Sound:** `GameSession::cue` meldet, was zu hören ist, `GameSounds.qml` spielt OGG mit `MediaPlayer`. `SoundEffect` kann nur WAV. Über die Steuerschnittstelle gibt es keine Töne. Der Ton einer Welle bestätigt nur das Rufen, eine Welle, die von selbst kommt, bleibt vorerst still. Die Player entstehen erst mit dem ersten Ton, denn schon das Anlegen lädt FFmpeg, und das schreibt ins Log.
-- **Noch offen:** Hintergrundmusik, denn Kenney hat nur Jingles, sie braucht eine zweite Quelle. Das Gelände kam mit E-34, die übrigen Landschaften kommen mit den Karten der Weltkarte (E-32). Das Castle Kit ist geladen und geprüft, aber noch nicht eingebaut. Lautstärke gehört zu den Einstellungen aus Etappe 11.
+- **Noch offen:** Hintergrundmusik, denn Kenney hat nur Jingles, sie braucht eine zweite Quelle. Das Gelände kam mit E-34, die übrigen Landschaften kommen mit den Karten der Weltkarte (E-32). Das Castle Kit ist geladen und geprüft, aber noch nicht eingebaut. Die Lautstärke steht in den Einstellungen (E-35).
 
 ## E-34 UI-Thema
 
@@ -303,3 +303,14 @@ Vom Menschen am 2026-11-06 aus vier Demos gewählt, ergänzt E-32 und den Auftra
 - **Umsetzung des Helden:** `HeroVoice` hört nur zu, die Simulation weiß nichts vom Helden. Sätze wechseln reihum statt zufällig, ihre Dauer zählt in Spielzeit, je nach Tempo gestreckt. Plaudern pausiert 10 Sekunden, Zauber, Leben, Sieg und Niederlage kommen immer durch. Die Sprachausgabe bleibt offen, `QtTextToSpeech` ist nicht installiert.
 - **Akzent:** Neon `#2CDE85` wie im Auftrag, vom Menschen am 2026-11-06 bestätigt. Demo A nutzte Orange. Alle Farben stehen in `Theme.qml`, ein Wechsel ist eine Zeile.
 - **Icons:** Sie stammen aus Demo A, eigene SVG-Pfade in `IconPaths.js`. Jeder Turm und Zauber hat ein eigenes Icon, ein Test prüft das. Der Text eines Knopfs bleibt für Screenreader. Fehlt für neuen Inhalt ein Icon, zeigt der Knopf einen Blitz.
+
+## E-35 Menü und Einstellungen
+
+- **Hauptmenü wie Demo A:** Burgmauer, Tor mit dem Helden zwischen zwei Fackeln, rechts Schilder an Ketten: Kampagne, Einstellungen, Beenden. Beenden fehlt auf Android und iOS, dort beendet man Apps nicht selbst. Ein Endlosmodus kommt als eigenes Schild mit seinem Feature. „Neue Kampagne" und eine Kartensammlung wie in der Demo gibt es nicht: Fortschritt löschen braucht eine Rückfrage, und die Karten zeigt das Spiel selbst.
+- **Seiten:** `Main.qml` kennt drei Seiten als Enum: Menü, Weltkarte, Spiel. Esc und die Zurück-Taste von Android gehen eine Stufe zurück: Einstellungen zu, Weltkarte zum Menü. Im Menü selbst gehört die Taste der Plattform, auf Android verlässt sie die App. Im Spiel tun sie nichts, dort führt das HUD zur Weltkarte; ein Tastendruck soll kein laufendes Spiel verlassen.
+- **Einstellungen:** Lautstärke, Sprüche des Helden an oder aus und Vollbild (nur wo es Fenster gibt, `AppInfo.windowed`). Der Regler folgt dem Ohr: die Hälfte ist ein Zehntel der Leistung. Pfeiltasten verschieben ihn in Zehnerschritten. Eine Lautstärke außerhalb von 0 bis 100 aus der Datei wird begrenzt. Ist neben dem Tor zu wenig Platz, liegen die Einstellungen über ihm. Sie liegen über `Settings` aus `QtCore` in `settings.ini` im Datenordner der App, getrennt vom Fortschritt. Sprache und Grafikqualität kommen mit Übersetzung und Qualitätsstufen in Etappe 13.
+- **Hochformat:** Das Spiel ist nur für Querformat gedacht (E-34). Die Sperre der Ausrichtung auf Mobile kommt mit Etappe 13.
+- **Größe:** Das Menü ist ein Textmenü und nimmt so viel Platz, wie das Fenster hergibt (14 Einheiten breit, 10 hoch). Schilder größer als ein Finger schaden nicht.
+- **Der Held auf der Weltkarte:** Sein Portrait steht links im Schild des gewählten Abschnitts. Bei jeder Wahl sagt er etwas zu Landschaft oder Lage, das Schild hängt über der Karte und verschwindet nach ein paar Sekunden. Oben links führt ein Knopf zurück ins Menü.
+- **Hängeschilder:** `ChainSign` ist das Brett an zwei Ketten, das schwingt. `WordSign` zeigt darauf die Worte des Helden in HUD, Menü und Weltkarte, die Schilder des Menüs sind ebenfalls `ChainSign`.
+- **Ohne Column:** Schilder und Zeilen der Einstellungen stehen an festen Stellen, denn ein `Column` ordnet erst mit dem ersten Bild an. Im versteckten Testfenster kommt kein Bild, und alle Schilder lägen übereinander.
