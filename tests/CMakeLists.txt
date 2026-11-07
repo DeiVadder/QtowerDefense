@@ -23,6 +23,11 @@ qtd_add_test(tst_core_content
 target_compile_definitions(tst_core_content PRIVATE
     QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
+qtd_add_test(tst_core_catalog
+    SOURCES core/scenario.h core/tst_catalog.cpp
+    LIBS qtd_core
+    LABELS core)
+
 qtd_add_test(tst_core_combat
     SOURCES core/scenario.h core/tst_combat.cpp
     LIBS qtd_core

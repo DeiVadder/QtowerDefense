@@ -48,6 +48,9 @@ Reihenfolge in einem Tick: Zauber kühlen ab, Gegner laufen (wer das Pfadende er
 - `coinTicks`, optional (ab 1, Standard 120): So lange bleibt eine Münze liegen.
 - `earlyCallTicksPerGold`, optional: Eine vorgezogene Welle zahlt je so viele gesparte Ticks ein Gold, ohne den Schlüssel nichts (E-31)
 - `spells`, optional: `id`, `cooldownTicks`, `radius`, `damageMin`, `damageMax` (dürfen 0 sein), `damageType`, optional `effects` wie bei Türmen (E-30)
+- `catalog`, optional: eine Datei neben der Karte, aus der `towers`, `enemies` und `spells` kommen. Die Karte nennt diese drei dann nicht selbst (E-37).
+
+`catalog.json` ist der gemeinsame Katalog der Kampagnenkarten: `formatVersion` (1), `towers`, `enemies`, optional `spells`, Felder wie oben. `training_ground.json` und `benchmark_arena.json` behalten ihre eigenen.
 
 Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen (E-16). Befehle und der Zustand sprechen Typen über Indizes an, die IDs dienen nur den Verweisen in den Daten.
 

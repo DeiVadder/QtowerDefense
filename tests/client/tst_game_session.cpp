@@ -82,7 +82,10 @@ private slots:
         GameSession game;
         game.startNewGame(u":/content/training_ground.json"_s);
         QCOMPARE(game.error(), QString());
-        QCOMPARE(game.gold(), 120);
+        QCOMPARE(game.gold(), 120); // A campaign map finds its catalog among the resources (E-37).
+        game.startNewGame(u":/content/mire_siege.json"_s);
+        QCOMPARE(game.error(), QString());
+        QVERIFY(!game.towerTypes().isEmpty());
     }
 
     // Without towers the first round of an endless game takes all lives (E-36).
@@ -523,8 +526,11 @@ private slots:
         QVERIFY(copy.open(QIODevice::WriteOnly));
         copy.write(map.readAll().replace(R"("startLives": 15)", R"("startLives": 1000)"));
         copy.close();
+        QVERIFY(QFile::copy(QDir(QStringLiteral(QTD_CONTENT_DIR)).filePath(u"catalog.json"_s),
+                            folder.filePath(u"catalog.json"_s)));
         game.startGame(longGame, 7);
         qtd::core::ReplayRecorder *recorder = game.recorder();
+        QVERIFY2(recorder != nullptr, qPrintable(game.error()));
         OpenInstances enemies;
         enemies.setLayer(MapInstances::Layer::Enemies);
         enemies.setFieldSize(50);

@@ -4,10 +4,10 @@
 
 #include <QByteArray>
 #include <QFile>
-#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QMap>
+#include <QStringList>
 #include <QTest>
 
 #include <algorithm>
@@ -54,14 +54,12 @@ QByteArray edited(const QByteArray &from, const QByteArray &to)
     return json.contains(from) ? QByteArray(json).replace(from, to) : QByteArray();
 }
 
-// Towers, enemies and spells of a shipped map.
-QJsonArray catalogOf(const QString &map)
+// The top level of a shipped map.
+QJsonObject mapObject(const QString &map)
 {
     QFile file(QStringLiteral(QTD_CONTENT_DIR "/") + map);
-    const QJsonObject root = file.open(QIODevice::ReadOnly)
-                                 ? QJsonDocument::fromJson(file.readAll()).object()
-                                 : QJsonObject();
-    return QJsonArray{root[u"towers"_s], root[u"enemies"_s], root[u"spells"_s]};
+    return file.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(file.readAll()).object()
+                                          : QJsonObject();
 }
 
 World testWorld()
@@ -138,14 +136,15 @@ private slots:
         }
     }
 
-    // Until there is one catalog for all maps, their towers, enemies and spells must not drift
-    // apart.
+    // Towers, enemies and spells come from one file, the balancing changes them in one place.
     static void everyMapOfTheWorldHasTheSameCatalog()
     {
         QFETCH(const QString, map);
-        const QJsonArray catalog = catalogOf(u"mire_siege.json"_s);
-        QVERIFY(!catalog[0].toArray().isEmpty());
-        QCOMPARE(catalogOf(map), catalog);
+        const QJsonObject root = mapObject(map);
+        QCOMPARE(root[u"catalog"_s].toString(), u"catalog.json"_s);
+        const QStringList own{u"towers"_s, u"enemies"_s, u"spells"_s};
+        QVERIFY(
+            std::ranges::none_of(own, [&root](const QString &key) { return root.contains(key); }));
     }
 
     static void aMissingFileNamesItself()

@@ -20,7 +20,8 @@ struct ContentLoadResult
 /// values are strings such as "1.25" (E-16). Unknown keys are errors.
 ContentLoadResult parseContent(QByteArrayView json);
 
-/// Reads a file and calls parseContent. The error text starts with the file name.
+/// Reads a file and calls parseContent. A map may name a catalog file next to it instead of its
+/// own towers, enemies and spells (E-37). The error text starts with the name of the file at fault.
 ContentLoadResult loadContentFile(const QString &fileName);
 
 } // namespace qtd::core

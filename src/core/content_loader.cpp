@@ -2,11 +2,15 @@
 
 #include "core/json_reader.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QLatin1StringView>
 
 #include <algorithm>
+#include <array>
 #include <iterator>
 #include <optional>
 #include <set>
@@ -314,6 +318,74 @@ ContentLoadResult failure(QString error)
     return {std::nullopt, std::move(error)};
 }
 
+/// What a map takes from a catalog (E-37): what can be built, what comes and what is cast.
+constexpr std::array kCatalogKeys{"towers"_L1, "enemies"_L1, "spells"_L1};
+
+/// Reads a whole file, or gives an error text that starts with its name.
+std::optional<QByteArray> readWhole(const QString &fileName, QString *error)
+{
+    QFile file(fileName);
+    if (!file.open(QIODevice::ReadOnly)) {
+        *error = u"%1: %2"_s.arg(fileName, file.errorString());
+        return std::nullopt;
+    }
+    return file.readAll();
+}
+
+/// Validates a catalog on its own, so that its errors name its own file.
+QString catalogError(const QJsonObject &catalog)
+{
+    QString error;
+    ObjectReader root(catalog, QString(), &error);
+    root.integer("formatVersion"_L1, kFormatVersion, kFormatVersion);
+    Content content;
+    readTowers(root, &content);
+    readEnemies(root, &content);
+    readSpells(root, &content);
+    root.rejectUnknownKeys();
+    return error;
+}
+
+/// Puts the catalog a map names into its JSON. A map without one stays as it is, an invalid map
+/// is left to parseContent. Gives an error text that names the file at fault.
+QString addCatalog(const QString &fileName, QByteArray *json)
+{
+    QString error;
+    std::optional<QJsonObject> map = parseExactJsonObject(*json, &error);
+    if (!map || !map->contains("catalog"_L1)) {
+        return {};
+    }
+    if (!map->value("catalog"_L1).isString()) {
+        return u"%1: catalog must be a file name"_s.arg(fileName);
+    }
+    const std::array<QLatin1StringView, 3>::const_iterator own = std::ranges::find_if(
+        kCatalogKeys, [&map](QLatin1StringView key) { return map->contains(key); });
+    if (own != kCatalogKeys.end()) {
+        return u"%1: %2 come from the catalog"_s.arg(fileName, *own);
+    }
+    const QString catalogFile =
+        QFileInfo(fileName).dir().filePath(map->take("catalog"_L1).toString());
+    const std::optional<QByteArray> text = readWhole(catalogFile, &error);
+    if (!text) {
+        return u"%1: %2"_s.arg(fileName, error);
+    }
+    const std::optional<QJsonObject> catalog = parseExactJsonObject(*text, &error);
+    if (!catalog) {
+        return u"%1: %2"_s.arg(catalogFile, error);
+    }
+    error = catalogError(*catalog);
+    if (!error.isEmpty()) {
+        return u"%1: %2"_s.arg(catalogFile, error);
+    }
+    for (const QLatin1StringView key : kCatalogKeys) {
+        if (catalog->contains(key)) {
+            map->insert(key, catalog->value(key));
+        }
+    }
+    *json = QJsonDocument(*map).toJson(QJsonDocument::Compact);
+    return {};
+}
+
 } // namespace
 
 ContentLoadResult parseContent(QByteArrayView json)
@@ -364,11 +436,16 @@ ContentLoadResult parseContent(QByteArrayView json)
 
 ContentLoadResult loadContentFile(const QString &fileName)
 {
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return failure(u"%1: %2"_s.arg(fileName, file.errorString()));
+    QString error;
+    std::optional<QByteArray> json = readWhole(fileName, &error);
+    if (!json) {
+        return failure(std::move(error));
     }
-    ContentLoadResult result = parseContent(file.readAll());
+    error = addCatalog(fileName, &*json);
+    if (!error.isEmpty()) {
+        return failure(std::move(error));
+    }
+    ContentLoadResult result = parseContent(*json);
     if (!result.content) {
         result.error.prepend(fileName + u": "_s);
     }
