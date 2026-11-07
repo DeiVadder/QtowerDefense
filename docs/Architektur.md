@@ -53,7 +53,7 @@ Dezimalwerte stehen als Zeichenkette, ganze Zahlen dürfen auch als Zahl stehen 
 
 ## Replays
 
-Eine Replay-Datei (`*.replay.json`) enthält `formatVersion` (1), `content` (Dateiname der Inhalte), `seed` (Dezimaltext, 64 Bit), `contentHash`, `commands` und `checkpoints`. Hashes sind 16 kleine Hex-Ziffern.
+Eine Replay-Datei (`*.replay.json`) enthält `formatVersion` (1), `content` (Dateiname der Inhalte), `seed` (Dezimaltext, 64 Bit), `contentHash`, `commands` und `checkpoints`, dazu `mode` mit dem Wert `endless` nur bei einem Spiel im Endlosmodus (E-36); ohne `mode` ist es eine Kampagne. Hashes sind 16 kleine Hex-Ziffern.
 
 - `commands`: `tick`, `type`, `result` (`accepted`, `gameOver`, `unknownTowerType`, `outsideMap`, `cellBlocked`, `cellOccupied`, `notEnoughGold`, `unknownTower`, `highestLevel`, `unknownSpell`, `spellCooling`, `noWaveWaiting`). Zu `buildTower` gehören `x`, `y`, `towerType`, `rotation` (0 bis 3, darf fehlen), zu `setTargetPriority` `tower` (ID) und `priority` (`first`, `last`, `strongest`, `nearest`), zu `upgradeTower` und `sellTower` `tower` (ID), zu `castSpell` `spell` (Index in `spells`), `x`, `y`, `callWave` hat keine Felder. Auch abgelehnte Befehle stehen darin.
 - `checkpoints`: `tick`, `hash`: der Zustand nach allen Befehlen dieses Ticks. Einer je Sekunde Spielzeit ab Tick 0, der letzte ist das Ende der Aufzeichnung.
@@ -78,8 +78,9 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 | `--seed <Zahl>` | Seed des ersten Spiels. Standard: der Seed des Skripts, ohne Skript 1 |
 | `--runs <Zahl>` | Anzahl Spiele, die Seeds zählen hoch |
 | `--bot <Name>` | Wer spielt: `idle`, `naive` oder `fuzz`. Schließt `--script` aus. Verletzt ein Spiel eine Invariante, endet der Lauf mit Exit-Code 1 und das Spiel liegt als Replay in `--record` oder `failure-<Seed>.replay.json`. `fuzz` nennt jeden Seed vorab auf der Fehlerausgabe, denn ein Absturz hinterlässt kein Replay |
+| `--mode <Name>` | `campaign` (Standard) oder `endless` (E-36). Standard: der Modus des Skripts. Der Bericht nennt bei `endless` zusätzlich `mode` und `rounds` |
 | `--script <Datei>` | Spielt die Befehle der Datei |
-| `--replay <Datei>` | Prüft ein Replay gegen `--map` bis zu seinem Ende, Tick für Tick auch die Invarianten (Bericht `"invariant"`, Exit-Code 1). Schließt `--seed`, `--runs`, `--bot`, `--script`, `--record`, `--max-ticks` und `--benchmark` aus |
+| `--replay <Datei>` | Prüft ein Replay gegen `--map` bis zu seinem Ende, Tick für Tick auch die Invarianten (Bericht `"invariant"`, Exit-Code 1). Schließt `--seed`, `--mode`, `--runs`, `--bot`, `--script`, `--record`, `--max-ticks` und `--benchmark` aus |
 | `--record <Datei>` | Schreibt das Spiel als Replay, nur für einen Lauf |
 | `--output <Datei>` | Schreibt den Bericht zusätzlich in eine Datei |
 | `--max-ticks <Zahl>` | Beendet ein Spiel spätestens bei diesem Tick, spätere Befehle entfallen. Standard 1000000 |

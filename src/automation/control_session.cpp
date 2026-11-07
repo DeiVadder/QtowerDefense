@@ -188,14 +188,14 @@ QJsonObject observationOf(const core::Simulation &game)
 class HeadlessGame : public ControlledGame
 {
 public:
-    QString start(const QString &map, quint64 seed) override
+    QString start(const QString &map, quint64 seed, core::GameMode mode) override
     {
         core::ContentLoadResult loaded = core::loadContentFile(map);
         if (!loaded.content) {
             return loaded.error;
         }
         recorder_ = std::make_unique<core::ReplayRecorder>(
-            *std::move(loaded.content), QFileInfo(map).fileName(), seed);
+            *std::move(loaded.content), QFileInfo(map).fileName(), seed, mode);
         return {};
     }
 
@@ -338,6 +338,7 @@ QByteArray ControlSession::startMap(core::ObjectReader &request)
 {
     const QString map = request.text("map"_L1);
     const QString seedText = request.text("seed"_L1);
+    const QString modeText = request.has("mode"_L1) ? request.text("mode"_L1) : u"campaign"_s;
     request.rejectUnknownKeys();
     if (request.failed()) {
         return failure(request.error());
@@ -346,7 +347,11 @@ QByteArray ControlSession::startMap(core::ObjectReader &request)
     if (!seed) {
         return failure(u"seed must be a text of decimal digits that fits 64 bits"_s);
     }
-    const QString problem = game_->start(map, *seed);
+    const std::optional<core::GameMode> mode = core::gameModeFromText(modeText);
+    if (!mode) {
+        return failure(u"mode must be \"campaign\" or \"endless\""_s);
+    }
+    const QString problem = game_->start(map, *seed, *mode);
     if (!problem.isEmpty()) {
         return failure(problem);
     }

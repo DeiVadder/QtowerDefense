@@ -127,7 +127,9 @@ public:
     /// Runs the ticks that are due. Long frames count as short ones, the game does not jump.
     Q_INVOKABLE void advanceTime(qint64 microseconds);
 
-    void startGame(const QString &fileName, quint64 seed);
+    void startGame(const QString &fileName,
+                   quint64 seed,
+                   core::GameMode mode = core::GameMode::Campaign);
     /// Goes on with a saved game, paused. Gives the reason if it cannot and keeps the current game.
     QString resumeGame(const QString &fileName, const QString &saveFile);
 

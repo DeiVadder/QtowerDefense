@@ -50,6 +50,11 @@ qtd_add_test(tst_core_world
 target_compile_definitions(tst_core_world PRIVATE
     QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
+qtd_add_test(tst_core_endless
+    SOURCES core/scenario.h core/tst_endless.cpp
+    LIBS qtd_core
+    LABELS core)
+
 qtd_add_test(tst_core_waves
     SOURCES core/scenario.h core/tst_waves.cpp
     LIBS qtd_core

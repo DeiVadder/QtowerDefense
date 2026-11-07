@@ -52,8 +52,16 @@ Fixed targetScore(TargetPriority priority, const Enemy &enemy, Fixed distance)
 
 } // namespace
 
-Simulation::Simulation(Content content, quint64 seed) : content_(std::move(content))
+Fixed fullHealth(const Content &content, std::size_t type, qint64 round)
 {
+    // On the raw value: content health is at most 1e9, raw 1e13, times 1e4 percent still fits.
+    const qint64 percent = std::min(kPercent + round * kEndlessGrowthPercent, kEndlessMostPercent);
+    return Fixed::fromRaw(content.enemies[type].health.raw() * percent / kPercent);
+}
+
+Simulation::Simulation(Content content, quint64 seed, GameMode mode) : content_(std::move(content))
+{
+    state_.mode = mode;
     state_.contentHash = contentHash(content_);
     state_.gold = content_.startGold;
     state_.lives = content_.startLives;
@@ -331,6 +339,13 @@ void Simulation::moveEnemies()
 void Simulation::spawnEnemies()
 {
     if (state_.spawnGroup >= content_.wave.size()) {
+        // The endless mode starts the next round once the last enemy of this one is gone.
+        if (state_.mode == GameMode::Endless && state_.enemies.empty()) {
+            ++state_.round;
+            state_.spawnGroup = 0;
+            state_.spawnedInGroup = 0;
+            state_.spawnCountdownTicks = content_.wave.front().delayTicks;
+        }
         return;
     }
     if (state_.spawnCountdownTicks > 0) {
@@ -340,10 +355,11 @@ void Simulation::spawnEnemies()
     const SpawnGroup &group = content_.wave[state_.spawnGroup];
     state_.enemies.push_back({state_.nextEntityId++,
                               group.enemyType,
-                              content_.enemies[group.enemyType].health,
+                              fullHealth(content_, group.enemyType, state_.round),
                               Fixed(),
                               {},
-                              {}});
+                              {},
+                              state_.round});
     ++state_.spawnedInGroup;
     if (state_.spawnedInGroup < group.count) {
         state_.spawnCountdownTicks = group.intervalTicks - 1;
@@ -364,7 +380,8 @@ void Simulation::updateHealth()
             countDown(&enemy.poison);
         } else {
             const EnemyType &type = content_.enemies[enemy.type];
-            enemy.health = std::min(enemy.health + type.regeneration, type.health);
+            enemy.health = std::min(enemy.health + type.regeneration,
+                                    fullHealth(content_, enemy.type, enemy.round));
         }
     }
     removeDeadEnemies();
@@ -478,7 +495,8 @@ void Simulation::updateStatus()
     if (state_.lives <= 0) {
         state_.lives = 0;
         state_.status = GameStatus::Lost;
-    } else if (state_.spawnGroup >= content_.wave.size() && state_.enemies.empty()) {
+    } else if (state_.mode == GameMode::Campaign && state_.spawnGroup >= content_.wave.size() &&
+               state_.enemies.empty()) {
         state_.status = GameStatus::Won;
     }
 }

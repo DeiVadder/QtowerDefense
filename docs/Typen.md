@@ -101,6 +101,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `CommandResult` | enum class | `simulation.h` |  |
 | `DiscardCardCommand` | struct | `simulation.h` | Throws a card away, its gold is lost. |
 | `Enemy` | struct | `simulation.h` |  |
+| `GameMode` | enum class | `simulation.h` | Campaign: the wave comes once, a game is won when it is over. |
 | `GameStatus` | enum class | `simulation.h` |  |
 | `RollCardCommand` | struct | `simulation.h` | A random card for less than any tower costs. |
 | `SellTowerCommand` | struct | `simulation.h` |  |

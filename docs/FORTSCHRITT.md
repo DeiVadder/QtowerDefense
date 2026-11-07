@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/11-endlos-kern`:** Endlosmodus in Core: die Welle kommt immer wieder und jedes Mal stärker, kein Sieg, gezählt werden Runden. Im Replay, in `qtd_headless --mode` und in `startMap` (E-36). Im Client fehlt er noch.
 - **Dazu aus `feature/11-menue`:** Das Spiel öffnet im Hauptmenü wie Demo A mit Kampagne, Einstellungen und Beenden. Einstellungen für Lautstärke, Sprüche des Helden und Vollbild bleiben in `settings.ini`. Der Held kommentiert auf der Weltkarte den gewählten Abschnitt (E-35).
 - **Dazu aus `feature/11-portrait`:** Portrait wie Demo A auf dem Eisenschild, Sprüche auf einem Hängeschild, Pause und Tempo im Bogen um das Portrait (E-34).
 - **Dazu aus `feature/11-karten-welt`:** Sieben neue Karten, je eine für Wald, Heide, Ödland, Hochland, Hügelgräber, Frost und Aschenland. Alle neun Abschnitte der Weltkarte sind spielbar (E-32). Noch zu leicht, Balancing folgt in Etappe 12.
@@ -32,7 +33,7 @@
 
 ## Nächster Schritt
 
-1. Etappe 11 abschließen: der Endlosmodus mit immer stärkeren Wellen und Highscore je Karte, mit eigenem Schild im Menü.
+1. Etappe 11 abschließen: den Endlosmodus im Client mit Highscore je Karte und eigenem Schild im Menü (`feature/11-endlos-ui`).
 2. Danach Etappe 12 (Balancing) mit gemeinsamem Katalog aller Karten (E-32).
 3. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro, Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
 

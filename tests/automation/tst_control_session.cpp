@@ -58,14 +58,14 @@ public:
         return {};
     }
 
-    QString start(const QString &map, quint64 seed) override
+    QString start(const QString &map, quint64 seed, qtd::core::GameMode mode) override
     {
         qtd::core::ContentLoadResult loaded = qtd::core::loadContentFile(map);
         if (!loaded.content) {
             return loaded.error;
         }
-        recorder_ =
-            std::make_unique<qtd::core::ReplayRecorder>(*std::move(loaded.content), map, seed);
+        recorder_ = std::make_unique<qtd::core::ReplayRecorder>(
+            *std::move(loaded.content), map, seed, mode);
         return {};
     }
     qtd::core::ReplayRecorder *recorder() override
@@ -89,6 +89,24 @@ private:
     std::unique_ptr<qtd::core::ReplayRecorder> recorder_;
 };
 
+namespace {
+
+// The wrong starts of a game, rows of wrongRequestsGiveAnAnswer.
+void addWrongStarts()
+{
+    QTest::newRow("signed seed") << QByteArray(R"({"action":"startMap","map":"m","seed":"+7"})")
+                                 << u"seed must be"_s;
+    QTest::newRow("bad seed") << QByteArray(R"({"action":"startMap","map":"m","seed":"x"})")
+                              << u"seed must be"_s;
+    QTest::newRow("no map") << QByteArray(R"({"action":"startMap","map":"none","seed":"1"})")
+                            << u"none"_s;
+    QTest::newRow("unknown mode")
+        << QByteArray(R"({"action":"startMap","map":"m","seed":"1","mode":"forever"})")
+        << u"mode must be"_s;
+}
+
+} // namespace
+
 class ControlSessionTest : public QObject
 {
     Q_OBJECT
@@ -108,6 +126,20 @@ private slots:
         QCOMPARE(wave["group"_L1].toInteger(), 0);
         QCOMPARE(wave["spawnedInGroup"_L1].toInteger(), 0);
         QCOMPARE(wave["countdownTicks"_L1].toInteger(), 60);
+    }
+
+    void anEndlessGameIsStartedAndShowsItsRounds()
+    {
+        ControlSession session;
+        const QJsonObject answer = ask(session,
+                                       {{"action"_L1, "startMap"_L1},
+                                        {"map"_L1, mapFile()},
+                                        {"seed"_L1, "7"_L1},
+                                        {"mode"_L1, "endless"_L1}});
+        QVERIFY(answer["ok"_L1].toBool());
+        QCOMPARE(answer["mode"_L1].toString(), u"endless"_s);
+        QCOMPARE(answer["rounds"_L1].toInteger(), 0);
+        QVERIFY(!start(session).contains("mode"_L1));
     }
 
     void aTowerCostsGoldAndShows()
@@ -469,15 +501,10 @@ private slots:
             << QByteArray(R"({"action":"observe","extra":1})") << u"extra"_s;
         QTest::newRow("unknown key of an action")
             << QByteArray(R"({"action":"advance","ticks":1,"extra":1})") << u"extra"_s;
-        QTest::newRow("signed seed")
-            << QByteArray(R"({"action":"startMap","map":"m","seed":"+7"})") << u"seed must be"_s;
         QTest::newRow("unwritable file")
             << QByteArray(R"({"action":"saveReplay","file":"no/such/folder/x"})")
             << u"no/such/folder/x"_s;
-        QTest::newRow("bad seed") << QByteArray(R"({"action":"startMap","map":"m","seed":"x"})")
-                                  << u"seed must be"_s;
-        QTest::newRow("no map") << QByteArray(R"({"action":"startMap","map":"none","seed":"1"})")
-                                << u"none"_s;
+        addWrongStarts();
     }
 
     void wrongRequestsGiveAnAnswer()

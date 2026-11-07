@@ -35,7 +35,7 @@ QString checkEnemies(const core::Content &content, const core::SimulationState &
         if (enemy.health <= core::Fixed()) {
             return u"enemy %1: dead but still in the game"_s.arg(enemy.id);
         }
-        if (enemy.health > content.enemies[enemy.type].health) {
+        if (enemy.health > core::fullHealth(content, enemy.type, enemy.round)) {
             return u"enemy %1: healed beyond its health"_s.arg(enemy.id);
         }
         if (!isSound(enemy.slow) || !isSound(enemy.poison) ||

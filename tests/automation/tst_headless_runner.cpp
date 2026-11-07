@@ -93,6 +93,8 @@ private slots:
                                                 u"9"_s,
                                                 u"--bot"_s,
                                                 u"idle"_s,
+                                                u"--mode"_s,
+                                                u"endless"_s,
                                                 u"--benchmark"_s}));
         QCOMPARE(result.error, QString());
         const HeadlessOptions read = required(result.options);
@@ -102,6 +104,7 @@ private slots:
         QCOMPARE(read.script, u"s"_s);
         QCOMPARE(read.output, u"o"_s);
         QCOMPARE(read.maxTicks, 9);
+        QVERIFY(read.mode == qtd::core::GameMode::Endless);
         QVERIFY(read.benchmark);
     }
 
@@ -132,6 +135,11 @@ private slots:
                                    << u"--max-ticks must not be negative"_s;
         QTest::newRow("bot") << map + QStringList{u"--bot"_s, u"clever"_s}
                              << u"unknown bot \"clever\", available: idle, naive, fuzz"_s;
+        QTest::newRow("mode") << map + QStringList{u"--mode"_s, u"forever"_s}
+                              << u"unknown mode \"forever\", available: campaign, endless"_s;
+        QTest::newRow("replay and mode")
+            << map + QStringList{u"--replay"_s, u"r"_s, u"--mode"_s, u"endless"_s}
+            << u"--replay brings its own seed and commands"_s;
         QTest::newRow("record many")
             << map + QStringList{u"--runs"_s, u"2"_s, u"--record"_s, u"r"_s}
             << u"--record takes a single run"_s;
@@ -221,6 +229,24 @@ private slots:
         QCOMPARE(report["commands"_L1].toInteger(), 9);
         QCOMPARE(report["rejected"_L1].toInteger(), 7);
         QCOMPARE(report["status"_L1].toString(), u"won"_s);
+    }
+
+    // The report of an endless game counts its rounds, a campaign has none. The end with the lives
+    // is a test of core.
+    void anEndlessGameReportsItsRounds()
+    {
+        HeadlessOptions game = options();
+        game.mode = qtd::core::GameMode::Endless;
+        game.bot = qtd::automation::BotKind::Naive;
+        game.maxTicks = 1000; // The naive bot holds out for 62 rounds, too long for the sanitizers.
+        const QJsonObject report =
+            parsed(runHeadless(game).json)["games"_L1].toArray().first().toObject();
+        QCOMPARE(report["status"_L1].toString(), u"running"_s);
+        QCOMPARE(report["mode"_L1].toString(), u"endless"_s);
+        QVERIFY(report["rounds"_L1].toInteger() > 0);
+        const QJsonObject campaign =
+            parsed(runHeadless(options()).json)["games"_L1].toArray().first().toObject();
+        QVERIFY(!campaign.contains("rounds"_L1));
     }
 
     void maxTicksStopsAGame()

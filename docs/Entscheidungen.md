@@ -314,3 +314,13 @@ Vom Menschen am 2026-11-06 aus vier Demos gewählt, ergänzt E-32 und den Auftra
 - **Der Held auf der Weltkarte:** Sein Portrait steht links im Schild des gewählten Abschnitts. Bei jeder Wahl sagt er etwas zu Landschaft oder Lage, das Schild hängt über der Karte und verschwindet nach ein paar Sekunden. Oben links führt ein Knopf zurück ins Menü.
 - **Hängeschilder:** `ChainSign` ist das Brett an zwei Ketten, das schwingt. `WordSign` zeigt darauf die Worte des Helden in HUD, Menü und Weltkarte, die Schilder des Menüs sind ebenfalls `ChainSign`.
 - **Ohne Column:** Schilder und Zeilen der Einstellungen stehen an festen Stellen, denn ein `Column` ordnet erst mit dem ersten Bild an. Im versteckten Testfenster kommt kein Bild, und alle Schilder lägen übereinander.
+
+## E-36 Endlosmodus
+
+- **Regel:** Im Endlosmodus kommt die Welle der Karte immer wieder. Eine neue Runde beginnt, sobald die letzte Gruppe draußen und das Feld leer ist, mit der Wartezeit der ersten Gruppe. Der Neubeginn braucht einen eigenen Tick, ab der zweiten Runde kommt die erste Gruppe deshalb einen Tick später. Die Welle vorzuziehen geht wie sonst. Jede Runde gibt den Gegnern 25 % der Gesundheit ihres Typs dazu, höchstens bis zum Hundertfachen, gerechnet auf dem Rohwert, damit auch die größte erlaubte Gesundheit nicht überläuft. Regeneration heilt bis zur Gesundheit der Runde, in der ein Gegner kam. Es gibt keinen Sieg, das Spiel endet mit dem letzten Leben. Der Wert ist die Zahl der überstandenen Runden. Kopfgeld, Gold und Leben ändern sich nicht. Ob das trägt, entscheidet das Balancing in Etappe 12.
+- **Daten:** Wachstum und Obergrenze sind Konstanten in Core (`kEndlessGrowthPercent`, `kEndlessMostPercent`). Gehören sie zur Karte, wandern sie mit dem Balancing in die Inhalte.
+- **Zustand und Hash:** `SimulationState` kennt `mode` und `round`, jeder Gegner seine Runde. Der Hash nimmt diese Felder nur bei einem Endlosspiel auf. So bleiben die Hashes jeder Kampagne und alle Golden Replays unverändert, obwohl der Zustand neue Felder hat.
+- **Dateien:** Ein Replay nennt `"mode": "endless"`, eine Kampagne lässt den Schlüssel weg. Alte Dateien bleiben gültig, `formatVersion` bleibt 1. Ein gespeichertes Endlosspiel geht als Endlosspiel weiter.
+- **Werkzeuge:** `qtd_headless --mode endless` und `startMap` mit `"mode": "endless"`. Bericht und Beobachtung nennen dann `mode` und `rounds`, bei einer Kampagne bleiben sie wie bisher. Die Invariante zur Gesundheit rechnet mit derselben Funktion `fullHealth` wie die Simulation.
+- **Grenze:** Ein Endlosspiel endet nur mit dem letzten Leben. Bots laufen deshalb bis `--max-ticks`, wenn sie nicht verlieren.
+

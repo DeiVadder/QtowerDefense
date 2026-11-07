@@ -145,6 +145,13 @@ quint64 stateHash(const SimulationState &state)
     for (const BonusCoin &coin : state.coins) {
         fields.add(coin.id, coin.place.x.raw(), coin.place.y.raw(), coin.value, coin.ticksLeft);
     }
+    // Only an endless game has these. A campaign keeps the hashes it had before (E-36).
+    if (state.mode == GameMode::Endless) {
+        fields.add(state.mode, state.round);
+        for (const Enemy &enemy : state.enemies) {
+            fields.add(enemy.round);
+        }
+    }
     return fields.value();
 }
 

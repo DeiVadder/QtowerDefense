@@ -10,7 +10,7 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 
 | Action | Fields | Effect |
 |---|---|---|
-| `startMap` | `map` (file), `seed` (decimal digits as text) | Starts a game and drops the current one. If it fails, the current game stays |
+| `startMap` | `map` (file), `seed` (decimal digits as text), optional `mode` (`campaign`, the default, or `endless`) | Starts a game and drops the current one. If it fails, the current game stays. An endless game adds `mode` and `rounds` to every observation |
 | `buildTower` | `x`, `y` (a cell of the grid), `towerType` (index), optional `rotation` (clockwise quarter turns around that cell, 0 to 3, default 0) | Runs the command. The answer adds `result` |
 | `setTargetPriority` | `tower` (the id of a tower in the game), `priority` (`first`, `last`, `strongest` or `nearest`) | Runs the command. The answer adds `result` |
 | `upgradeTower` | `tower` (the id of a tower in the game) | Runs the command. The answer adds `result`, `highestLevel` if there is no further level |

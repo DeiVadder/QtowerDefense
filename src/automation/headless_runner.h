@@ -18,7 +18,8 @@ constexpr quint64 kDefaultSeed = 1;
 struct HeadlessOptions
 {
     QString map;
-    std::optional<quint64> seed; // otherwise the seed of the script, or kDefaultSeed
+    std::optional<quint64> seed;        // otherwise the seed of the script, or kDefaultSeed
+    std::optional<core::GameMode> mode; // otherwise the mode of the script, or the campaign
     qint64 runs = 1;
     BotKind bot = BotKind::Idle;
     QString script;

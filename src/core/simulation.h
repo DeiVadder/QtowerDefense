@@ -18,6 +18,21 @@ constexpr int kTicksPerSecond = 30;
 /// The cards a player can hold at once.
 constexpr std::size_t kHandLimit = 5;
 
+/// Campaign: the wave comes once, a game is won when it is over. Endless: the wave comes again and
+/// again, stronger each round, until the lives are gone (E-36).
+enum class GameMode : quint8 {
+    Campaign,
+    Endless,
+};
+
+/// What each round of the endless mode adds to the health of its enemies, in percent of their type,
+/// and the most it adds up to.
+constexpr qint64 kEndlessGrowthPercent = 25;
+constexpr qint64 kEndlessMostPercent = 10000;
+
+/// The health an enemy of this type has when it comes in this round, the most it heals up to.
+Fixed fullHealth(const Content &content, std::size_t type, qint64 round);
+
 enum class GameStatus : quint8 {
     Running,
     Won,
@@ -39,6 +54,7 @@ struct Enemy
     Fixed travelled; // distance along the path
     ActiveStatus slow;
     ActiveStatus poison;
+    qint64 round = 0; // the round of the endless mode it came in, 0 in a campaign
 };
 
 struct Tower
@@ -75,7 +91,9 @@ struct SimulationState
 {
     quint64 contentHash = 0;
     qint64 tick = 0;
+    GameMode mode = GameMode::Campaign;
     GameStatus status = GameStatus::Running;
+    qint64 round = 0; // the rounds of the endless mode that are over
     qint64 gold = 0;
     qint64 lives = 0;
     Random random{0, 0};
@@ -183,7 +201,7 @@ class Simulation
 {
 public:
     /// The content must come from parseContent, which guarantees its limits.
-    Simulation(Content content, quint64 seed);
+    Simulation(Content content, quint64 seed, GameMode mode = GameMode::Campaign);
 
     const Content &content() const
     {

@@ -42,6 +42,7 @@ struct Replay
     QString content; // the name of the content file, for people and tools
     quint64 seed = 0;
     quint64 contentHash = 0;
+    GameMode mode = GameMode::Campaign; // in the file only when it is endless
     std::vector<RecordedCommand> commands;
     std::vector<Checkpoint> checkpoints;
 };
@@ -60,6 +61,9 @@ std::optional<quint64> hashFromText(QStringView text);
 /// The text of a command result in files and reports.
 QString toString(CommandResult result);
 QString toString(GameStatus status);
+QString toString(GameMode mode);
+/// "campaign" or "endless", nothing for any other text.
+std::optional<GameMode> gameModeFromText(QStringView text);
 
 /// A seed from its decimal text, the only form it has outside. Signs and spaces do not count.
 std::optional<quint64> seedFromText(const QString &text);
@@ -86,7 +90,10 @@ ReplayLoadResult loadScriptFile(const QString &fileName);
 class ReplayRecorder
 {
 public:
-    ReplayRecorder(Content content, QString contentName, quint64 seed);
+    ReplayRecorder(Content content,
+                   QString contentName,
+                   quint64 seed,
+                   GameMode mode = GameMode::Campaign);
 
     const Simulation &simulation() const
     {

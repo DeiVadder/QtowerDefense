@@ -24,11 +24,17 @@ QByteArray compact(const QJsonObject &object)
 QJsonObject stateReport(const core::Simulation &game)
 {
     const core::SimulationState &state = game.state();
-    return {{"status"_L1, core::toString(state.status)},
-            {"tick"_L1, state.tick},
-            {"gold"_L1, state.gold},
-            {"lives"_L1, state.lives},
-            {"hash"_L1, core::hashToText(game.hash())}};
+    QJsonObject report{{"status"_L1, core::toString(state.status)},
+                       {"tick"_L1, state.tick},
+                       {"gold"_L1, state.gold},
+                       {"lives"_L1, state.lives},
+                       {"hash"_L1, core::hashToText(game.hash())}};
+    // Only an endless game has rounds, a campaign reports as before.
+    if (state.mode == core::GameMode::Endless) {
+        report.insert("mode"_L1, core::toString(state.mode));
+        report.insert("rounds"_L1, state.round);
+    }
+    return report;
 }
 
 bool writeFile(const QString &fileName, const QByteArray &data, QString *error)

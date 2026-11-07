@@ -187,6 +187,7 @@ HeadlessOutcome playGames(const HeadlessOptions &options, const core::Content &c
 {
     std::vector<core::RecordedCommand> commands;
     quint64 firstSeed = options.seed.value_or(kDefaultSeed);
+    core::GameMode mode = options.mode.value_or(core::GameMode::Campaign);
     if (!options.script.isEmpty()) {
         core::ReplayLoadResult script = core::loadScriptFile(options.script);
         if (!script.replay) {
@@ -194,6 +195,7 @@ HeadlessOutcome playGames(const HeadlessOptions &options, const core::Content &c
         }
         commands = std::move(script.replay->commands);
         firstSeed = options.seed.value_or(script.replay->seed);
+        mode = options.mode.value_or(script.replay->mode);
     }
     const QString contentName = QFileInfo(options.map).fileName();
     QJsonArray games;
@@ -201,7 +203,7 @@ HeadlessOutcome playGames(const HeadlessOptions &options, const core::Content &c
     qint64 nanoseconds = 0;
     for (qint64 run = 0; run < options.runs; ++run) {
         const quint64 seed = firstSeed + static_cast<quint64>(run);
-        core::ReplayRecorder recorder(content, contentName, seed);
+        core::ReplayRecorder recorder(content, contentName, seed, mode);
         QElapsedTimer timer;
         timer.start();
         const QString problem = playOneGame(&recorder, options, commands, seed);
@@ -242,8 +244,9 @@ QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
     if (options.control) {
         const bool alone = options.map.isEmpty() && options.replay.isEmpty() &&
                            options.script.isEmpty() && options.record.isEmpty() &&
-                           options.output.isEmpty() && !options.seed && options.runs == 1 &&
-                           options.bot == BotKind::Idle && !maxTicksGiven && !options.benchmark;
+                           options.output.isEmpty() && !options.seed && !options.mode &&
+                           options.runs == 1 && options.bot == BotKind::Idle && !maxTicksGiven &&
+                           !options.benchmark;
         return alone ? QString() : u"--control takes its games from the protocol"_s;
     }
     if (options.map.isEmpty()) {
@@ -262,7 +265,7 @@ QString conflict(const HeadlessOptions &options, bool maxTicksGiven)
         return u"--record takes a single run"_s;
     }
     if (!options.replay.isEmpty() &&
-        (options.seed || options.runs > 1 || options.bot != BotKind::Idle ||
+        (options.seed || options.mode || options.runs > 1 || options.bot != BotKind::Idle ||
          !options.script.isEmpty() || !options.record.isEmpty())) {
         return u"--replay brings its own seed and commands"_s;
     }
@@ -319,6 +322,9 @@ struct CommandLine
     QCommandLineOption runs{
         u"runs"_s, u"Number of games, seeds count up, default 1."_s, u"number"_s};
     QCommandLineOption bot{u"bot"_s, u"Who plays: idle, the default, naive or fuzz."_s, u"name"_s};
+    QCommandLineOption mode{u"mode"_s,
+                            u"campaign, the default, or endless: the wave comes again, stronger."_s,
+                            u"name"_s};
     QCommandLineOption script{u"script"_s, u"Play the commands of a file."_s, u"file"_s};
     QCommandLineOption replay{u"replay"_s, u"Check a replay against --map."_s, u"file"_s};
     QCommandLineOption record{u"record"_s, u"Write the game as a replay."_s, u"file"_s};
@@ -350,6 +356,14 @@ void readOptions(const QCommandLineParser &parser,
         }
         options.bot = *bot;
     }
+    if (parser.isSet(line.mode)) {
+        const QString name = parser.value(line.mode);
+        options.mode = core::gameModeFromText(name);
+        if (!options.mode) {
+            result->error = u"unknown mode \"%1\", available: campaign, endless"_s.arg(name);
+            return;
+        }
+    }
     quint64 seed = kDefaultSeed;
     if (readNumber(parser, line.seed, &seed, &result->error) &&
         readNumber(parser, line.runs, &options.runs, &result->error) &&
@@ -374,6 +388,7 @@ HeadlessArguments parseHeadlessArguments(const QStringList &arguments)
                        line.seed,
                        line.runs,
                        line.bot,
+                       line.mode,
                        line.script,
                        line.replay,
                        line.record,

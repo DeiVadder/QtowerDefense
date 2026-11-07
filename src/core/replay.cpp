@@ -196,6 +196,14 @@ ReplayLoadResult parse(QByteArrayView json, Kind kind)
     if (kind == Kind::Replay || root.has("contentHash"_L1)) {
         replay.contentHash = readHash(root, "contentHash"_L1);
     }
+    if (root.has("mode"_L1)) {
+        const std::optional<GameMode> mode = gameModeFromText(root.text("mode"_L1));
+        if (mode) {
+            replay.mode = *mode;
+        } else {
+            root.fail(u"mode"_s, u"must be \"campaign\" or \"endless\""_s);
+        }
+    }
     readCommands(root, kind, &replay);
     if (kind == Kind::Replay || root.has("checkpoints"_L1)) {
         readCheckpoints(root, &replay);
@@ -331,6 +339,22 @@ QString toString(GameStatus status)
     return u"running"_s;
 }
 
+QString toString(GameMode mode)
+{
+    return mode == GameMode::Endless ? u"endless"_s : u"campaign"_s;
+}
+
+std::optional<GameMode> gameModeFromText(QStringView text)
+{
+    if (text == u"campaign"_s) {
+        return GameMode::Campaign;
+    }
+    if (text == u"endless"_s) {
+        return GameMode::Endless;
+    }
+    return std::nullopt;
+}
+
 QString toString(CommandResult result)
 {
     return kResultNames[static_cast<std::size_t>(result)];
@@ -347,12 +371,16 @@ QByteArray toJson(const Replay &replay)
         checkpoints.append(
             QJsonObject{{"tick"_L1, checkpoint.tick}, {"hash"_L1, hashToText(checkpoint.hash)}});
     }
-    const QJsonObject root{{"formatVersion"_L1, kFormatVersion},
-                           {"content"_L1, replay.content},
-                           {"seed"_L1, QString::number(replay.seed)},
-                           {"contentHash"_L1, hashToText(replay.contentHash)},
-                           {"commands"_L1, commands},
-                           {"checkpoints"_L1, checkpoints}};
+    QJsonObject root{{"formatVersion"_L1, kFormatVersion},
+                     {"content"_L1, replay.content},
+                     {"seed"_L1, QString::number(replay.seed)},
+                     {"contentHash"_L1, hashToText(replay.contentHash)},
+                     {"commands"_L1, commands},
+                     {"checkpoints"_L1, checkpoints}};
+    // A campaign leaves the key out, so the files of before stay as they are.
+    if (replay.mode == GameMode::Endless) {
+        root.insert("mode"_L1, toString(replay.mode));
+    }
     return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
@@ -376,11 +404,12 @@ ReplayLoadResult loadScriptFile(const QString &fileName)
     return loadFile(fileName, Kind::Script);
 }
 
-ReplayRecorder::ReplayRecorder(Content content, QString contentName, quint64 seed)
-    : game_(std::move(content), seed)
+ReplayRecorder::ReplayRecorder(Content content, QString contentName, quint64 seed, GameMode mode)
+    : game_(std::move(content), seed, mode)
 {
     replay_.content = std::move(contentName);
     replay_.seed = seed;
+    replay_.mode = mode;
     replay_.contentHash = game_.state().contentHash;
 }
 
@@ -413,7 +442,7 @@ Replay ReplayRecorder::replay() const
 ResumeResult resumeGame(Content content, const Replay &saved)
 {
     std::unique_ptr<ReplayRecorder> game =
-        std::make_unique<ReplayRecorder>(std::move(content), saved.content, saved.seed);
+        std::make_unique<ReplayRecorder>(std::move(content), saved.content, saved.seed, saved.mode);
     const Simulation &simulation = game->simulation();
     if (simulation.state().contentHash != saved.contentHash) {
         return {nullptr, u"the game was saved with other content"_s};
@@ -451,7 +480,7 @@ ResumeResult resumeGame(const QString &mapFile, const QString &saveFile)
 }
 
 ReplayPlayer::ReplayPlayer(Content content, Replay replay)
-    : game_(std::move(content), replay.seed), replay_(std::move(replay))
+    : game_(std::move(content), replay.seed, replay.mode), replay_(std::move(replay))
 {
     if (game_.state().contentHash != replay_.contentHash) {
         fail(u"the content differs: its hash is %1, the replay expects %2"_s.arg(

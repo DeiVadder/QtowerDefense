@@ -73,7 +73,7 @@ void GameSession::restart()
     startNewGame(fileName_);
 }
 
-void GameSession::startGame(const QString &fileName, quint64 seed)
+void GameSession::startGame(const QString &fileName, quint64 seed, core::GameMode mode)
 {
     fileName_ = fileName;
     saveIsOurs_ = false;
@@ -84,7 +84,7 @@ void GameSession::startGame(const QString &fileName, quint64 seed)
     game_.reset();
     if (loaded.content) {
         game_ = std::make_unique<core::ReplayRecorder>(
-            *std::move(loaded.content), QFileInfo(fileName).fileName(), seed);
+            *std::move(loaded.content), QFileInfo(fileName).fileName(), seed, mode);
     }
     showNewGame();
 }

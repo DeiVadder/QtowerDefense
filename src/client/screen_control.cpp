@@ -116,13 +116,13 @@ public:
         FrameCosts::watch(frameCosts_, window);
     }
 
-    QString start(const QString &map, quint64 seed) override
+    QString start(const QString &map, quint64 seed, core::GameMode mode) override
     {
         const core::ContentLoadResult loaded = core::loadContentFile(map);
         if (!loaded.content) {
             return loaded.error;
         }
-        game_->startGame(map, seed);
+        game_->startGame(map, seed, mode);
         game_->setPaused(true);
         started_ = true;
         return {};

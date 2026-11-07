@@ -25,7 +25,7 @@ public:
     ControlledGame &operator=(const ControlledGame &) = delete;
 
     /// Starts a game. A failure gives its text and keeps the current game.
-    virtual QString start(const QString &map, quint64 seed) = 0;
+    virtual QString start(const QString &map, quint64 seed, core::GameMode mode) = 0;
     /// Goes on with a saved game on a map. A failure gives its text and keeps the current game.
     virtual QString loadSaved(const QString &map, const QString &file) = 0;
     /// The current game, nothing before the first start.
