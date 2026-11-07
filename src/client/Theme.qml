@@ -15,6 +15,7 @@ QtObject {
     readonly property color plankGap: "#bf0f0702"
     readonly property color woodDark: "#2f1c0f"
     readonly property color iron: "#4a4f54"
+    readonly property color ironLight: "#868d92"
     readonly property color ironDark: "#1e2124"
 
     readonly property color text: "#f4e3c1"
@@ -25,8 +26,21 @@ QtObject {
     readonly property color fire: "#e8702a"
     readonly property color ice: "#7fd4f5"
 
-    readonly property color heroSkin: "#e2b48c"
-    readonly property color heroBeard: "#b5562a"
+    readonly property color heroSkin: "#d9a678"
+    readonly property color heroSkinDark: "#c48f62"
+    readonly property color heroLine: "#4a2a16"
+    readonly property color heroArmor: "#3c3f44"
+    readonly property color heroShield: "#6d2a20"
+    readonly property color heroBrow: "#5b5148"
+    readonly property color heroMoustache: "#7b6f62"
+    readonly property color heroMoustacheLine: "#2d2620"
+    readonly property color heroMouth: "#2a0d08"
+    readonly property color heroEye: "#f4efe2"
+    readonly property color heroPupil: "#22190f"
+    readonly property color helmetLight: "#9aa1a6"
+    readonly property color helmetMiddle: "#6b7277"
+    readonly property color helmetDark: "#3c4146"
+    readonly property color signWood: "#c9a06a"
 
     function spellColor(spell: int): color {
         return spell === 0 ? fire : ice;
@@ -48,8 +62,22 @@ QtObject {
     readonly property real endWidth: 8
     readonly property real endHeight: 3.5
     readonly property real endMargin: 0.5
-    readonly property real heroSize: 2.2
+    readonly property real heroSize: 3.4
+    readonly property real dialButton: 0.9 // what stands around the portrait
+    readonly property real dialGap: 0.45 // from the portrait to the middle of a button
+    readonly property real dialTurn: 90 // degrees from the first button to the last
+    readonly property real signChain: 0.3
+    readonly property real chainInset: 0.15 // of the width of the sign
+    readonly property int signSeed: 21
+    readonly property real swingStart: -6 // degrees of a sign that drops in
+    readonly property real swingOut: 3
+    readonly property real swingBack: -1.5
+    readonly property int swingTime: 170
+    readonly property int swingRest: 130
+    readonly property real signBracket: 0.6
+    readonly property real signText: 0.36
     readonly property real leftRows: 2 // the rows of buttons above the hand, at most
+    readonly property real leftInsets: 3 // the edges of the window and of the frames along them
 
     readonly property real cardWidth: 3
     readonly property real cardHeight: 4.25

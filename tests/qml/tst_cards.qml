@@ -289,15 +289,35 @@ Item {
             verify(findChild(game.hud, "flyingCard").visible);
         }
 
+        // Beside the hand, over a cell that a drop on the map would build on.
+        function coveredCell(game) {
+            const hand = findChild(game.hud, "towerList");
+            const size = game.scene.game.gridSize;
+            for (let y = 0; y < size.height; ++y) {
+                for (let x = 0; x < size.width; ++x) {
+                    const place = game.scene.cellOnScreen(x, y);
+                    const over = game.hud.childAt(place.x, place.y);
+                    if (over !== null && over !== hand && game.scene.game.buildTower(x, y)) {
+                        game.scene.game.restart();
+                        return Qt.point(place.x, place.y);
+                    }
+                }
+            }
+            return null;
+        }
+
         function test_aCardDroppedOnTheHudBuildsNothing() {
+            stage.width = 480;
             const game = create();
-            const button = findChild(game.hud, "pauseButton");
-            const over = button.mapToItem(game.hud, 5, 5);
+            waitForRendering(game.scene);
+            const over = coveredCell(game);
+            verify(over !== null);
+            tryVerify(() => cardsOf(game.cards).length > 3);
             dragCard(game, cardsOf(game.cards)[0], over, {
                          touch: false
                      })();
             compare(game.scene.game.towerCount, 0);
-            verify(!game.scene.game.paused);
+            stage.width = 640;
         }
 
         function test_aCardDroppedBesideTheMapBuildsNothing() {

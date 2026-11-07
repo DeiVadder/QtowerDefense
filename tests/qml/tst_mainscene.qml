@@ -374,8 +374,7 @@ Item {
             const actions = findChild(hud, "towerActions");
             verify(!actions.visible);
             const frames = hud.children.filter(child => child.around === actions);
-            compare(frames.length, 1);
-            verify(!frames[0].visible);
+            compare(frames.map(frame => frame.visible), [false]);
         }
 
         function test_aChosenButtonShowsTheAccent() {
@@ -540,9 +539,11 @@ Item {
             const hud = createHud();
             hud.density = data.density;
             const stats = findChild(hud, "stats");
-            const buttons = findChild(hud, "buttons");
-            tryVerify(() => buttons.width > 0);
-            verify(stats.x + stats.width <= buttons.x, stats.width + " and " + buttons.x);
+            const pause = findChild(hud, "pauseButton");
+            tryVerify(() => pause.width > 0);
+            const corner = pause.mapToItem(hud, pause.width, 0);
+            verify(corner.y >= stats.y + stats.height || corner.x <= stats.x);
+            verify(stats.x + stats.width <= findChild(hud, "waveButton").x, stats.width);
             const towerButtons = findChild(hud, "towerButtons");
             tryVerify(() => towerButtons.children.length > 3);
             const list = findChild(hud, "towerList");

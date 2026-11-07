@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/11-portrait`:** Portrait wie Demo A auf dem Eisenschild, Sprüche auf einem Hängeschild, Pause und Tempo im Bogen um das Portrait (E-34).
 - **Dazu aus `feature/11-karten`:** Türme als aufgefächerte Karten mit Werten, Ziehen auf die Karte oder Tippen, Raster beim Ziehen deutlich, Karte fällt auf ihr Feld (E-34). Das Limit von fünf kommt mit dem Würfeln.
 - **Dazu aus `feature/11-held`:** Portrait mit Blinzeln, Blick aufs Brett, Stimmungen und Sprechblase, der Held hält den Zauber in der Hand (E-34). Die Sprachausgabe fehlt noch.
 - **Dazu aus `feature/11-theme`:** `Theme.qml` mit Neon als Akzent, HUD mit Icons und Rahmen aus Holz und Eisen (E-34). Ein Menü gibt es noch nicht.

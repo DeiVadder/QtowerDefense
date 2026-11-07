@@ -11,11 +11,13 @@ Item {
     property color tone: Theme.wood
     property int seed: 7 // every board has a grain of its own
     property real plankUnits: Theme.plank
+    property bool takesTaps: true
     readonly property real bracket: unit * Theme.bracket
     readonly property real bar: Math.max(Theme.thinnestBar, unit * Theme.bracketBar)
 
     MouseArea {
         anchors.fill: parent
+        enabled: root.takesTaps
     }
 
     Canvas {

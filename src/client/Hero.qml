@@ -1,8 +1,10 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Shapes
 import QtowerDefense.Client
 
-// The portrait of the hero with its speech bubble. The bubble lies over the map and takes no taps.
+// The portrait of the hero, with its words on a sign that hangs at bubbleTop. The sign lies over the
+// map and takes no taps.
 Item {
     id: root
 
@@ -10,6 +12,8 @@ Item {
     required property real unit
 
     property real size: unit * Theme.heroSize
+    property real bubbleLeft: size + unit * Theme.gap
+    property real bubbleTop: 0
     property int spell: 0
     property point target: Qt.point(0.5, 0.5)
 
@@ -38,61 +42,59 @@ Item {
         }
     }
 
-    FramedPanel {
+    HeroFace {
+        objectName: "heroFace"
         anchors.fill: parent
-        unit: root.unit
-
-        HeroFace {
-            objectName: "heroFace"
-            anchors.fill: parent
-            anchors.margins: root.unit * Theme.inset
-            mood: voice.mood
-            spellColor: Theme.spellColor(root.spell)
-            focused: voice.line.length > 0 && voice.moment === HeroVoice.Moment.Spell
-            lookAt: root.target
-        }
+        mood: voice.mood
+        talking: voice.line.length > 0
+        spell: root.game.spellNames[root.spell] ?? ""
+        spellColor: Theme.spellColor(root.spell)
+        focused: voice.line.length > 0 && voice.moment === HeroVoice.Moment.Spell
+        lookAt: root.target
     }
 
-    Rectangle {
+    // It lies over the map, a tap on it means nothing there.
+    MouseArea {
+        anchors.fill: parent
+    }
+
+    Item {
         id: bubble
 
+        readonly property real chain: root.unit * Theme.signChain
+        readonly property real padding: root.unit * Theme.gap
+
         objectName: "heroBubble"
-        anchors.left: parent.right
-        anchors.leftMargin: root.unit * Theme.gap
-        anchors.verticalCenter: parent.verticalCenter
+        x: root.bubbleLeft
+        y: root.bubbleTop
         visible: voice.line.length > 0
-        width: Math.min(words.implicitWidth, root.unit * Theme.bubbleWidth) + 2 * padding
-        height: words.height + 2 * padding
-        radius: root.unit * Theme.corner
-        color: Theme.text
-        border.color: Theme.woodDark
+        width: root.unit * Theme.bubbleWidth
+        height: words.height + 2 * padding + chain
+        transformOrigin: Item.Top
 
-        readonly property real padding: root.unit * Theme.inset
-        readonly property real tail: root.unit * Theme.gap
+        Repeater {
+            model: 2
 
-        Shape {
-            anchors.right: parent.left
-            anchors.rightMargin: -bubble.border.width
-            anchors.verticalCenter: parent.verticalCenter
-            width: bubble.tail
-            height: bubble.tail
-            preferredRendererType: Shape.CurveRenderer
+            delegate: Rectangle {
+                required property int index
 
-            ShapePath {
-                fillColor: Theme.text
-                strokeColor: Theme.woodDark
-                startX: bubble.tail
-                startY: 0
-
-                PathLine {
-                    x: 0
-                    y: bubble.tail / 2
-                }
-                PathLine {
-                    x: bubble.tail
-                    y: bubble.tail
-                }
+                x: (index === 0 ? Theme.chainInset : 1 - Theme.chainInset) * bubble.width - width
+                   / 2
+                width: root.unit * Theme.bracketBar
+                height: bubble.chain + width
+                color: Theme.ironDark
+                border.color: Theme.ironLight
             }
+        }
+
+        FramedPanel {
+            y: bubble.chain
+            width: parent.width
+            height: parent.height - bubble.chain
+            unit: root.unit * Theme.signBracket
+            tone: Theme.signWood
+            seed: Theme.signSeed
+            takesTaps: false
         }
 
         Text {
@@ -100,15 +102,53 @@ Item {
 
             objectName: "heroLine"
             x: bubble.padding
-            y: bubble.padding
-            width: Math.min(implicitWidth, root.unit * Theme.bubbleWidth)
+            y: bubble.chain + bubble.padding
+            width: bubble.width - 2 * bubble.padding
             wrapMode: Text.Wrap
             text: voice.line
-            color: Theme.woodDark
+            color: Theme.burnt
             font.family: Theme.face
-            font.pixelSize: root.unit * Theme.smallText
+            font.bold: true
+            font.pixelSize: root.unit * Theme.signText
             Accessible.role: Accessible.StaticText
             Accessible.name: text
+        }
+
+        // A new line drops in and swings out.
+        SequentialAnimation {
+            id: swing
+
+            NumberAnimation {
+                target: bubble
+                property: "rotation"
+                from: Theme.swingStart
+                to: Theme.swingOut
+                duration: Theme.swingTime
+                easing.type: Easing.OutQuad
+            }
+            NumberAnimation {
+                target: bubble
+                property: "rotation"
+                to: Theme.swingBack
+                duration: Theme.swingTime
+                easing.type: Easing.InOutQuad
+            }
+            NumberAnimation {
+                target: bubble
+                property: "rotation"
+                to: 0
+                duration: Theme.swingRest
+            }
+        }
+
+        Connections {
+            target: voice
+
+            function onLineChanged() {
+                if (voice.line.length > 0) {
+                    swing.restart();
+                }
+            }
         }
     }
 }

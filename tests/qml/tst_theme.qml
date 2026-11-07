@@ -64,14 +64,16 @@ Item {
                             back: Theme.wood
                         },
                         {
-                            tag: "the words of the hero",
-                            front: Theme.woodDark,
-                            back: Theme.text
-                        },
-                        {
                             tag: "a price on a card",
                             front: Theme.gold,
                             back: Theme.ironDark
+                        },
+                        {
+                            tag: "the words of the hero on the darkest plank",
+                            front: Theme.burnt,
+                            back: Qt.rgba(Theme.signWood.r * Theme.darkestPlank, Theme.signWood.g
+                                          * Theme.darkestPlank, Theme.signWood.b
+                                          * Theme.darkestPlank, 1)
                         },
                         {
                             tag: "an error on wood",

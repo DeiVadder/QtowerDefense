@@ -249,18 +249,57 @@ Item {
                             tag: "roomy",
                             width: 1280,
                             height: 720
+                        },
+                        {
+                            tag: "dense",
+                            width: 800,
+                            height: 360,
+                            density: 6.3
                         }
                     ];
+        }
+
+        function apart(first, second, hud) {
+            const one = first.mapToItem(hud, 0, 0);
+            const other = second.mapToItem(hud, 0, 0);
+            return one.x + first.width <= other.x || other.x + second.width <= one.x || one.y
+                    + first.height <= other.y || other.y + second.height <= one.y;
         }
 
         function test_theHeroLeavesTheButtonsAlone(data) {
             stage.width = data.width;
             stage.height = data.height;
             const made = createTemporaryObject(hudComponent, stage);
-            const hero = findChild(made.hud, "hero");
-            const actions = findChild(made.hud, "towerActions");
-            verify(hero.visible);
-            verify(hero.y + hero.height <= actions.y - made.hud.unit * Theme.inset);
+            const hud = made.hud;
+            if (data.density !== undefined) {
+                hud.density = data.density;
+            }
+            const clock = findChild(hud, "buttons");
+            const actions = findChild(hud, "towerActions");
+            verify(made.session.buildTower(4, 4));
+            verify(made.session.chooseTowerAt(4, 4));
+            tryVerify(() => actions.visible && actions.height > 0);
+            // The hand first has to sink.
+            const hero = findChild(hud, "hero");
+            const lowest = Math.max(clock.y + clock.height, hero.y + hero.height);
+            tryVerify(() => lowest <= actions.y - hud.unit * Theme.inset, 2000, lowest + " and "
+            + actions.y);
+            const stats = findChild(hud, "stats");
+            const buttons = clock.children.filter(child => child.width > 0);
+            compare(buttons.length, made.session.maxSpeed + 1);
+            for (const button of buttons) {
+                verify(apart(button, stats, hud));
+                // The HUD asks the clock about a dropped card: it has to reach as far as its buttons.
+                const edge = button.mapToItem(hud, button.width - 1, button.height - 1);
+                compare(hud.childAt(edge.x, edge.y), clock);
+            }
+            made.session.clearChosenTower();
+            made.session.paused = true;
+            const save = findChild(hud, "savePanel");
+            tryVerify(() => save.visible && save.height > 0);
+            waitForPolish(hud);
+            verify(apart(save, stats, hud));
+            verify(buttons.every(button => apart(save, button, hud)));
             stage.width = 640;
             stage.height = 360;
         }

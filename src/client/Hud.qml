@@ -47,11 +47,35 @@ Item {
         }
     }
 
+    // In the corner, as large as the buttons at the left leave room for.
+    Hero {
+        id: hero
+
+        readonly property real ring: root.unit * (Theme.dialGap + Theme.dialButton / 2)
+        readonly property real room: root.height - root.cardUnit * Theme.cardPeek - root.unit * (Theme.leftRows
+                                                                                                 + (Theme.leftRows
+                                                                                                    + 1) * Theme.gap
+                                                                                                 + Theme.leftInsets
+                                                                                                 * Theme.inset)
+        // A low window has no room for the bow, the clock then stands in a row beside the portrait.
+        readonly property bool compact: room - ring < root.unit * Theme.heroSize
+
+        objectName: "hero"
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.margins: root.unit * Theme.inset
+        size: Math.max(root.unit, Math.min(root.unit * Theme.heroSize, room))
+        bubbleLeft: size + (compact ? 0 : ring) + root.unit * Theme.gap
+        bubbleTop: Math.max(stats.y + stats.height - y, compact ? size : 0)
+        game: root.game
+        unit: root.unit
+    }
+
     FramedPanel {
         id: stats
 
         objectName: "stats"
-        anchors.left: parent.left
+        anchors.left: hero.compact ? topButtons.right : hero.right
         anchors.top: parent.top
         anchors.margins: root.unit * Theme.inset
         unit: root.unit
@@ -110,11 +134,6 @@ Item {
     }
 
     HudFrame {
-        around: topButtons
-        unit: root.unit
-    }
-
-    HudFrame {
         around: towerActions
         unit: root.unit
     }
@@ -144,17 +163,39 @@ Item {
         unit: root.unit
     }
 
-    Row {
+    // The clock stands around the portrait, along its lower right.
+    Item {
         id: topButtons
 
+        readonly property real reach: hero.size / 2 + root.unit * Theme.dialGap
+        readonly property real button: root.unit * Theme.dialButton
+        readonly property int places: root.game.maxSpeed + 1
+        readonly property real gap: root.unit * Theme.inset
+
+        function placed(place: int): point {
+            if (hero.compact) {
+                return Qt.point(hero.size + gap + place * (button + gap), 0);
+            }
+            const angle = place * Theme.dialTurn / (places - 1) * Math.PI / 180;
+            return Qt.point(hero.size / 2 + Math.cos(angle) * reach - button / 2, hero.size / 2 + Math.sin(
+                                angle) * reach - button / 2);
+        }
+
+        // As large as the buttons: the HUD asks what lies under a dropped card.
         objectName: "buttons"
-        anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: root.unit * Theme.gap
-        spacing: root.unit * Theme.gap
+        anchors.left: hero.left
+        anchors.top: hero.top
+        anchors.topMargin: hero.compact ? (hero.size - button) / 2 : 0
+        width: hero.size + (hero.compact ? places * (button + gap) + gap : hero.ring)
+        height: hero.compact ? button : hero.size + hero.ring
 
         HudButton {
             objectName: "pauseButton"
+            x: topButtons.placed(0).x
+            y: topButtons.placed(0).y
+            width: topButtons.button
+            height: topButtons.button
+            radius: width / 2
             unit: root.unit
             icon: root.game.paused ? "play" : "pause"
             text: root.game.paused ? qsTr("Resume") : qsTr("Pause")
@@ -169,9 +210,12 @@ Item {
                 required property int index
                 readonly property int speed: index + 1
 
+                x: topButtons.placed(speed).x
+                y: topButtons.placed(speed).y
+                width: topButtons.button
+                height: topButtons.button
+                radius: width / 2
                 unit: root.unit
-                icon: "fast"
-                caption: speed
                 text: qsTr("%1x").arg(speed)
                 highlighted: root.game.speed === speed
                 onClicked: root.game.speed = speed
@@ -270,8 +314,9 @@ Item {
         objectName: "savePanel"
         visible: root.game.paused
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: topButtons.bottom
-        anchors.margins: root.unit * Theme.gap
+        anchors.top: parent.top
+        anchors.topMargin: Math.max(stats.y + stats.height, hero.compact ? hero.y + hero.size : 0)
+                           + root.unit * Theme.gap
         spacing: root.unit * Theme.gap
 
         Row {
@@ -315,7 +360,7 @@ Item {
 
         objectName: "waveButton"
         anchors.right: parent.right
-        anchors.top: topButtons.bottom
+        anchors.top: parent.top
         anchors.margins: root.unit * Theme.gap
         unit: root.unit
         available: root.game.canCallWave
@@ -400,23 +445,6 @@ Item {
             text: qsTr("Rotate")
             onClicked: root.game.rotateSelection()
         }
-    }
-
-    // Takes what the buttons at the left leave free. Below the size of a button it is not worth it.
-    Hero {
-        readonly property real room: root.height - stats.height - root.unit * (Theme.cardPeek + Theme.leftRows
-                                                                               + (Theme.leftRows
-                                                                                  + 1) * Theme.gap
-                                                                               + 4 * Theme.inset)
-
-        objectName: "hero"
-        visible: room >= root.unit
-        size: Math.min(root.unit * Theme.heroSize, room)
-        anchors.left: parent.left
-        anchors.top: stats.bottom
-        anchors.margins: root.unit * Theme.inset
-        game: root.game
-        unit: root.unit
     }
 
     CardFlight {
