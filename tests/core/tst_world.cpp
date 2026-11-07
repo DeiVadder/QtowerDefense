@@ -3,6 +3,10 @@
 #include "scenario.h"
 
 #include <QByteArray>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QMap>
 #include <QTest>
 
@@ -10,6 +14,7 @@
 #include <cstddef>
 #include <vector>
 
+using namespace Qt::StringLiterals;
 using qtd::core::BuildTowerCommand;
 using qtd::core::CampaignProgress;
 using qtd::core::GameStatus;
@@ -47,6 +52,16 @@ QByteArray edited(const QByteArray &from, const QByteArray &to)
 {
     const QByteArray json = worldJson();
     return json.contains(from) ? QByteArray(json).replace(from, to) : QByteArray();
+}
+
+// Towers, enemies and spells of a shipped map.
+QJsonArray catalogOf(const QString &map)
+{
+    QFile file(QStringLiteral(QTD_CONTENT_DIR "/") + map);
+    const QJsonObject root = file.open(QIODevice::ReadOnly)
+                                 ? QJsonDocument::fromJson(file.readAll()).object()
+                                 : QJsonObject();
+    return QJsonArray{root[u"towers"_s], root[u"enemies"_s], root[u"spells"_s]};
 }
 
 World testWorld()
@@ -109,6 +124,28 @@ private slots:
         const World world =
             required(qtd::core::loadWorldFile(QStringLiteral(QTD_CONTENT_DIR "/world.json")).world);
         QCOMPARE(world.sections.size(), std::size_t{9});
+    }
+
+    static void everyMapOfTheWorldHasTheSameCatalog_data()
+    {
+        QTest::addColumn<QString>("map");
+        const World world =
+            required(qtd::core::loadWorldFile(QStringLiteral(QTD_CONTENT_DIR "/world.json")).world);
+        for (const qtd::core::WorldSection &section : world.sections) {
+            if (section.map != u"training_ground.json"_s) { // the short tutorial has fewer enemies
+                QTest::newRow(qPrintable(section.id)) << section.map;
+            }
+        }
+    }
+
+    // Until there is one catalog for all maps, their towers, enemies and spells must not drift
+    // apart.
+    static void everyMapOfTheWorldHasTheSameCatalog()
+    {
+        QFETCH(const QString, map);
+        const QJsonArray catalog = catalogOf(u"mire_siege.json"_s);
+        QVERIFY(!catalog[0].toArray().isEmpty());
+        QCOMPARE(catalogOf(map), catalog);
     }
 
     static void aMissingFileNamesItself()

@@ -1,7 +1,14 @@
 {
     "maps": {
         "training_ground.json": "meadow",
-        "mire_siege.json": "swamp"
+        "mire_siege.json": "swamp",
+        "whispering_pines.json": "forest",
+        "grey_peaks.json": "highland",
+        "heather_downs.json": "heath",
+        "red_gulch.json": "badlands",
+        "barrow_fields.json": "barrows",
+        "frost_gate.json": "frost",
+        "ashen_keep.json": "ashlands"
     },
     "fallback": "meadow",
     "landscapes": {
@@ -92,7 +99,7 @@
             ]
         },
         "highland": {
-            "landmarks": [ { "model": "pine", "size": 2.6 }, { "model": "boulder", "size": 0.6 }, { "model": "rock", "size": 0.5 } ],
+            "landmarks": [ { "model": "pine", "size": 2.6 }, { "model": "rock", "size": 1.2 }, { "model": "rock", "size": 0.5 } ],
             "grass": "#7c8a5a",
             "grassDark": "#5f6c46",
             "earth": "#7d7464",
@@ -102,10 +109,10 @@
             "lakes": false,
             "hillHeight": 4.0,
             "treeModel": "pine",
-            "rockModel": "boulder",
+            "rockModel": "rock",
             "scenery": [
-                { "model": "boulder", "zone": "surroundings", "count": 90, "minSize": 0.8, "maxSize": 2.2 },
-                { "model": "rock", "zone": "surroundings", "count": 60, "minSize": 0.6, "maxSize": 1.6 },
+                { "model": "boulder", "zone": "surroundings", "count": 25, "minSize": 0.5, "maxSize": 1.1 },
+                { "model": "rock", "zone": "surroundings", "count": 100, "minSize": 0.6, "maxSize": 1.8 },
                 { "model": "pine", "zone": "surroundings", "count": 60, "minSize": 1.6, "maxSize": 2.8 },
                 { "model": "stone", "zone": "border", "count": 40, "minSize": 0.15, "maxSize": 0.4 },
                 { "model": "grass_tuft", "zone": "border", "count": 30, "minSize": 0.18, "maxSize": 0.3 },
@@ -121,6 +128,8 @@
             "path": "#b09c74",
             "pathDark": "#8c7a58",
             "sky": "#c9c2cf",
+            "water": "#55708a",
+            "waterLevel": -0.04,
             "sceneryTint": "#e0d4c8",
             "lakes": false,
             "hillHeight": 1.6,
@@ -137,7 +146,7 @@
             ]
         },
         "badlands": {
-            "landmarks": [ { "model": "boulder", "size": 0.7 }, { "model": "rock", "size": 0.6 }, { "model": "stump", "size": 0.6 } ],
+            "landmarks": [ { "model": "rock", "size": 1.4 }, { "model": "rock", "size": 0.6 }, { "model": "stump", "size": 0.6 } ],
             "grass": "#9a7a4e",
             "grassDark": "#7c5e3a",
             "earth": "#8e5a3a",
@@ -148,10 +157,10 @@
             "lakes": false,
             "hillHeight": 3.0,
             "treeModel": "stump",
-            "rockModel": "boulder",
+            "rockModel": "rock",
             "scenery": [
-                { "model": "boulder", "zone": "surroundings", "count": 110, "minSize": 0.8, "maxSize": 2.4 },
-                { "model": "rock", "zone": "surroundings", "count": 70, "minSize": 0.6, "maxSize": 1.8 },
+                { "model": "boulder", "zone": "surroundings", "count": 30, "minSize": 0.5, "maxSize": 1.2 },
+                { "model": "rock", "zone": "surroundings", "count": 120, "minSize": 0.6, "maxSize": 2.0 },
                 { "model": "stump", "zone": "surroundings", "count": 20, "minSize": 0.3, "maxSize": 0.5 },
                 { "model": "stone", "zone": "border", "count": 40, "minSize": 0.15, "maxSize": 0.4 },
                 { "model": "fallen_log", "zone": "border", "count": 6, "minSize": 0.2, "maxSize": 0.3 },
@@ -184,7 +193,7 @@
             ]
         },
         "frost": {
-            "landmarks": [ { "model": "pine", "size": 3.2 }, { "model": "pine", "size": 2.6 }, { "model": "boulder", "size": 0.5 } ],
+            "landmarks": [ { "model": "pine", "size": 3.2 }, { "model": "pine", "size": 2.6 }, { "model": "rock", "size": 1.0 } ],
             "grass": "#c8d2d4",
             "grassDark": "#a6b4ba",
             "earth": "#8a949a",
@@ -196,10 +205,10 @@
             "waterLevel": -0.04,
             "hillHeight": 2.8,
             "treeModel": "pine",
-            "rockModel": "boulder",
+            "rockModel": "rock",
             "scenery": [
                 { "model": "pine", "zone": "surroundings", "count": 130, "minSize": 1.8, "maxSize": 3.2 },
-                { "model": "boulder", "zone": "surroundings", "count": 50, "minSize": 0.6, "maxSize": 1.6 },
+                { "model": "rock", "zone": "surroundings", "count": 50, "minSize": 0.5, "maxSize": 1.4 },
                 { "model": "tall_tree", "zone": "surroundings", "count": 30, "minSize": 2.0, "maxSize": 3.0 },
                 { "model": "stone", "zone": "border", "count": 40, "minSize": 0.15, "maxSize": 0.4 },
                 { "model": "stump", "zone": "border", "count": 8, "minSize": 0.25, "maxSize": 0.4 },
@@ -223,7 +232,7 @@
             "scenery": [
                 { "model": "rock", "zone": "surroundings", "count": 110, "minSize": 0.8, "maxSize": 2.6 },
                 { "model": "dark_tree", "zone": "surroundings", "count": 50, "minSize": 1.6, "maxSize": 2.8 },
-                { "model": "boulder", "zone": "surroundings", "count": 40, "minSize": 0.6, "maxSize": 1.6 },
+                { "model": "boulder", "zone": "surroundings", "count": 25, "minSize": 0.4, "maxSize": 0.9 },
                 { "model": "old_stump", "zone": "border", "count": 14, "minSize": 0.3, "maxSize": 0.5 },
                 { "model": "stone", "zone": "border", "count": 40, "minSize": 0.15, "maxSize": 0.4 },
                 { "model": "stone", "zone": "board", "count": 24, "minSize": 0.1, "maxSize": 0.18 }

@@ -1,6 +1,11 @@
 #include "../core/scenario.h"
 #include "automation/bot.h"
+#include "automation/headless_runner.h"
+#include "core/world.h"
 
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QTest>
 
 #include <cstddef>
@@ -40,6 +45,40 @@ class BotsTest : public QObject
     Q_OBJECT
 
 private slots:
+    static void everyMapOfTheWorldCanBeWonButNotWithoutTowers_data()
+    {
+        QTest::addColumn<QString>("map");
+        const qtd::core::World world = qtd::tests::required(
+            qtd::core::loadWorldFile(QStringLiteral(QTD_CONTENT_DIR "/world.json")).world);
+        for (const qtd::core::WorldSection &section : world.sections) {
+            QTest::newRow(qPrintable(section.id)) << section.map;
+        }
+    }
+
+    // The bar is low on purpose: the balance of the maps comes with stage 12.
+    static void everyMapOfTheWorldCanBeWonButNotWithoutTowers()
+    {
+        QFETCH(const QString, map);
+        QVERIFY(!map.isEmpty()); // every section has its map now
+        const auto statusWith = [&map](BotKind bot) {
+            qtd::automation::HeadlessOptions options;
+            options.map = QStringLiteral(QTD_CONTENT_DIR "/") + map;
+            options.bot = bot;
+            const QByteArray json = qtd::automation::runHeadless(options).json;
+            const QJsonObject report = QJsonDocument::fromJson(json).object();
+            if (report.contains(QLatin1StringView("error"))) {
+                return QString::fromUtf8(json); // the problem itself, in place of a status
+            }
+            return report[QLatin1StringView("games")]
+                .toArray()
+                .at(0)
+                .toObject()[QLatin1StringView("status")]
+                .toString();
+        };
+        QCOMPARE(statusWith(BotKind::Naive), QStringLiteral("won"));
+        QCOMPARE(statusWith(BotKind::Idle), QStringLiteral("lost"));
+    }
+
     static void theNaiveBotWaitsForAnEnemy()
     {
         const Simulation game = spellGame();

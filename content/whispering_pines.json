@@ -1,0 +1,326 @@
+{
+    "formatVersion": 1,
+    "startGold": 230,
+    "startLives": 15,
+    "earlyCallTicksPerGold": 15,
+    "gridWidth": 17,
+    "gridHeight": 11,
+    "path": [
+        { "x": 0, "y": 1 },
+        { "x": 5, "y": 1 },
+        { "x": 5, "y": 8 },
+        { "x": 11, "y": 8 },
+        { "x": 11, "y": 2 },
+        { "x": 16, "y": 2 }
+    ],
+    "obstacles": [
+        { "terrain": "tree", "x": 14, "y": 10 },
+        { "terrain": "tree", "x": 15, "y": 10 },
+        { "terrain": "tree", "x": 16, "y": 10 },
+        { "terrain": "tree", "x": 16, "y": 9 },
+        { "terrain": "tree", "x": 15, "y": 9 },
+        { "terrain": "tree", "x": 15, "y": 8 },
+        { "terrain": "tree", "x": 15, "y": 7 },
+        { "terrain": "tree", "x": 14, "y": 7 },
+        { "terrain": "tree", "x": 1, "y": 3 },
+        { "terrain": "tree", "x": 0, "y": 3 },
+        { "terrain": "tree", "x": 8, "y": 4 },
+        { "terrain": "tree", "x": 7, "y": 3 },
+        { "terrain": "tree", "x": 6, "y": 3 },
+        { "terrain": "tree", "x": 13, "y": 4 },
+        { "terrain": "tree", "x": 9, "y": 4 },
+        { "terrain": "tree", "x": 0, "y": 6 },
+        { "terrain": "tree", "x": 0, "y": 5 },
+        { "terrain": "tree", "x": 0, "y": 4 },
+        { "terrain": "tree", "x": 15, "y": 0 },
+        { "terrain": "tree", "x": 2, "y": 9 },
+        { "terrain": "tree", "x": 2, "y": 10 },
+        { "terrain": "tree", "x": 1, "y": 10 },
+        { "terrain": "rock", "x": 4, "y": 7 },
+        { "terrain": "rock", "x": 3, "y": 7 },
+        { "terrain": "rock", "x": 3, "y": 6 }
+    ],
+    "towers": [
+        {
+            "id": "ballista",
+            "cost": 50,
+            "range": "3.5",
+            "cooldownTicks": 20,
+            "damageMin": "2",
+            "damageMax": "4.5",
+            "damageType": "physical",
+            "footprint": [
+                { "x": 0, "y": 0 }
+            ],
+            "upgrades": [
+                { "cost": 40, "damageMin": "3", "damageMax": "6" },
+                { "cost": 70, "range": "4", "damageMin": "4.5", "damageMax": "8" }
+            ]
+        },
+        {
+            "id": "twin_ballista",
+            "cost": 90,
+            "range": "4",
+            "cooldownTicks": 20,
+            "damageMin": "3",
+            "damageMax": "6",
+            "damageType": "magic",
+            "footprint": [
+                { "x": 0, "y": 0 },
+                { "x": 1, "y": 0 }
+            ],
+            "upgrades": [
+                { "cost": 70, "damageMin": "4", "damageMax": "8" },
+                { "cost": 110, "cooldownTicks": 16, "damageMin": "6", "damageMax": "10" }
+            ]
+        },
+        {
+            "id": "bastion",
+            "cost": 120,
+            "range": "4.5",
+            "cooldownTicks": 30,
+            "damageMin": "6",
+            "damageMax": "9",
+            "damageType": "fire",
+            "footprint": [
+                { "x": 0, "y": 0 },
+                { "x": 1, "y": 0 },
+                { "x": 0, "y": 1 }
+            ],
+            "upgrades": [
+                { "cost": 90, "damageMin": "8", "damageMax": "12" },
+                { "cost": 140, "range": "5", "damageMin": "10", "damageMax": "15" }
+            ]
+        },
+        {
+            "id": "horseshoe",
+            "cost": 150,
+            "range": "5",
+            "cooldownTicks": 25,
+            "damageMin": "6",
+            "damageMax": "10",
+            "damageType": "physical",
+            "footprint": [
+                { "x": -1, "y": -1 },
+                { "x": 1, "y": -1 },
+                { "x": -1, "y": 0 },
+                { "x": 0, "y": 0 },
+                { "x": 1, "y": 0 }
+            ],
+            "upgrades": [
+                { "cost": 110, "damageMin": "8", "damageMax": "13" },
+                { "cost": 170, "range": "5.5", "damageMin": "10", "damageMax": "16" }
+            ]
+        },
+        {
+            "id": "frost_spire",
+            "cost": 60,
+            "range": "3.5",
+            "cooldownTicks": 25,
+            "damageMin": "1",
+            "damageMax": "2",
+            "damageType": "ice",
+            "effects": [
+                { "kind": "slow", "strength": "0.4", "durationTicks": 45 }
+            ],
+            "footprint": [
+                { "x": 0, "y": 0 }
+            ],
+            "upgrades": [
+                {
+                    "cost": 50,
+                    "effects": [
+                        { "kind": "slow", "strength": "0.5", "durationTicks": 60 }
+                    ]
+                },
+                {
+                    "cost": 80,
+                    "range": "4",
+                    "effects": [
+                        { "kind": "slow", "strength": "0.6", "durationTicks": 75 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "venom_spire",
+            "cost": 60,
+            "range": "3",
+            "cooldownTicks": 40,
+            "damageMin": "0.5",
+            "damageMax": "1",
+            "damageType": "magic",
+            "effects": [
+                { "kind": "poison", "strength": "0.05", "durationTicks": 90 }
+            ],
+            "footprint": [
+                { "x": 0, "y": 0 }
+            ],
+            "upgrades": [
+                {
+                    "cost": 50,
+                    "effects": [
+                        { "kind": "poison", "strength": "0.08", "durationTicks": 120 }
+                    ]
+                },
+                {
+                    "cost": 80,
+                    "range": "3.5",
+                    "effects": [
+                        { "kind": "poison", "strength": "0.12", "durationTicks": 150 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "catapult",
+            "cost": 110,
+            "range": "5",
+            "cooldownTicks": 60,
+            "damageMin": "5",
+            "damageMax": "8",
+            "damageType": "physical",
+            "splashRadius": "1.25",
+            "footprint": [
+                { "x": 0, "y": 0 },
+                { "x": 0, "y": 1 }
+            ],
+            "upgrades": [
+                { "cost": 90, "damageMin": "7", "damageMax": "11", "splashRadius": "1.5" },
+                { "cost": 140, "damageMin": "9", "damageMax": "14", "splashRadius": "1.75" }
+            ]
+        }
+    ],
+    "enemies": [
+        {
+            "id": "mire_goblin",
+            "health": "12",
+            "speedPerTick": "0.05",
+            "bounty": 8,
+            "lifeCost": 1,
+            "resistances": [
+                { "damageType": "fire", "share": "-0.5" },
+                { "damageType": "ice", "share": "0.25" }
+            ]
+        },
+        {
+            "id": "stone_troll",
+            "health": "30",
+            "speedPerTick": "0.035",
+            "bounty": 20,
+            "lifeCost": 2,
+            "resistances": [
+                { "damageType": "physical", "share": "0.5" },
+                { "damageType": "magic", "share": "-0.25" },
+                { "damageType": "ice", "share": "1" }
+            ]
+        },
+        { "id": "swamp_rat", "health": "6", "speedPerTick": "0.09", "bounty": 4, "lifeCost": 1 },
+        {
+            "id": "iron_beetle",
+            "health": "22",
+            "speedPerTick": "0.04",
+            "bounty": 14,
+            "lifeCost": 1,
+            "resistances": [
+                { "damageType": "physical", "share": "0.7" },
+                { "damageType": "fire", "share": "-0.25" }
+            ]
+        },
+        {
+            "id": "ember_imp",
+            "health": "14",
+            "speedPerTick": "0.065",
+            "bounty": 10,
+            "lifeCost": 1,
+            "resistances": [
+                { "damageType": "fire", "share": "1" },
+                { "damageType": "ice", "share": "-0.5" }
+            ]
+        },
+        {
+            "id": "frost_wraith",
+            "health": "16",
+            "speedPerTick": "0.055",
+            "bounty": 11,
+            "lifeCost": 1,
+            "resistances": [
+                { "damageType": "ice", "share": "1" },
+                { "damageType": "fire", "share": "-0.5" },
+                { "damageType": "physical", "share": "0.25" }
+            ]
+        },
+        {
+            "id": "moss_shaman",
+            "health": "18",
+            "speedPerTick": "0.045",
+            "bounty": 13,
+            "lifeCost": 1,
+            "regeneration": "0.03",
+            "resistances": [
+                { "damageType": "magic", "share": "0.3" }
+            ]
+        },
+        {
+            "id": "hex_warden",
+            "health": "24",
+            "speedPerTick": "0.04",
+            "bounty": 15,
+            "lifeCost": 2,
+            "resistances": [
+                { "damageType": "magic", "share": "0.75" },
+                { "damageType": "physical", "share": "-0.25" }
+            ]
+        },
+        {
+            "id": "bog_titan",
+            "health": "220",
+            "speedPerTick": "0.025",
+            "bounty": 120,
+            "lifeCost": 3,
+            "regeneration": "0.05",
+            "boss": true,
+            "resistances": [
+                { "damageType": "physical", "share": "0.3" },
+                { "damageType": "ice", "share": "0.5" }
+            ]
+        },
+        {
+            "id": "cinder_drake",
+            "health": "180",
+            "speedPerTick": "0.04",
+            "bounty": 150,
+            "lifeCost": 3,
+            "boss": true,
+            "resistances": [
+                { "damageType": "fire", "share": "1" },
+                { "damageType": "ice", "share": "-0.25" }
+            ]
+        }
+    ],
+    "spells": [
+        { "id": "meteor", "cooldownTicks": 600, "radius": "2", "damageMin": "15", "damageMax": "25", "damageType": "fire" },
+        {
+            "id": "deep_freeze",
+            "cooldownTicks": 900,
+            "radius": "2.5",
+            "damageMin": "0",
+            "damageMax": "1",
+            "damageType": "ice",
+            "effects": [
+                { "kind": "slow", "strength": "0.9", "durationTicks": 90 }
+            ]
+        }
+    ],
+    "wave": [
+        { "enemy": "mire_goblin", "count": 12, "delayTicks": 60, "intervalTicks": 35 },
+        { "enemy": "swamp_rat", "count": 14, "delayTicks": 150, "intervalTicks": 20 },
+        { "enemy": "moss_shaman", "count": 6, "delayTicks": 150, "intervalTicks": 50 },
+        { "enemy": "iron_beetle", "count": 6, "delayTicks": 150, "intervalTicks": 50 },
+        { "enemy": "stone_troll", "count": 6, "delayTicks": 150, "intervalTicks": 70 },
+        { "enemy": "swamp_rat", "count": 20, "delayTicks": 150, "intervalTicks": 15 },
+        { "enemy": "hex_warden", "count": 4, "delayTicks": 150, "intervalTicks": 60 },
+        { "enemy": "moss_shaman", "count": 4, "delayTicks": 150, "intervalTicks": 50 },
+        { "enemy": "stone_troll", "count": 4, "delayTicks": 150, "intervalTicks": 70 }
+    ]
+}

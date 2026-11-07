@@ -109,6 +109,8 @@ qtd_add_test(tst_automation_bots
     SOURCES automation/tst_bots.cpp
     LIBS qtd_automation
     LABELS automation)
+target_compile_definitions(tst_automation_bots PRIVATE
+    QTD_CONTENT_DIR="${PROJECT_SOURCE_DIR}/content")
 
 qtd_add_test(tst_automation_control_session
     SOURCES automation/tst_control_session.cpp

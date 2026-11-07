@@ -4,13 +4,13 @@
     "sections": [
         { "id": "training_ground", "name": "Training Ground", "landscape": "meadow", "map": "training_ground.json", "x": 100, "y": 520 },
         { "id": "mire_siege", "name": "Mire Siege", "landscape": "swamp", "map": "mire_siege.json", "x": 270, "y": 280 },
-        { "id": "whispering_pines", "name": "Whispering Pines", "landscape": "forest", "x": 460, "y": 190 },
-        { "id": "grey_peaks", "name": "Grey Peaks", "landscape": "highland", "x": 650, "y": 270 },
-        { "id": "heather_downs", "name": "Heather Downs", "landscape": "heath", "x": 280, "y": 750 },
-        { "id": "red_gulch", "name": "Red Gulch", "landscape": "badlands", "x": 470, "y": 810 },
-        { "id": "barrow_fields", "name": "Barrow Fields", "landscape": "barrows", "x": 660, "y": 730 },
-        { "id": "frost_gate", "name": "Frost Gate", "landscape": "frost", "x": 800, "y": 500 },
-        { "id": "ashen_keep", "name": "Ashen Keep", "landscape": "ashlands", "x": 920, "y": 500 }
+        { "id": "whispering_pines", "name": "Whispering Pines", "landscape": "forest", "map": "whispering_pines.json", "x": 460, "y": 190 },
+        { "id": "grey_peaks", "name": "Grey Peaks", "landscape": "highland", "map": "grey_peaks.json", "x": 650, "y": 270 },
+        { "id": "heather_downs", "name": "Heather Downs", "landscape": "heath", "map": "heather_downs.json", "x": 280, "y": 750 },
+        { "id": "red_gulch", "name": "Red Gulch", "landscape": "badlands", "map": "red_gulch.json", "x": 470, "y": 810 },
+        { "id": "barrow_fields", "name": "Barrow Fields", "landscape": "barrows", "map": "barrow_fields.json", "x": 660, "y": 730 },
+        { "id": "frost_gate", "name": "Frost Gate", "landscape": "frost", "map": "frost_gate.json", "x": 800, "y": 500 },
+        { "id": "ashen_keep", "name": "Ashen Keep", "landscape": "ashlands", "map": "ashen_keep.json", "x": 920, "y": 500 }
     ],
     "links": [
         { "from": "training_ground", "to": "mire_siege" },

@@ -5,7 +5,8 @@
 - **Etappe:** 0 bis 10 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
 - **Dazu aus `feature/11-portrait`:** Portrait wie Demo A auf dem Eisenschild, Sprüche auf einem Hängeschild, Pause und Tempo im Bogen um das Portrait (E-34).
-- **Dazu aus `feature/11-weltkarte`:** Das Spiel öffnet auf einer Weltkarte im Nebel mit neun Abschnitten, Sterne und Freischalten nach E-32, Fortschritt in `progress.json`. Sieben Abschnitte haben noch keine Karte.
+- **Dazu aus `feature/11-karten-welt`:** Sieben neue Karten, je eine für Wald, Heide, Ödland, Hochland, Hügelgräber, Frost und Aschenland. Alle neun Abschnitte der Weltkarte sind spielbar (E-32). Noch zu leicht, Balancing folgt in Etappe 12.
+- **Dazu aus `feature/11-weltkarte`:** Das Spiel öffnet auf einer Weltkarte im Nebel mit neun Abschnitten, Sterne und Freischalten nach E-32, Fortschritt in `progress.json`.
 - **Dazu aus `feature/11-dice`:** Hand mit höchstens fünf bezahlten Karten, Würfel, Laden und Papierkorb, Bonusmünzen auf der Karte, alles als Befehle in Core (E-34). Die Hand beginnt leer.
 - **Dazu aus `feature/11-karten`:** Türme als aufgefächerte Karten mit Werten, Ziehen auf die Karte oder Tippen, Raster beim Ziehen deutlich, Karte fällt auf ihr Feld (E-34).
 - **Dazu aus `feature/11-held`:** Portrait mit Blinzeln, Blick aufs Brett, Stimmungen und Sprechblase, der Held hält den Zauber in der Hand (E-34). Die Sprachausgabe fehlt noch.
@@ -33,7 +34,7 @@
 1. Etappe 11, zuvor das UI-Thema. Die übrigen Landschaften kommen mit ihren Abschnitten dazu (E-32, E-34).
 2. Vor Etappe 11: das UI-Thema nach E-34, als letzter Schritt die Weltkarte.
 3. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro.
-4. In Etappe 11: die sieben fehlenden Karten der Weltkarte (E-32), je Landschaft aus `landscapes.json`. Danach Menü, Einstellungen und der Held auf der Weltkarte.
+4. In Etappe 11: Menü, Einstellungen und der Held auf der Weltkarte.
 
 ## Bekannte Mängel und offene Punkte
 
@@ -64,7 +65,7 @@
   - Falscher Alarm bei `__has_include(<foo/1.2/bar.h>)` und bei auskommentierten Link-Zeilen.
   - Eine getestete Datei mit Nicht-ASCII-Namen sprengt den OpenCppCoverage-Export (`scripts/coverage.py`).
   - Ohne lokalen Branch `dev` scheitert `check_length` laut, der Hook blockiert dann. `BASELINE_NAME` steht in `scripts/check_length.py` doppelt.
-- **MSVC-Absturz C1001, ungeklärt, dreimal gesehen (zuletzt in Etappe 9 in `tst_game_session.cpp`, ein zweiter Build lief durch):** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen.
+- **MSVC-Absturz C1001, ungeklärt, dreimal gesehen (zuletzt in Etappe 9 in `tst_game_session.cpp`, ein zweiter Build lief durch):** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen. Am 2026-11-07 traten C1001, LNK1136 und frisch gelinkte, sofort abstürzende Programme gehäuft auf. Der Mensch nannte als mögliche Ursache eine zu hohe CPU-Spannung im alten BIOS und hat es aktualisiert. Kommen die Fehler danach wieder, ist die CPU vermutlich weiter instabil.
 - **Auftrag, Sache des Menschen:** `QtowerDefense-Agent-Auftrag.md` nennt für `clang-tidy` und `clang-format` noch den Pfad der VS Build Tools. Gültig ist jetzt E-22.
 - **Plugin `qtd-lsp`:** Am 2026-11-04 vom Menschen in einer neuen Sitzung geprüft: Es lädt, `clangd` fand bei fertigem Index alle Verwendungen von `projectVersion`. Bei laufendem Index fehlten Treffer ohne Warnung (Regel in `CLAUDE.md`). `qmlls` wurde dort nicht abgefragt, nur seine LSP-Initialisierung ist geprüft. clangds Hinweis auf ein unbenutztes `<compare>` in `version.h` ist ein Fehlalarm (`operator<=>`).
 - **OpenCppCoverage-Setup** hat einen HKLM-Uninstall-Schlüssel und einen Benutzer-`PATH`-Eintrag außerhalb von `C:\dev` hinterlassen (`docs/Building.md`).

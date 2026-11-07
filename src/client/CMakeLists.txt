@@ -33,7 +33,14 @@ qt_add_resources(qtd_client "qtd_content"
         "${PROJECT_SOURCE_DIR}/content/landscapes.json"
         "${PROJECT_SOURCE_DIR}/content/training_ground.json"
         "${PROJECT_SOURCE_DIR}/content/mire_siege.json"
-        "${PROJECT_SOURCE_DIR}/content/world.json")
+        "${PROJECT_SOURCE_DIR}/content/world.json"
+        "${PROJECT_SOURCE_DIR}/content/whispering_pines.json"
+        "${PROJECT_SOURCE_DIR}/content/grey_peaks.json"
+        "${PROJECT_SOURCE_DIR}/content/heather_downs.json"
+        "${PROJECT_SOURCE_DIR}/content/red_gulch.json"
+        "${PROJECT_SOURCE_DIR}/content/barrow_fields.json"
+        "${PROJECT_SOURCE_DIR}/content/frost_gate.json"
+        "${PROJECT_SOURCE_DIR}/content/ashen_keep.json")
 
 file(GLOB qtd_assets CONFIGURE_DEPENDS "assets/*.mesh" "assets/*.png" "assets/*.ogg")
 qt_add_resources(qtd_client "qtd_assets"

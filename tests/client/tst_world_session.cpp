@@ -1,4 +1,6 @@
+#include "client/landscape.h"
 #include "client/world_session.h"
+#include "core/content_loader.h"
 
 #include <QFile>
 #include <QRegularExpression>
@@ -7,10 +9,24 @@
 #include <QTest>
 #include <QVariantMap>
 
+#include <optional>
+
 using namespace Qt::StringLiterals;
 using qtd::client::WorldSession;
 
 namespace {
+
+bool hasWater(const qtd::core::Grid &grid)
+{
+    for (qint64 y = 0; y < grid.height(); ++y) {
+        for (qint64 x = 0; x < grid.width(); ++x) {
+            if (grid.terrainAt({x, y}) == qtd::core::Terrain::Water) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
 QVariantMap sectionOf(const WorldSession &world, int section)
 {
@@ -57,7 +73,7 @@ private slots:
         QCOMPARE(sectionOf(second, 0)[u"stars"_s].toInt(), 2);
         QVERIFY(sectionOf(second, 1)[u"playable"_s].toBool());
         QVERIFY(sectionOf(second, 4)[u"open"_s].toBool());
-        QVERIFY(!sectionOf(second, 4)[u"playable"_s].toBool()); // its map is not made yet
+        QVERIFY(sectionOf(second, 4)[u"playable"_s].toBool());
         QVERIFY(!sectionOf(second, 2)[u"open"_s].toBool());
         QCOMPARE(second.selected(), 1);
     }
@@ -96,11 +112,40 @@ private slots:
         QCOMPARE(sectionOf(world, 0)[u"stars"_s].toInt(), 1);
     }
 
+    // A swamp on the world map is a swamp in the game (E-32).
+    static void everySectionPlaysInItsLandscape_data()
+    {
+        QTest::addColumn<int>("section");
+        const WorldSession world;
+        for (int section = 0; section < world.sections().size(); ++section) {
+            QTest::newRow(qPrintable(sectionOf(world, section)[u"id"_s].toString())) << section;
+        }
+    }
+
+    static void everySectionPlaysInItsLandscape()
+    {
+        QFETCH(const int, section);
+        const WorldSession world;
+        QVERIFY(QFile::exists(world.mapFile(section))); // in the resources of the game
+        const qtd::client::Landscape inGame = qtd::client::landscapeOfMap(world.mapFile(section));
+        const qtd::client::Landscape onMap =
+            qtd::client::landscapeNamed(sectionOf(world, section)[u"landscape"_s].toString());
+        QCOMPARE(inGame.grass, onMap.grass);
+        QCOMPARE(inGame.treeModel, onMap.treeModel);
+        // Ponds on the board need water in the landscape, else they are empty pits.
+        const std::optional<qtd::core::Content> content =
+            qtd::core::loadContentFile(world.mapFile(section)).content;
+        if (!content) {
+            QFAIL("the map does not load");
+            return;
+        }
+        QVERIFY(!hasWater(content->grid) || inGame.water.isValid());
+    }
+
     static void aMapLiesNextToTheWorld()
     {
         const WorldSession world;
         QCOMPARE(world.mapFile(0), u":/content/training_ground.json"_s);
-        QVERIFY(world.mapFile(2).isEmpty());
         QVERIFY(world.mapFile(-1).isEmpty());
         QVERIFY(world.mapFile(9).isEmpty());
     }
