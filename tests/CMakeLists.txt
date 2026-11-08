@@ -184,6 +184,11 @@ if(NOT QTD_ENABLE_UBSAN)
         LIBS qtd_client
         LABELS client)
 
+    qtd_add_test(tst_client_translation
+        SOURCES client/tst_translation.cpp
+        LIBS qtd_client
+        LABELS client)
+
     qtd_add_test(tst_client_landscape
         SOURCES client/tst_landscape.cpp
         LIBS qtd_client

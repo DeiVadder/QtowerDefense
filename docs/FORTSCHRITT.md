@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 12 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/13-uebersetzung`:** Deutsche Übersetzung aller Texte, Sprachwahl in den Einstellungen (System, Englisch, Deutsch), übersetzte Namen für Türme, Zauber und Abschnitte, englische Pluralformen, `check_translations.py` in der Schnellprüfung (E-40).
 - **Dazu aus `feature/12-werte`:** Zielkorridore in `docs/Balancing.md`, geprüft von `scripts/balancing.py` als Stufe der Vollprüfung. Gegner rund 2,6-mal so zäh, Türme neu abgestimmt, der gute Bot rechnet Verlangsamen und spart nicht mehr auf jeden besseren Plan (E-39). Der gute Bot gewinnt jede Karte, der naive rund 70 % der Kampagne, jeder Turm wird genutzt.
 - **Dazu aus `feature/12-guter-bot`:** Der gute Bot (`--bot good`) und `qtd_headless --statistics` mit Gold je Turmtyp und Goldkurve (E-38). Beide Bots gewinnen noch jede Karte.
 - **Dazu aus `feature/12-katalog`:** Türme, Gegner und Zauber der Kampagnenkarten in einem gemeinsamen `content/catalog.json` (E-37). Hashes und Golden Replays unverändert.
@@ -37,20 +38,18 @@
 
 ## Nächster Schritt
 
-1. Etappe 13 (Feinschliff) nach `QtowerDefense-Agent-Auftrag.md`.
+1. Etappe 13 (Feinschliff) weiter: UI-Skalierung, Qualitätsstufen, Leistung, Mobile-Prüfung.
 2. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro, Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
 
 ## Bekannte Mängel und offene Punkte
 
-- **Stufen ohne Inhalt (MISSING in `verify`):** Balancing (12).
 - **Steuerschnittstelle:** Läuft in `qtd_headless` und im echten Spiel auf Standardein- und -ausgabe (E-26). Die Aktionen zu Regeln, die es noch nicht gibt, fehlen. Schadensarten, Effekte und Resistenzen stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei. Ein localhost-Transport fehlt; falls er kommt, müssen `startMap`, `saveReplay` und `screenshot` auf erlaubte Pfade beschränkt werden. Raster und Kosten stehen nicht in der Beobachtung, ein Agent liest sie aus der Kartendatei.
 - **Aus dem Review von Etappe 4, nicht behoben:** Kein Test merkt, wenn `MapInstances` nicht mehr an `frameChanged` hängt (die Gegner sprängen dann wieder mit 30 Hz). `frameChanged` kommt auch in der Pause und nach Spielende.
-- **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Die Form ist nur im HUD zu sehen, nicht auf der Karte, ein abgelehnter Tipp bleibt stumm, das HUD nennt die rohe ID statt eines übersetzbaren Namens, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
+- **Aus dem Review von `feature/raster`, nicht behoben:** Kein Test sichert, dass der Fuzz-Bot genau einen Wert eines Befehls bricht und dass das Brett keine Fugen hat; beides ist nur von Hand gemessen. Felder sind auf kleinen Displays klein (etwa 3 mm bei 800x360 ohne Zoom). Die Form ist nur im HUD zu sehen, nicht auf der Karte, ein abgelehnter Tipp bleibt stumm, alle Türme haben eine Farbe. Das gehört zu den Menüs und Assets (Etappen 10 und 11), spätestens zur Bedienung auf Mobile.
 - **Review von `feature/11-spielwelt`:** Erst nicht bestanden: Absturz auf Karten von 1 Feld Breite, Pfade am Rand wurden zu Sandflächen, drei Mutanten überlebten, nach einem Kartenwechsel blieb im fernen Boden das alte Bild, der Rand des Geländes war sichtbar, Wasser sah aus wie Schlamm, Baumkronen nahmen Taps der Nachbarfelder. Alles behoben, Nachprüfung mit Mutanten bestanden (`1011d4d`).
 - **Aus dem Review von `feature/11-spielwelt`, nicht behoben:** Im Sumpf zeigt ganz verschobene Kamera bei größtem Zoom eine gerade Küste, weil das Land am Rand auf Höhe 0 ausläuft. Eine Landschaft ohne `water` und ohne `lakes: false`, auch der Standard bei kaputter `landscapes.json`, hat jenseits des Geländes weder Ebene noch Meer; heute trifft das keine Karte. Der GPU-Speicher bei vielen Kartenwechseln ist ungeprüft, der Arbeitsspeicher blieb stabil. Die Vollprüfung scheiterte zweimal an einem internen Fehler von MSVC im Coverage-Build, an wechselnden Dateien, Ursache offen, danach nicht wieder.
-- **Aus dem Review von Etappe 9, nicht behoben:** Fehlertexte beim Laden kommen aus Core und erscheinen englisch im HUD, wie die Fehler einer Karte. Übersetzbar werden sie mit Etappe 13. `resumeGame` vergleicht ähnlich wie `ReplayPlayer`, `loadGame` liest die Datei zweimal.
-- **Aus dem Review von Etappe 8, nicht behoben:** Das HUD zeigt die rohen IDs der Zauber (`deep_freeze`), wie bei den Türmen. Anzeigenamen gehören zum UI-Thema vor Etappe 11.
-- **Aus dem Review von Etappe 7, nicht behoben:** `mire_siege` ist zu leicht, der naive Bot gewinnt ohne Upgrades (Etappe 12). Über die Steuerschnittstelle verkauft, bleibt die ID des gewählten Turms in `GameSession` stehen. Das ist harmlos, weil alles über `chosen()` geht.
+- **Aus dem Review von Etappe 9, nicht behoben:** Fehlertexte beim Laden kommen aus Core und erscheinen englisch im HUD, wie die Fehler einer Karte. Sie bleiben Englisch, der Client setzt sie in einen übersetzten Satz (E-40). `resumeGame` vergleicht ähnlich wie `ReplayPlayer`, `loadGame` liest die Datei zweimal.
+- **Aus dem Review von Etappe 7, nicht behoben:** Über die Steuerschnittstelle verkauft, bleibt die ID des gewählten Turms in `GameSession` stehen. Das ist harmlos, weil alles über `chosen()` geht.
 - **Aus dem Review von `feature/bildzeit`, nicht behoben:** Die Arbeit des GUI-Threads (`GameSession::refresh`, `MapInstances`, QML-Bindings) misst nichts, sie fällt erst auf, wenn die Bildrate unter 60 sinkt. Die GPU-Zeit prüft nur der Smoke-Test in der Vollprüfung, nicht `tst_client_screen_control`.
 - **Aus dem Review von Etappe 6, nicht behoben:** Die Farben von Schadensart, Status und gewähltem Turm prüft kein Test, nur der Blick auf die Screenshots.
 - **Client:** Die Verbindung von `GameSession` zu `applicationStateChanged` läuft in keinem Test mit echtem Signal, Windows sendet es nicht. Die Reaktion darauf ist getestet.
@@ -94,4 +93,4 @@
 | 10 | Assets | fertig bis auf Musik und Geländekacheln, in `dev` |
 | 11 | Modi | fertig, in `dev` |
 | 12 | Balancing | fertig |
-| 13 | Feinschliff | offen |
+| 13 | Feinschliff | in Arbeit (Übersetzung) |

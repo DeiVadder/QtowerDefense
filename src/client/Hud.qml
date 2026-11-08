@@ -22,6 +22,11 @@ Item {
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
     readonly property bool gameOver: game.won || game.lost
     readonly property bool failed: game.error.length > 0
+    // Content may bring more spells than this client has words for: they keep their id.
+    readonly property var spellNames: ({
+                                           meteor: qsTr("Meteor"),
+                                           deep_freeze: qsTr("Deep Freeze")
+                                       })
 
     signal leave // back to the world map
 
@@ -384,11 +389,11 @@ Item {
 
         Text {
             objectName: "saveError"
-            visible: text.length > 0
+            visible: root.game.saveError.length > 0
             width: root.width / 2
             wrapMode: Text.Wrap
             horizontalAlignment: Text.AlignHCenter
-            text: root.game.saveError
+            text: qsTr("The game was not saved or loaded: %1").arg(root.game.saveError)
             color: Theme.danger
             font.family: Theme.face
             font.pixelSize: root.unit * Theme.smallText
@@ -432,7 +437,8 @@ Item {
                 unit: root.unit
                 icon: modelData
                 caption: seconds > 0 ? seconds : ""
-                text: seconds > 0 ? qsTr("%1: %2 s").arg(modelData).arg(seconds) : modelData
+                readonly property string title: root.spellNames[modelData] ?? modelData
+                text: seconds > 0 ? qsTr("%1: %2 s").arg(title).arg(seconds) : title
                 highlighted: root.game.selectedSpell === index
                 onClicked: root.game.selectSpell(index)
             }

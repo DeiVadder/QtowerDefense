@@ -17,6 +17,7 @@ qt_add_qml_module(qtd_client
         screen_control.cpp screen_control.h
         terrain_mesh.cpp terrain_mesh.h
         terrain_picture.cpp terrain_picture.h
+        translation.cpp translation.h
         world_session.cpp world_session.h
     QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml EndPanel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml GameSettings.qml MainMenu.qml SettingsPanel.qml WordSign.qml ChainSign.qml
         IconPaths.js Main.qml MainScene.qml Theme.qml TowerCard.qml WorldMap.qml WorldPainting.qml WorldScene.qml)
@@ -24,6 +25,14 @@ target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qm
 # rhi/qrhi.h, only for the GPU time of a frame.
 target_link_libraries(qtd_client PRIVATE Qt6::GuiPrivate)
 qtd_set_strict_warnings(qtd_client)
+
+# The German texts, and the English plurals (E-40). lupdate reads the sources of the client,
+# update_translations writes the files, the build turns them into :/i18n/qtowerdefense_<code>.qm.
+qt_add_translations(qtd_client
+    TS_FILES i18n/qtowerdefense_de.ts
+    PLURALS_TS_FILE i18n/qtowerdefense_en.ts
+    RESOURCE_PREFIX "/i18n"
+    LUPDATE_OPTIONS -no-obsolete -locations none)
 
 # In the program, not next to it: no platform promises a file system for its assets.
 qt_add_resources(qtd_client "qtd_content"

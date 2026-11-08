@@ -56,6 +56,12 @@ Window {
     }
     Component.onCompleted: applyFullScreen()
 
+    // First of all objects, so that every text is made in the chosen language (E-40).
+    Translation {
+        objectName: "translation"
+        choice: gameSettings.language
+    }
+
     FrameAnimation {
         running: true
         onTriggered: session.advanceTime(Math.round(frameTime * 1000000))

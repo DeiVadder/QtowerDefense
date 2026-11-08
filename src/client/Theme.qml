@@ -196,11 +196,12 @@ QtObject {
     readonly property real menuHero: 0.42 // of the width of the gate
     readonly property real menuHeroTop: 0.22
     readonly property int settingsSeed: 9
-    readonly property real settingsHeight: 6.4
+    readonly property real settingsHeight: 7.75
     readonly property real settingsRow: 1.1
     readonly property real settingsLabel: 2.2
     readonly property real settingsPercent: 1.6
     readonly property real settingsToggle: 1.8
+    readonly property real settingsChoice: 2.4 // wide enough for "Deutsch" and "System"
     readonly property real sliderTrack: 0.2
     readonly property real sliderKnob: 0.55
     readonly property real loudnessRange: 100 // from the quietest step of the slider to the loudest

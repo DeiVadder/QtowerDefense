@@ -5,6 +5,7 @@
 #include <QFile>
 #include <QGuiApplication>
 #include <QImage>
+#include <QLocale>
 #include <QPoint>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -14,6 +15,9 @@
 #include <QTest>
 #include <QVariantMap>
 #include <QtQml/qqmlextensionplugin.h>
+
+#include <algorithm>
+#include <iterator>
 
 Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)
 
@@ -39,6 +43,21 @@ QQuickWindow *openWindow(QQmlApplicationEngine *engine)
     engine->loadFromModule("QtowerDefense.Client", "Main");
     auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().constFirst());
     return window != nullptr && QTest::qWaitForWindowExposed(window) ? window : nullptr;
+}
+
+/// Whether a visible item of the window shows the text, as a sign of the menu does.
+bool showsText(const QQuickWindow *window, const QString &text)
+{
+    QList<const QQuickItem *> open{window->contentItem()};
+    while (!open.isEmpty()) {
+        const QQuickItem *item = open.takeLast();
+        if (item->isVisible() && item->property("text").toString() == text) {
+            return true;
+        }
+        const QList<QQuickItem *> children = item->childItems();
+        std::ranges::copy(children, std::back_inserter(open));
+    }
+    return false;
 }
 
 /// The game of the real window, with the first section of the world chosen on its map.
@@ -215,6 +234,25 @@ private slots:
         QVERIFY(QTest::qWaitFor([window] { return window->visibility() == QWindow::Windowed; }));
     }
 
+    // The setting reaches the texts of the window, there and back.
+    static void theSettingChangesTheLanguage()
+    {
+        QQmlApplicationEngine engine;
+        const QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        QObject *settings = window->findChild<QObject *>(u"gameSettings"_s);
+        const QObject *translation = window->findChild<QObject *>(u"translation"_s);
+        QVERIFY(settings != nullptr && translation != nullptr);
+        QCOMPARE(translation->property("language").toString(), u"en"_s);
+        QVERIFY(settings->setProperty("language", 2)); // German
+        QCOMPARE(translation->property("language").toString(), u"de"_s);
+        QVERIFY(showsText(window, u"Kampagne"_s));
+        QVERIFY(settings->setProperty("language", 1)); // English
+        QCOMPARE(translation->property("language").toString(), u"en"_s);
+        QVERIFY(showsText(window, u"Campaign"_s));
+        QVERIFY(!showsText(window, u"Kampagne"_s));
+    }
+
     // Stars are written to the progress of the test mode, a fresh one each time.
     static void aWonSectionKeepsItsStarsAndOpensTheWay()
     {
@@ -308,7 +346,8 @@ int main(int argc, char *argv[])
 {
     qtd::client::configureGraphics();
     const QGuiApplication app(argc, argv);
-    QStandardPaths::setTestModeEnabled(true); // the progress of a player stays as it is
+    QStandardPaths::setTestModeEnabled(true);       // the progress of a player stays as it is
+    QLocale::setDefault(QLocale(QLocale::English)); // the same texts on every machine
     TestWindow test;
     return QTest::qExec(&test, argc, argv);
 }

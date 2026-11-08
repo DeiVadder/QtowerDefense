@@ -30,6 +30,12 @@ Item {
     }
 
     Component {
+        id: translationComponent
+
+        Translation {}
+    }
+
+    Component {
         id: worldComponent
 
         Item {
@@ -134,7 +140,9 @@ Item {
         }
 
         // In the endless mode only a won section can be played, it shows its best (E-36).
+        // With the translation, as in the game: English needs its file for the plurals.
         function test_theEndlessWorldOffersTheWonSections() {
+            createTemporaryObject(translationComponent, stage);
             const made = createTemporaryObject(worldComponent, stage, {
                                                    file: worldFile(4)
                                                });
@@ -147,7 +155,7 @@ Item {
             made.world.recordRounds(0, 7);
             made.world.selected = 0;
             verify(play.available);
-            compare(findChild(made.map, "sectionStatus").text, "Best: 7 round(s)");
+            compare(findChild(made.map, "sectionStatus").text, "Best: 7 rounds");
             made.map.endless = false;
             verify(play.available);
             compare(findChild(made.map, "sectionStatus").text, "");
@@ -205,6 +213,36 @@ Item {
             compare(menu.settings[data.setting], !before);
             tapCenter(findChild(menu, data.toggle));
             compare(menu.settings[data.setting], before);
+        }
+
+        // A language names itself in its own words, the system choice in the language that speaks.
+        function test_theLanguageButtonStepsThroughTheChoices() {
+            const menu = openSettings();
+            menu.settings.language = Translation.System;
+            const button = findChild(menu, "languageButton");
+            compare(button.text, "System");
+            tapCenter(button);
+            compare(menu.settings.language, Translation.English);
+            compare(button.text, "English");
+            tapCenter(button);
+            compare(menu.settings.language, Translation.German);
+            compare(button.text, "Deutsch");
+            tapCenter(button);
+            compare(menu.settings.language, Translation.System);
+        }
+
+        // Texts that are already there change with the language, and back.
+        function test_germanTextsReplaceTheEnglishOnes() {
+            const translation = createTemporaryObject(translationComponent, stage);
+            compare(translation.language, "en", "the system of the tests speaks English");
+            const menu = openSettings();
+            const close = findChild(menu, "closeSettings");
+            compare(close.text, "Close");
+            translation.choice = Translation.German;
+            compare(translation.language, "de");
+            compare(close.text, "Schließen");
+            translation.choice = Translation.English;
+            compare(close.text, "Close");
         }
 
         function test_theHeroGreetsAndCanBeSilenced() {
@@ -297,6 +335,9 @@ Item {
             const close = findChild(menu, "closeSettings");
             const corner = close.mapToItem(menu, close.width, close.height);
             verify(corner.x <= menu.width && corner.y <= menu.height);
+            const last = findChild(menu, "fullScreenToggle");
+            verify(last.mapToItem(panel, 0, last.height).y <= panel.height,
+                   "the last row is inside");
         }
 
         // Narrow windows give the settings all their width, the slider keeps room for a finger.

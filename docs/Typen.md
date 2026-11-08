@@ -56,6 +56,8 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `TerrainMesh` | class | `terrain_mesh.h` | The ground as one mesh, in the coordinates of the map: the board and the land around it. |
 | `GridCellPicture` | class | `terrain_picture.h` | One cell of the grid that shows where towers go: a thin frame, the rest is clear. |
 | `TerrainPicture` | class | `terrain_picture.h` | The colors of the ground. |
+| `Translation` | class | `translation.h` | The language of the texts. |
+| `Translation::Choice` | enum class | `translation.h` |  |
 | `WorldSession` | class | `world_session.h` | The campaign world for QML: its sections, which are open and the stars won (E-32). |
 
 ## core

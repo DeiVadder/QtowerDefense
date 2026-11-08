@@ -13,7 +13,6 @@ Item {
     required property real unit
     property bool highlighted: false
 
-    readonly property string text: qsTr("%1: %2 gold").arg(info.name).arg(info.cost)
     // Content may bring more towers than this client has words for.
     readonly property var titles: ({
                                        ballista: qsTr("Ballista"),
@@ -25,6 +24,7 @@ Item {
                                        catapult: qsTr("Catapult")
                                    })
     readonly property string title: titles[info.name] ?? info.name
+    readonly property string text: qsTr("%1: %2 gold").arg(title).arg(info.cost)
 
     signal picked
 

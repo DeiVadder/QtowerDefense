@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QLocale>
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QTemporaryDir>
@@ -9,13 +10,18 @@ Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)
 
 using namespace Qt::StringLiterals;
 
-/// Gives the tests a folder of their own for saved games, and the first map with gold enough for
-/// a full hand of any cards.
+/// Gives the tests English as the language of the system, a folder of their own for saved games,
+/// and the first map with gold enough for a full hand of any cards.
 class Setup : public QObject
 {
     Q_OBJECT
 
 public slots:
+    static void applicationAvailable()
+    {
+        QLocale::setDefault(QLocale(QLocale::English)); // the same texts on every machine
+    }
+
     void qmlEngineAvailable(QQmlEngine *engine)
     {
         engine->rootContext()->setContextProperty(u"saveFolder"_s, folder_.path());

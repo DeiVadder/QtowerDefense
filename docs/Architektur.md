@@ -67,7 +67,7 @@ Ein **Skript** hat dasselbe Format, `contentHash`, `result` und `checkpoints` d�
 
 ## Client
 
-`qtd_client` ist eine statische Bibliothek mit QML-Modul über `qt_add_qml_module()`. Programme und Tests linken `qtd_clientplugin` und nennen `Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)`. Es gibt genau eine Engine, in `src/app/main.cpp`. `Main.qml` ist das Fenster und treibt die Zeit, `MainScene.qml` die 3D-Szene mit Kamera und Eingabe, `Hud.qml` die Anzeige. `GameSession` verbindet QML mit der Simulation, `MapInstances` zeichnet Brett, Türme und Gegner mit je einem Modell. `ScreenControl` setzt die Steuerschnittstelle auf das Spiel im Fenster (E-26).
+`qtd_client` ist eine statische Bibliothek mit QML-Modul über `qt_add_qml_module()`. Programme und Tests linken `qtd_clientplugin` und nennen `Q_IMPORT_QML_PLUGIN(QtowerDefenseClientPlugin)`. Es gibt genau eine Engine, in `src/app/main.cpp`. `Main.qml` ist das Fenster und treibt die Zeit, `MainScene.qml` die 3D-Szene mit Kamera und Eingabe, `Hud.qml` die Anzeige. `GameSession` verbindet QML mit der Simulation, `MapInstances` zeichnet Brett, Türme und Gegner mit je einem Modell. `ScreenControl` setzt die Steuerschnittstelle auf das Spiel im Fenster (E-26). `Translation` installiert die Übersetzung der gewählten Sprache aus `src/client/i18n` und lässt QML die Texte neu lesen (E-40).
 
 ## Startoptionen
 

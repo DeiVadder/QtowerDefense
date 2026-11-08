@@ -25,6 +25,19 @@ FramedPanel {
                                                ashlands: qsTr("Ashlands")
                                            })
 
+    // The world may bring more sections than this client has words for: they keep their own name.
+    readonly property var sectionNames: ({
+                                             training_ground: qsTr("Training Ground"),
+                                             mire_siege: qsTr("Mire Siege"),
+                                             whispering_pines: qsTr("Whispering Pines"),
+                                             grey_peaks: qsTr("Grey Peaks"),
+                                             heather_downs: qsTr("Heather Downs"),
+                                             red_gulch: qsTr("Red Gulch"),
+                                             barrow_fields: qsTr("Barrow Fields"),
+                                             frost_gate: qsTr("Frost Gate"),
+                                             ashen_keep: qsTr("Ashen Keep")
+                                         })
+
     property bool heroSpeaks: true
     property bool endless: false // offers the endless games of the won sections (E-36)
     // What the hero says of a landscape. The words for a section in the fog come first.
@@ -180,7 +193,7 @@ FramedPanel {
                 MouseArea {
                     anchors.fill: parent
                     Accessible.role: Accessible.Button
-                    Accessible.name: marker.modelData.name
+                    Accessible.name: root.sectionNames[marker.modelData.id] ?? marker.modelData.name
                     onClicked: root.world.selected = marker.index
                 }
             }
@@ -224,7 +237,7 @@ FramedPanel {
                 objectName: "sectionName"
                 width: parent.width
                 elide: Text.ElideRight
-                text: root.chosen?.name ?? ""
+                text: root.chosen ? root.sectionNames[root.chosen.id] ?? root.chosen.name : ""
                 color: Theme.text
                 font.family: Theme.face
                 font.bold: true

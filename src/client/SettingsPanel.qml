@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// The settings on a board: the loudness of the sounds, the words of the hero and, where windows exist,
-// the full screen. Every change is kept at once.
+// The settings on a board: the loudness of the sounds, the words of the hero, the language and, where
+// windows exist, the full screen. Every change is kept at once.
 FramedPanel {
     id: root
 
@@ -170,6 +170,33 @@ FramedPanel {
 
         Item {
             y: 2 * (root.row + root.unit * Theme.gap)
+            width: parent.width
+            height: root.row
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: languageButton.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Language")
+            }
+
+            // Steps through the choices. A language names itself in its own words.
+            HudButton {
+                id: languageButton
+
+                objectName: "languageButton"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                unit: root.unit
+                width: root.unit * Theme.settingsChoice
+                text: [qsTr("System"), "English", "Deutsch"][root.settings.language] ?? qsTr(
+                    "System")
+                onClicked: root.settings.language = (root.settings.language + 1) % 3
+            }
+        }
+
+        Item {
+            y: 3 * (root.row + root.unit * Theme.gap)
             width: parent.width
             height: root.row
             visible: AppInfo.windowed

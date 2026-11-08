@@ -26,7 +26,8 @@ FramedPanel {
         width: parent.width - panel.unit
         horizontalAlignment: Text.AlignHCenter
         wrapMode: Text.Wrap
-        text: panel.failed ? panel.game.error : panel.game.won ? qsTr("Victory") : qsTr("Defeat")
+        text: panel.failed ? qsTr("This map cannot be played: %1").arg(panel.game.error) :
+                             panel.game.won ? qsTr("Victory") : qsTr("Defeat")
         color: Theme.text
         font.family: Theme.face
         font.bold: true
