@@ -265,21 +265,52 @@ View3D {
         Repeater3D {
             model: root.game.enemyModels
 
-            delegate: AssetModel {
-                id: enemyLook
+            delegate: Node {
+                id: enemyType
 
                 required property int index
                 required property string modelData
+                readonly property int frames: root.game.enemyFrames[index] ?? 0
 
-                name: enemyLook.modelData
-                fallback: "#Sphere"
-                y: enemyLook.modelData.length > 0 ? 0 : root.enemyHeight
-                instancing: MapInstances {
-                    game: root.game
-                    layer: MapInstances.Enemies
-                    typeIndex: enemyLook.index
-                    fieldSize: root.fieldSize
-                    enemyScale: root.fieldSize * (enemyLook.modelData.length > 0 ? 1.1 : 1 / 120)
+                // A model with walk frames: one instanced model for each frame.
+                Repeater3D {
+                    model: enemyType.frames
+
+                    delegate: AssetModel {
+                        id: walkLook
+
+                        required property int index
+
+                        name: enemyType.modelData + "_" + walkLook.index
+                        texture: "monsters"
+                        fallback: "#Sphere"
+                        instancing: MapInstances {
+                            game: root.game
+                            layer: MapInstances.Enemies
+                            typeIndex: enemyType.index
+                            walkFrame: walkLook.index
+                            fieldSize: root.fieldSize
+                            enemyScale: root.fieldSize * 1.1
+                        }
+                    }
+                }
+
+                AssetModel {
+                    id: enemyLook
+
+                    visible: enemyType.frames === 0
+                    name: enemyType.frames === 0 ? enemyType.modelData : ""
+                    fallback: "#Sphere"
+                    y: enemyType.modelData.length > 0 ? 0 : root.enemyHeight
+                    instancing: MapInstances {
+                        game: enemyType.frames === 0 ? root.game : null // the frames draw them
+                        layer: MapInstances.Enemies
+                        typeIndex: enemyType.index
+                        fieldSize: root.fieldSize
+                        enemyScale: root.fieldSize * (enemyType.modelData.length > 0 ? 1.1 : 1
+                                                                                       / 120)
+
+                    }
                 }
             }
         }

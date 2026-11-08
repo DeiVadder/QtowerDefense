@@ -20,6 +20,9 @@
 
 namespace qtd::client {
 
+/// The frames of one walk cycle of an enemy model, baked by scripts/import_assets.py.
+constexpr int kWalkFrames = 8;
+
 /// The running game for the QML side. It shows the state and passes on commands, the same commands
 /// that bots use. Positions are in map units, the scene decides how large a unit is.
 class GameSession : public QObject
@@ -32,6 +35,8 @@ class GameSession : public QObject
     Q_PROPERTY(QVariantList towerTypes READ towerTypes NOTIFY mapChanged)
     Q_PROPERTY(QStringList towerModels READ towerModels NOTIFY mapChanged)
     Q_PROPERTY(QStringList enemyModels READ enemyModels NOTIFY mapChanged)
+    // How many walk frames the model of each enemy type has, 0 for a model without.
+    Q_PROPERTY(QList<int> enemyFrames READ enemyFrames NOTIFY mapChanged)
     Q_PROPERTY(QVariantList hand READ hand NOTIFY handChanged)
     Q_PROPERTY(int handLimit READ handLimit CONSTANT)
     Q_PROPERTY(int rollCost READ rollCost NOTIFY mapChanged)
@@ -142,6 +147,7 @@ public:
     /// By type: the name of a model in the resources of the client, empty if it has none.
     [[nodiscard]] QStringList towerModels() const;
     [[nodiscard]] QStringList enemyModels() const;
+    [[nodiscard]] QList<int> enemyFrames() const;
     [[nodiscard]] bool canCallWave() const;
     [[nodiscard]] qint64 waveCallBonus() const;
     [[nodiscard]] const QString &saveFile() const;

@@ -23,6 +23,8 @@ class MapInstances : public QQuick3DInstancing
     Q_PROPERTY(float enemyScale READ enemyScale WRITE setEnemyScale NOTIFY enemyScaleChanged)
     Q_PROPERTY(float modelSize READ modelSize WRITE setModelSize NOTIFY modelSizeChanged)
     Q_PROPERTY(int typeIndex READ typeIndex WRITE setTypeIndex NOTIFY typeIndexChanged)
+    // Of an enemy with walk frames, the one frame drawn here; -1 draws all, without frames.
+    Q_PROPERTY(int walkFrame READ walkFrame WRITE setWalkFrame NOTIFY walkFrameChanged)
 
 public:
     enum class Layer : quint8 {
@@ -44,6 +46,7 @@ public:
     [[nodiscard]] float enemyScale() const;
     [[nodiscard]] float modelSize() const;
     [[nodiscard]] int typeIndex() const;
+    [[nodiscard]] int walkFrame() const;
 
     void setGame(GameSession *game);
     void setLayer(Layer layer);
@@ -51,6 +54,7 @@ public:
     void setModelSize(float size);
     void setEnemyScale(float scale);
     void setTypeIndex(int index);
+    void setWalkFrame(int frame);
 
 signals:
     void gameChanged();
@@ -59,6 +63,7 @@ signals:
     void enemyScaleChanged();
     void modelSizeChanged();
     void typeIndexChanged();
+    void walkFrameChanged();
 
 protected:
     QByteArray getInstanceBuffer(int *instanceCount) override;
@@ -72,6 +77,7 @@ private:
     float enemyScale_ = 1;
     float modelSize_ = 1; // the edge of what TowerLooks draws, in its own units
     int typeIndex_ = 0;
+    int walkFrame_ = -1;
 };
 
 } // namespace qtd::client

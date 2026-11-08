@@ -12,6 +12,7 @@ Model {
     readonly property bool found: name.length > 0
     readonly property real size: found ? 1 : 100 // the edge of the shape in its own units
     property bool tower: false
+    property string texture: name // models can share one texture
 
     source: found ? "qrc:/assets/" + name + ".mesh" : fallback
     instanceRoot: root // without it, instances ignore the place of the map
@@ -24,6 +25,6 @@ Model {
     Texture {
         id: texture
 
-        source: root.found ? "qrc:/assets/" + root.name + ".png" : ""
+        source: root.found ? "qrc:/assets/" + root.texture + ".png" : ""
     }
 }

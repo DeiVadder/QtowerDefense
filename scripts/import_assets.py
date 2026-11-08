@@ -9,10 +9,17 @@ are merged into one, stacked on top of each other, in the pose they have in thei
 stands on y = 0 around the origin and is one unit wide, or one unit high with "height". Nothing of
 a pack is unpacked, the script reads what it needs out of the zip files. Only the meshes and the
 textures of the game go into the repository.
+
+Enemies walk (E-41): their walk animation is baked into WALK_FRAMES meshes `<name>_<frame>`, all in
+the scale of the first frame. The client shows each enemy in the frame of its way. The monsters
+share one texture, `monsters.png`.
+
+The zip files are named as in PACKS. Ultimate Monsters comes as a folder from the page of
+Quaternius, put its glTF folders into `ultimate-monsters.zip`. The Medieval Hexagon Pack is the
+zip of its GitHub repository.
 """
 
 import json
-import math
 import pathlib
 import shutil
 import struct
@@ -22,62 +29,44 @@ import tempfile
 import zipfile
 import zlib
 
+from gltf_mesh import IDENTITY, apply, matrix_of, multiply, read_accessor, read_glb, read_gltf
+from gltf_mesh import unit, walk_cycle
 from qtd_common import REPO
 
 TARGET = REPO / "src" / "client" / "assets"
 TOWERS = "tower-defense-kit"
-BLOCKY = "blocky-characters"
 NATURE = "nature-kit"
 GRAVES = "graveyard-kit"
+HEXAGON = "kaykit-medieval-hexagon"
+MONSTERS = "ultimate-monsters"
+WALK_FRAMES = 8  # kWalkFrames in src/client/game_session.h
 
 # name: pack, the parts from the bottom up, what fits into one unit, the texture of the pack
 MODELS = {
-    "ballista": (TOWERS, ["tower-square-bottom-a", "weapon-ballista"], "width", "colormap"),
-    "twin_ballista": (
-        TOWERS,
-        ["tower-square-bottom-b", "tower-square-middle-a", "weapon-ballista"],
-        "width",
-        "colormap",
-    ),
-    "bastion": (
-        TOWERS,
-        ["tower-round-bottom-a", "tower-round-middle-a", "tower-round-top-a"],
-        "width",
-        "colormap",
-    ),
-    "horseshoe": (TOWERS, ["tower-round-bottom-b", "weapon-turret"], "width", "colormap"),
-    "frost_spire": (
-        TOWERS,
-        ["tower-round-bottom-c", "tower-round-crystals"],
-        "width",
-        "colormap",
-    ),
-    "venom_spire": (
-        TOWERS,
-        ["tower-round-bottom-c", "tower-round-middle-c", "tower-round-roof-c"],
-        "width",
-        "colormap",
-    ),
-    "catapult": (TOWERS, ["tower-square-bottom-c", "weapon-catapult"], "width", "colormap"),
+    "ballista": (HEXAGON, ["building_tower_A_blue"], "width", "hexagons_medieval"),
+    "twin_ballista": (HEXAGON, ["building_tower_B_blue"], "width", "hexagons_medieval"),
+    "bastion": (HEXAGON, ["building_castle_blue"], "width", "hexagons_medieval"),
+    "horseshoe": (HEXAGON, ["building_barracks_yellow"], "width", "hexagons_medieval"),
+    "frost_spire": (HEXAGON, ["building_church_blue"], "width", "hexagons_medieval"),
+    "venom_spire": (HEXAGON, ["building_tower_A_green"], "width", "hexagons_medieval"),
+    "catapult": (HEXAGON, ["building_tower_catapult_red"], "width", "hexagons_medieval"),
     "rock": (TOWERS, ["detail-rocks"], "width", "colormap"),
     "tree": (TOWERS, ["detail-tree-large"], "width", "colormap"),
 }
-for letter, enemy in zip(
-    "bcdefghijk",
-    [
-        "mire_goblin",
-        "stone_troll",
-        "swamp_rat",
-        "iron_beetle",
-        "ember_imp",
-        "frost_wraith",
-        "moss_shaman",
-        "hex_warden",
-        "bog_titan",
-        "cinder_drake",
-    ],
-):
-    MODELS[enemy] = (BLOCKY, [f"character-{letter}"], "height", f"texture-{letter}")
+
+# name: the model in Ultimate Monsters, the animation that is its walk
+ENEMIES = {
+    "mire_goblin": ("Big/glTF/Orc", "Walk"),
+    "stone_troll": ("Big/glTF/Yeti", "Walk"),
+    "swamp_rat": ("Big/glTF/Frog", "Walk"),
+    "iron_beetle": ("Blob/glTF/GreenSpikyBlob", "Walk"),
+    "ember_imp": ("Big/glTF/Demon", "Walk"),
+    "frost_wraith": ("Flying/glTF/Ghost", "Fast_Flying"),
+    "moss_shaman": ("Big/glTF/Tribal", "Walk"),
+    "hex_warden": ("Big/glTF/Orc_Skull", "Walk"),
+    "bog_titan": ("Big/glTF/MushroomKing", "Walk"),
+    "cinder_drake": ("Flying/glTF/Dragon_Evolved", "Fast_Flying"),
+}
 
 # name: pack, the start of a file name in it
 # The scenery of the landscapes: name, pack, part. One unit high, the landscape sets the size. The
@@ -139,68 +128,29 @@ SOUNDS = {
     "lost": ("music-jingles", "jingles_PIZZI00"),
 }
 
-PACK_NAMES = {
-    NATURE: "Nature Kit",
-    GRAVES: "Graveyard Kit",
-    TOWERS: "Tower Defense Kit",
-    BLOCKY: "Blocky Characters",
-    "impact-sounds": "Impact Sounds",
-    "interface-sounds": "Interface Sounds",
-    "rpg-audio": "RPG Audio",
-    "music-jingles": "Music Jingles",
+# pack: name, page, author
+PACKS = {
+    NATURE: ("Nature Kit", "https://kenney.nl/assets/nature-kit", "Kenney"),
+    GRAVES: ("Graveyard Kit", "https://kenney.nl/assets/graveyard-kit", "Kenney"),
+    TOWERS: ("Tower Defense Kit", "https://kenney.nl/assets/tower-defense-kit", "Kenney"),
+    HEXAGON: (
+        "KayKit Medieval Hexagon Pack 1.0",
+        "https://github.com/KayKit-Game-Assets/KayKit-Medieval-Hexagon-Pack-1.0",
+        "Kay Lousberg",
+    ),
+    MONSTERS: (
+        "Ultimate Monsters",
+        "https://quaternius.com/packs/ultimatemonsters.html",
+        "Quaternius",
+    ),
+    "impact-sounds": ("Impact Sounds", "https://kenney.nl/assets/impact-sounds", "Kenney"),
+    "interface-sounds": ("Interface Sounds", "https://kenney.nl/assets/interface-sounds", "Kenney"),
+    "rpg-audio": ("RPG Audio", "https://kenney.nl/assets/rpg-audio", "Kenney"),
+    "music-jingles": ("Music Jingles", "https://kenney.nl/assets/music-jingles", "Kenney"),
 }
-DATE = "2026-11-06"
+DATES = {HEXAGON: "2026-11-08", MONSTERS: "2026-11-08"}  # the others came on 2026-11-06
 
 PALETTE_WIDTH = 16
-
-COMPONENTS = {5121: ("B", 1), 5123: ("H", 2), 5125: ("I", 4), 5126: ("f", 4)}
-SIZES = {"SCALAR": 1, "VEC2": 2, "VEC3": 3}
-
-
-def read_glb(data):
-    size = struct.unpack_from("<I", data, 12)[0]
-    document = json.loads(data[20 : 20 + size])
-    return document, data[20 + size + 8 :]
-
-
-def read_accessor(document, binary, index):
-    accessor = document["accessors"][index]
-    view = document["bufferViews"][accessor["bufferView"]]
-    code, width = COMPONENTS[accessor["componentType"]]
-    count = SIZES[accessor["type"]]
-    stride = view.get("byteStride", width * count)
-    start = view.get("byteOffset", 0) + accessor.get("byteOffset", 0)
-    return [
-        struct.unpack_from(f"<{count}{code}", binary, start + item * stride)
-        for item in range(accessor["count"])
-    ]
-
-
-def multiply(left, right):
-    return [
-        [sum(left[row][k] * right[k][col] for k in range(4)) for col in range(4)]
-        for row in range(4)
-    ]
-
-
-def matrix_of(node):
-    if "matrix" in node:
-        m = node["matrix"]
-        return [[m[col * 4 + row] for col in range(4)] for row in range(4)]
-    x, y, z, w = node.get("rotation", [0, 0, 0, 1])
-    sx, sy, sz = node.get("scale", [1, 1, 1])
-    tx, ty, tz = node.get("translation", [0, 0, 0])
-    return [
-        [(1 - 2 * (y * y + z * z)) * sx, 2 * (x * y - z * w) * sy, 2 * (x * z + y * w) * sz, tx],
-        [2 * (x * y + z * w) * sx, (1 - 2 * (x * x + z * z)) * sy, 2 * (y * z - x * w) * sz, ty],
-        [2 * (x * z - y * w) * sx, 2 * (y * z + x * w) * sy, (1 - 2 * (x * x + y * y)) * sz, tz],
-        [0, 0, 0, 1],
-    ]
-
-
-def apply(matrix, vector, moves):
-    w = 1 if moves else 0
-    return [sum(matrix[row][k] * ([*vector, w][k]) for k in range(4)) for row in range(3)]
 
 
 def color_of(document, primitive):
@@ -250,9 +200,7 @@ def collect(document, binary, index, parent, mesh):
             for place in read_accessor(document, binary, attributes["POSITION"]):
                 mesh["positions"].append(apply(matrix, place, True))
             for normal in read_accessor(document, binary, attributes["NORMAL"]):
-                turned = apply(matrix, normal, False)
-                length = math.sqrt(sum(value * value for value in turned)) or 1
-                mesh["normals"].append([value / length for value in turned])
+                mesh["normals"].append(unit(apply(matrix, normal, False)))
             uvs = read_accessor(document, binary, attributes["TEXCOORD_0"])
             color = color_of(document, primitive)
             if color is not None:
@@ -264,14 +212,21 @@ def collect(document, binary, index, parent, mesh):
         collect(document, binary, child, matrix, mesh)
 
 
-def part_of(pack, name):
-    endings = (f"GLB format/{name}.glb", f"GLTF format/{name}.glb")
+def document_of(pack, name):
+    """A model of a pack by the end of its path: a .glb of Kenney or a .gltf with its buffer."""
+    endings = (f"GLB format/{name}.glb", f"GLTF format/{name}.glb", f"/{name}.gltf")
     path = next(item for item in pack.namelist() if item.endswith(endings))
-    document, binary = read_glb(pack.read(path))
+    if path.endswith(".glb"):
+        return read_glb(pack.read(path))
+    folder = path.rsplit("/", 1)[0]
+    return read_gltf(pack.read(path), lambda uri: pack.read(f"{folder}/{uri}"))
+
+
+def part_of(pack, name):
+    document, binary = document_of(pack, name)
     mesh = {"positions": [], "normals": [], "uvs": [], "indices": [], "palette": []}
-    identity = [[float(row == col) for col in range(4)] for row in range(4)]
     for root in document["scenes"][document.get("scene", 0)]["nodes"]:
-        collect(document, binary, root, identity, mesh)
+        collect(document, binary, root, IDENTITY, mesh)
     return mesh
 
 
@@ -292,16 +247,20 @@ def merged(pack, names):
     return whole
 
 
-def normalized(mesh, fit):
+def normalized(mesh, fit, others=()):
+    """Scaled and moved by the bounds of the mesh. The other meshes, frames of the same model, move
+    the same way, and none of them reaches below the ground."""
     places = mesh["positions"]
     lows = [min(place[axis] for place in places) for axis in range(3)]
     highs = [max(place[axis] for place in places) for axis in range(3)]
     extent = highs[1] - lows[1] if fit == "height" else max(highs[0] - lows[0], highs[2] - lows[2])
     middle_x, middle_z = (lows[0] + highs[0]) / 2, (lows[2] + highs[2]) / 2
-    mesh["positions"] = [
-        [(x - middle_x) / extent, (y - lows[1]) / extent, (z - middle_z) / extent]
-        for x, y, z in places
-    ]
+    ground = min(place[1] for each in (mesh, *others) for place in each["positions"])
+    for each in (mesh, *others):
+        each["positions"] = [
+            [(x - middle_x) / extent, (y - ground) / extent, (z - middle_z) / extent]
+            for x, y, z in each["positions"]
+        ]
 
 
 def glb_of(mesh):
@@ -365,7 +324,7 @@ def glb_of(mesh):
 
 
 def texture_of(pack, name):
-    path = next(item for item in pack.namelist() if item.endswith(f"Textures/{name}.png"))
+    path = next(item for item in sorted(pack.namelist()) if item.endswith(f"/{name}.png"))
     return pack.read(path)
 
 
@@ -386,6 +345,16 @@ def import_scenery(folder, name, work):
         picture = png_of(mesh["palette"]) if mesh["palette"] else texture_of(pack, "colormap")
     (TARGET / f"{name}.png").write_bytes(picture)
     compile_mesh(mesh, name, work)
+
+
+def import_enemy(folder, name, work):
+    part, walk = ENEMIES[name]
+    with zipfile.ZipFile(folder / f"{MONSTERS}.zip") as pack:
+        document, binary = document_of(pack, part)
+    frames = walk_cycle(document, binary, walk, WALK_FRAMES)
+    normalized(frames[0], "height", frames[1:])
+    for frame, mesh in enumerate(frames):
+        compile_mesh(mesh, f"{name}_{frame}", work)
 
 
 def compile_mesh(mesh, name, work):
@@ -417,8 +386,9 @@ def import_sound(folder, name):
 
 
 def row(file, pack, change):
-    url = f"https://kenney.nl/assets/{pack}"
-    return f"| `{file}` | {PACK_NAMES[pack]}, {url} | Kenney | CC0 | {DATE} | {change} |"
+    title, url, author = PACKS[pack]
+    date = DATES.get(pack, "2026-11-06")
+    return f"| `{file}` | {title}, {url} | {author} | CC0 | {date} | {change} |"
 
 
 def asset_list(sounds):
@@ -426,7 +396,8 @@ def asset_list(sounds):
         "# Assets",
         "",
         "Alle Dateien liegen in `src/client/assets`. Erzeugt von `scripts/import_assets.py`, nicht",
-        "von Hand ändern. Jedes Modell ist ein Mesh mit der Textur des Pakets.",
+        "von Hand ändern. Jedes Modell ist ein Mesh mit der Textur des Pakets, Gegner haben",
+        f"{WALK_FRAMES} Meshes für einen Schritt-Zyklus (E-41). Alle Pakete stehen unter CC0.",
         "",
         "| Datei | Quelle | Urheber | Lizenz | Datum | Änderungen |",
         "|---|---|---|---|---|---|",
@@ -435,6 +406,10 @@ def asset_list(sounds):
         change = f"Aus {', '.join(parts)} zu einem Mesh verbunden, auf eine Einheit skaliert"
         lines.append(row(f"{name}.mesh", pack, change))
         lines.append(row(f"{name}.png", pack, f"{texture}.png, unverändert"))
+    for name, (part, walk) in ENEMIES.items():
+        change = f"{part}.gltf, Animation {walk} in {WALK_FRAMES} Posen, auf eine Einheit Höhe skaliert"
+        lines.append(row(f"{name}_0.mesh … {name}_{WALK_FRAMES - 1}.mesh", MONSTERS, change))
+    lines.append(row("monsters.png", MONSTERS, "Atlas_Monsters.png, unverändert"))
     for name, (pack, part) in SCENERY.items():
         lines.append(row(f"{name}.mesh", pack, f"Aus {part}, auf eine Einheit Höhe skaliert"))
         lines.append(row(f"{name}.png", pack, f"Farben von {part} geändert, als Palette, oder colormap.png"))
@@ -453,9 +428,14 @@ def main():
         for name in MODELS:
             import_model(folder, name, pathlib.Path(work))
             print(name)
+        for name in ENEMIES:
+            import_enemy(folder, name, pathlib.Path(work))
+            print(name)
         for name in SCENERY:
             import_scenery(folder, name, pathlib.Path(work))
             print(name)
+    with zipfile.ZipFile(folder / f"{MONSTERS}.zip") as pack:
+        (TARGET / "monsters.png").write_bytes(texture_of(pack, "Atlas_Monsters"))
     sounds = {name: import_sound(folder, name) for name in SOUNDS}
     (REPO / "docs" / "ASSETS.md").write_text(asset_list(sounds), encoding="utf-8", newline="\n")
     return 0

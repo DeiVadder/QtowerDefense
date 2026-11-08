@@ -37,6 +37,7 @@ constexpr int kChosenLight = 150; // percent, how much brighter the chosen tower
 
 constexpr float kHopHeight = 0.08F; // of a field, how far a walking enemy leaves the ground
 constexpr float kHopsPerField = 2.5F;
+constexpr qint64 kStrideTenths = 9;  // of a field, the way of one walk cycle
 constexpr qint64 kShotTicks = 6;     // how long a shot is seen after the tower fired
 constexpr float kShotSize = 0.0015F; // of a field per unit of the sphere
 constexpr float kShotHeight = 0.6F;  // of a field, where it leaves the tower
@@ -251,8 +252,20 @@ std::vector<Piece> shotPieces(const GameSession &game, float fieldSize)
     return pieces;
 }
 
-std::vector<Piece>
-enemyPieces(const GameSession &game, float fieldSize, float enemyScale, int typeIndex)
+/// The walk frame of an enemy follows its way, so that a slowed enemy walks slower. A boss is
+/// larger and takes longer steps.
+int walkFrameOf(const core::Enemy &enemy, bool boss)
+{
+    qint64 stride = core::Fixed::fromInt(1).raw() * kStrideTenths / 10;
+    if (boss) {
+        stride = static_cast<qint64>(static_cast<float>(stride) * kBossScale);
+    }
+    return static_cast<int>((enemy.travelled.raw() * kWalkFrames / stride + enemy.id * 3) %
+                            kWalkFrames);
+}
+
+std::vector<Piece> enemyPieces(
+    const GameSession &game, float fieldSize, float enemyScale, int typeIndex, int walkFrame)
 {
     std::vector<Piece> pieces;
     const std::vector<QPointF> places = game.enemyPlaces();
@@ -264,12 +277,15 @@ enemyPieces(const GameSession &game, float fieldSize, float enemyScale, int type
     const std::vector<core::EnemyType> &types = simulation.content().enemies;
     for (std::size_t index = 0; index < places.size(); ++index) {
         const core::Enemy &enemy = enemies[index];
-        if (std::cmp_not_equal(enemy.type, typeIndex)) {
+        if (std::cmp_not_equal(enemy.type, typeIndex) ||
+            (walkFrame >= 0 && walkFrameOf(enemy, types[enemy.type].boss) != walkFrame)) {
             continue;
         }
         const auto x = static_cast<float>(places[index].x());
         const auto z = static_cast<float>(places[index].y());
-        const float hop = std::abs(std::sin((x + z) * kHopsPerField)) * kHopHeight * fieldSize;
+        const float hop =
+            walkFrame >= 0 ? 0.0F
+                           : std::abs(std::sin((x + z) * kHopsPerField)) * kHopHeight * fieldSize;
         pieces.push_back(
             {QVector3D(x * fieldSize, hop, z * fieldSize),
              QVector3D(1, 1, 1) * enemyScale * (types[enemy.type].boss ? kBossScale : 1.0F),
@@ -384,6 +400,20 @@ void MapInstances::setTypeIndex(int index)
     }
 }
 
+int MapInstances::walkFrame() const
+{
+    return walkFrame_;
+}
+
+void MapInstances::setWalkFrame(int frame)
+{
+    if (walkFrame_ != frame) {
+        walkFrame_ = frame;
+        markDirty();
+        emit walkFrameChanged();
+    }
+}
+
 void MapInstances::markDirtyFor(std::initializer_list<Layer> layers)
 {
     if (std::ranges::find(layers, layer_) != layers.end()) {
@@ -406,7 +436,7 @@ QByteArray MapInstances::getInstanceBuffer(int *instanceCount)
             pieces = towerLooks(*game_, fieldSize_, modelSize_, typeIndex_);
             break;
         case Layer::Enemies:
-            pieces = enemyPieces(*game_, fieldSize_, enemyScale_, typeIndex_);
+            pieces = enemyPieces(*game_, fieldSize_, enemyScale_, typeIndex_, walkFrame_);
             break;
         case Layer::Shots:
             pieces = shotPieces(*game_, fieldSize_);

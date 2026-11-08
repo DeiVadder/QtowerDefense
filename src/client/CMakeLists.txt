@@ -7,7 +7,7 @@ qt_add_qml_module(qtd_client
     DEPENDENCIES QtQuick3D QtMultimedia
     SOURCES
         app_info.cpp app_info.h
-        game_session.cpp game_session_cards.cpp game_session_save.cpp game_session.h
+        game_session.cpp game_session_cards.cpp game_session_looks.cpp game_session_save.cpp game_session.h
         graphics.cpp graphics.h
         ground_field.cpp ground_field.h
         landscape.cpp landscape.h

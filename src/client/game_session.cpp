@@ -3,7 +3,6 @@
 #include "core/content_loader.h"
 
 #include <QCoreApplication>
-#include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QRandomGenerator>
@@ -22,16 +21,6 @@ namespace {
 constexpr qint64 kMaxFrameMicroseconds = 250'000;
 constexpr int kMaxSpeed = 3;
 constexpr double kMillionthsPerTick = 1'000'000;
-
-/// A model has the name of its type in the content, an empty name means there is none.
-QStringList modelsOf(const auto &types)
-{
-    QStringList models;
-    for (const auto &type : types) {
-        models.append(QFile::exists(u":/assets/%1.mesh"_s.arg(type.id)) ? type.id : QString());
-    }
-    return models;
-}
 
 double mapUnits(core::Fixed value)
 {
@@ -234,16 +223,6 @@ bool GameSession::castSpellAt(int x, int y)
     emit cue(Cue::Spell);
     emit spellCast(x, y, mapUnits(game_->simulation().content().spells[spell].radius), spell);
     return true;
-}
-
-QStringList GameSession::towerModels() const
-{
-    return game_ ? modelsOf(game_->simulation().content().towers) : QStringList();
-}
-
-QStringList GameSession::enemyModels() const
-{
-    return game_ ? modelsOf(game_->simulation().content().enemies) : QStringList();
 }
 
 const QString &GameSession::mapFile() const

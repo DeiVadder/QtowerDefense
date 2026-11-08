@@ -270,12 +270,12 @@ Vom Menschen am 2026-11-06 festgelegt, ergänzt den Auftrag.
 
 ## E-33 Assets
 
-- **Quelle:** Alles kommt bisher von Kenney (CC0, Lizenzdatei in jedem Paket). Jede Datei steht in `docs/ASSETS.md`. Die Pakete selbst liegen nicht im Repository.
+- **Quelle:** Alles steht unter CC0, bisher von Kenney, seit E-41 auch Gegner von Quaternius und Türme von KayKit. Jede Datei steht in `docs/ASSETS.md`. Die Pakete selbst liegen nicht im Repository.
 - **Ein Modell, ein Mesh:** `scripts/import_assets.py` verbindet die Teile eines Modells und übersetzt es mit `balsam`, denn nur ein einzelnes Mesh lässt sich instanziert zeichnen. 200 Gegner bleiben so wenige Draw Calls. Ins Repository kommen nur Meshes, Texturen und Sounds.
-- **Keine Skelett-Animation:** Instanzen teilen sich eine Pose. Gegner hüpfen beim Gehen und schauen in ihre Richtung, beides berechnet `MapInstances` aus dem Weg. Das ist der Ersatz für animierte Modelle, solange das Budget für schwache GPUs gilt.
+- **Keine Skelett-Animation:** Instanzen teilen sich eine Pose. Gegner schauen in ihre Richtung, das berechnet `MapInstances` aus dem Weg. Ihre Schritte sind seit E-41 gebackene Posen, Modelle ohne Posen hüpfen.
 - **Name:** Ein Modell heißt wie sein Typ im Inhalt (`ballista`), Core kennt keine Modelle. Fehlt ein Modell, zeichnet der Client eine einfache Form, sie bleibt ungefärbt. Felsen und Bäume hängen nicht am Inhalt, ihre Modelle fehlen nie, das prüft ein Test.
 - **Taps:** Die Blöcke von Hindernissen und Türmen bleiben unsichtbar stehen und nehmen weiter die Taps. Türme und Bäume ragen höher als ihr Block, deshalb nehmen ihre Modelle selbst Taps, das Feld ergibt sich aus der Stelle des Treffers. Der Block eines Baums bleibt flach, sonst verdeckt er das freie Feld dahinter. Der Boden unter Hindernissen hängt am Ende der Tabelle, damit die Nummer einer Instanz weiter ihr Feld nennt.
-- **Gegner:** Blockfiguren aus Blocky Characters sind Platzhalter, ein CC0-Paket mit Fantasy-Monstern fehlt noch. Bosse sind nur größer.
+- **Gegner:** Seit E-41 Monster aus Ultimate Monsters (Quaternius). Bosse sind nur größer.
 - **Schüsse:** Sie sind nur ein Bild. Die Simulation trifft sofort und nennt ihr Ziel nicht, ein Schuss fliegt zum nächsten Gegner, nicht immer zum echten Ziel.
 - **Sound:** `GameSession::cue` meldet, was zu hören ist, `GameSounds.qml` spielt OGG mit `MediaPlayer`. `SoundEffect` kann nur WAV. Über die Steuerschnittstelle gibt es keine Töne. Der Ton einer Welle bestätigt nur das Rufen, eine Welle, die von selbst kommt, bleibt vorerst still. Die Player entstehen erst mit dem ersten Ton, denn schon das Anlegen lädt FFmpeg, und das schreibt ins Log.
 - **Noch offen:** Hintergrundmusik, denn Kenney hat nur Jingles, sie braucht eine zweite Quelle. Das Gelände kam mit E-34, die übrigen Landschaften kommen mit den Karten der Weltkarte (E-32). Das Castle Kit ist geladen und geprüft, aber noch nicht eingebaut. Die Lautstärke steht in den Einstellungen (E-35).
@@ -363,3 +363,14 @@ Vom Menschen am 2026-11-06 aus vier Demos gewählt, ergänzt E-32 und den Auftra
 - **Prüfung:** `scripts/check_translations.py` liest die Quellen mit lupdate und der Projektdatei des Debug-Builds und scheitert bei Texten ohne Übersetzung, bei Übersetzungen ohne Text, bei fehlenden Pluralformen und bei Übersetzungen mit anderen Platzhaltern (`%1`, `%n`). Dazu sucht es in QML sichtbare Eigenschaften (`text`, `title`, `caption`, `Accessible.name` …), die auf einen nackten Text gesetzt sind. Was ein Ausdruck baut, sieht es nicht. Es läuft in den Quellregeln der Schnellprüfung.
 - **Fenstertitel:** `AppInfo.windowTitle` kommt aus C++ und ist konstant, er wechselt beim Umschalten nicht. Er lautet in beiden Sprachen gleich. Neue Texte aus C++ brauchen ein Signal zum Wechsel.
 - **Nicht:** Weitere Sprachen. Eine neue `.ts` in `TS_FILES` und ein Eintrag in `Translation` reichen dafür. Die Fehlertexte in Core werden nicht übersetzt.
+
+## E-41 Neue Modelle, laufende Gegner
+
+Vom Menschen am 2026-11-08 gewünscht: bessere Modelle für Gegner und Türme, Gegner sollen laufen und nicht gleiten.
+
+- **Quellen:** Gegner aus „Ultimate Monsters“ von Quaternius (quaternius.com, Download über den dort verlinkten Google-Drive-Ordner), Türme aus dem „KayKit Medieval Hexagon Pack 1.0“ von Kay Lousberg (GitHub-Repository des Erstellers). Beide CC0. Die Lizenzdatei von Quaternius trägt im Kopf versehentlich den Namen eines anderen Pakets, die Lizenz selbst ist CC0 wie auf der Seite. Felsen, Bäume, Umgebung und Töne bleiben von Kenney.
+- **Laufen ohne Skelett:** `scripts/import_assets.py` backt die Laufanimation jedes Gegners (`Walk`, bei Fliegern `Fast_Flying`) in acht feste Meshes (`<name>_0` … `<name>_7`), mit Linear Blend Skinning in `scripts/gltf_mesh.py`. Alle Posen haben den Maßstab der ersten, keine reicht unter den Boden. Der Client zeichnet je Gegnertyp und Pose ein instanziertes Modell (`MapInstances.walkFrame`), jeder Gegner steht in genau einer Pose. Echte Skelett-Animation hätte je Gegner ein eigenes Modell gebraucht und das Instancing aus E-33 aufgegeben.
+- **Pose aus dem Weg:** Die Pose folgt `Enemy::travelled`, ein Zyklus sind 0,9 Felder (`kStrideTenths`), versetzt nach Id, damit Nachbarn nicht im Gleichschritt gehen. Verlangsamte Gegner gehen dadurch langsamer, die Füße rutschen kaum, und das Bild hängt nur am Zustand. Bosse sind größer und machen entsprechend längere Schritte. Gegner mit Posen hüpfen nicht mehr. Posen zählen nur vollständig: Fehlt eine, zeichnet der Client wie bisher ein Modell ohne Posen oder eine Form.
+- **Kosten:** Zehn Gegner mit je acht Posen sind 80 Meshes, rund 15 MB im Programm, und 80 Modelle statt 10 in der Szene. Leere Posen zeichnen nichts. Alle Monster teilen eine Textur (`monsters.png`).
+- **Pakete:** Die Pakete liegen nicht im Repository. `import_assets.py` liest Zips: das GitHub-Zip von KayKit als `kaykit-medieval-hexagon.zip`, die glTF-Ordner von Quaternius als `ultimate-monsters.zip`.
+- **Nicht:** Animationen für Treffer, Tod oder Angriff, Schweben der Flieger. Die Zuordnung der Monster zu den Gegnern ist ein erster Wurf und darf sich ändern.

@@ -8,10 +8,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <vector>
 
 using namespace Qt::StringLiterals;
 
 using qtd::client::GameSession;
+using qtd::client::kWalkFrames;
 using qtd::client::MapInstances;
 
 namespace {
@@ -19,6 +22,41 @@ namespace {
 QString mapFile()
 {
     return QStringLiteral(QTD_CONTENT_DIR "/mire_siege.json");
+}
+
+/// The walk frames that the enemy models miss.
+QStringList missingFrames(const QStringList &models)
+{
+    QStringList missing;
+    for (const QString &model : models) {
+        for (int frame = 0; frame < kWalkFrames; ++frame) {
+            const QString name = u"%1_%2"_s.arg(model).arg(frame);
+            if (!QFile::exists(u":/assets/%1.mesh"_s.arg(name))) {
+                missing.append(name);
+            }
+        }
+    }
+    return missing;
+}
+
+/// How many enemies the frames show, each frame noted in seen once it shows one. A walk frame has
+/// its own steps, its enemies do not hop.
+int shownInFrames(const std::vector<std::unique_ptr<OpenInstances>> &frames, QList<int> &seen)
+{
+    int shown = 0;
+    for (int frame = 0; frame < kWalkFrames; ++frame) {
+        const int count = frames[frame]->count();
+        shown += count;
+        if (count > 0 && !seen.contains(frame)) {
+            seen.append(frame);
+        }
+        for (int index = 0; index < count; ++index) {
+            if (frames[frame]->entry(index).getPosition().y() != 0.0F) {
+                return -1;
+            }
+        }
+    }
+    return shown;
 }
 
 void advance(GameSession &game, int ticks)
@@ -43,6 +81,8 @@ private slots:
         QVERIFY(!game.towerModels().contains(QString()));
         QCOMPARE(game.enemyModels().size(), 10);
         QVERIFY(!game.enemyModels().contains(QString()));
+        QCOMPARE(game.enemyFrames(), QList<int>(10, kWalkFrames));
+        QCOMPARE(missingFrames(game.enemyModels()), QStringList());
     }
 
     static void aTypeWithoutAModelFallsBack()
@@ -52,6 +92,7 @@ private slots:
         QCOMPARE(game.error(), QString());
         QCOMPARE(game.towerModels(), QStringList{QString()});
         QCOMPARE(game.enemyModels(), QStringList{QString()});
+        QCOMPARE(game.enemyFrames(), QList<int>{0});
     }
 
     static void obstaclesShowOnTheirCells()
@@ -201,6 +242,26 @@ private slots:
         }
         QVERIFY(highest > 0);
         QVERIFY(highest < 50.0F / 4);
+    }
+
+    static void aWalkingEnemyShowsInOneFrameAtATime()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        OpenInstances all(&game, MapInstances::Layer::Enemies);
+        std::vector<std::unique_ptr<OpenInstances>> frames;
+        for (int frame = 0; frame < kWalkFrames; ++frame) {
+            frames.push_back(std::make_unique<OpenInstances>(&game, MapInstances::Layer::Enemies));
+            frames.back()->setWalkFrame(frame);
+        }
+        advance(game, 80);
+        QCOMPARE(all.count(), 1);
+        QList<int> seen;
+        for (int tick = 0; tick < 30; ++tick) {
+            advance(game, 1);
+            QCOMPARE(shownInFrames(frames, seen), all.count()); // each enemy in one frame
+        }
+        QCOMPARE(seen.size(), kWalkFrames); // a whole cycle in a second
     }
 };
 
