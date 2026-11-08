@@ -1,3 +1,4 @@
+#include "client/app_info.h"
 #include "client/game_session.h"
 #include "client/graphics.h"
 #include "client/screen_control.h"
@@ -6,6 +7,7 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QStandardPaths>
@@ -50,6 +52,7 @@ int run(int argc, char *argv[], bool *controlled)
 {
     qtd::client::configureGraphics();
     const QGuiApplication app(argc, argv);
+    QGuiApplication::setWindowIcon(QIcon(u":/assets/icon.png"_s));
 
     QCommandLineParser parser;
     parser.addOption({u"control"_s, u"Play through JSON lines on stdin and stdout."_s});
@@ -62,9 +65,10 @@ int run(int argc, char *argv[], bool *controlled)
         &app,
         [] { QCoreApplication::exit(1); },
         Qt::QueuedConnection);
+    *controlled = parser.isSet(u"control"_s);
+    qtd::client::AppInfo::setControlled(*controlled); // before the window: no intro (E-42)
     engine.loadFromModule("QtowerDefense.Client", "Main");
 
-    *controlled = parser.isSet(u"control"_s);
     if (!*controlled) {
         useSaveFile(engine);
         return QGuiApplication::exec();

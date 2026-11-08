@@ -1,3 +1,4 @@
+#include "client/app_info.h"
 #include "client/game_session.h"
 #include "client/graphics.h"
 #include "client/world_session.h"
@@ -126,6 +127,7 @@ private slots:
     static void init()
     {
         QFile::remove(settingsFile());
+        qtd::client::AppInfo::setControlled(false);
     }
 
     static void rendersTheScene()
@@ -175,6 +177,67 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(menu, "campaign"));
         QTest::keyClick(window, Qt::Key_Escape);
         QVERIFY(menu->isVisible());
+    }
+
+    // The intro covers the menu at the start, a tap ends it early (E-42).
+    static void aTapEndsTheIntro()
+    {
+        QQmlApplicationEngine engine;
+        QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        const QQuickItem *splash = window->findChild<QQuickItem *>(u"splash"_s);
+        QVERIFY(splash->property("intro").toBool());
+        QVERIFY(splash->isVisible());
+        QTest::mouseClick(
+            window, Qt::LeftButton, {}, window->contentItem()->boundingRect().center().toPoint());
+        QVERIFY(!splash->property("intro").toBool());
+        QVERIFY(QTest::qWaitFor([splash] { return !splash->isVisible(); }));
+    }
+
+    // A new map draws behind the curtain. It falls at once and is on the screen before the scene
+    // shows, then it lifts by itself.
+    static void aNewMapLoadsBehindTheCurtain()
+    {
+        QQmlApplicationEngine engine;
+        const QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        const QQuickItem *splash = window->findChild<QQuickItem *>(u"splash"_s);
+        const QQuickItem *scene = window->findChild<QQuickItem *>(u"gameScene"_s);
+        int framesBefore = -1;
+        qreal coverBefore = -1;
+        QObject::connect(scene, &QQuickItem::visibleChanged, scene, [&] {
+            if (scene->isVisible() && framesBefore < 0) {
+                framesBefore = splash->property("framesShown").toInt();
+                coverBefore = splash->opacity();
+            }
+        });
+        // After the intro, so that only the curtain covers.
+        QVERIFY(QTest::qWaitFor([splash] { return !splash->isVisible(); }));
+        QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(u"worldMap"_s), "play", 0));
+        QCOMPARE(splash->opacity(), 1.0);
+        QVERIFY(!scene->isVisible());
+        // The first frames of a scene load its meshes and shaders, on a hidden desktop that may
+        // take long.
+        constexpr int loadingMillis = 60'000;
+        QVERIFY(QTest::qWaitFor([splash] { return !splash->property("loading").toBool(); },
+                                loadingMillis));
+        QVERIFY(scene->isVisible());
+        QVERIFY(framesBefore >= 2);
+        QCOMPARE(coverBefore, 1.0);
+    }
+
+    // Under the control interface nothing covers the game, not even for a moment.
+    static void aControlledWindowHasNoCurtain()
+    {
+        qtd::client::AppInfo::setControlled(true);
+        QQmlApplicationEngine engine;
+        const QQuickWindow *window = openWindow(&engine);
+        QVERIFY(window != nullptr);
+        const QQuickItem *splash = window->findChild<QQuickItem *>(u"splash"_s);
+        QVERIFY(!splash->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(u"worldMap"_s), "play", 0));
+        QVERIFY(!splash->isVisible());
+        QVERIFY(window->findChild<QQuickItem *>(u"gameScene"_s)->isVisible());
     }
 
     // The settings of the test mode, a fresh file each time.

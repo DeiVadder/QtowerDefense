@@ -77,8 +77,9 @@ Window {
     MainScene {
         id: gameScene
 
+        objectName: "gameScene"
         anchors.fill: parent
-        visible: window.page === Main.Page.Game
+        visible: window.page === Main.Page.Game && !curtain.hidesScene
         game: session
         coinUnit: hud.unit
     }
@@ -131,6 +132,15 @@ Window {
         onQuit: Qt.quit()
     }
 
+    // Over all pages.
+    SplashScreen {
+        id: curtain
+
+        objectName: "splash"
+        anchors.fill: parent
+        intro: !AppInfo.controlled
+    }
+
     GameSounds {
         objectName: "gameSounds"
         game: session
@@ -156,6 +166,9 @@ Window {
 
         // Whoever starts a map, the window shows it. Another map is no section of the world.
         onMapChanged: {
+            if (!AppInfo.controlled) {
+                curtain.cover();
+            }
             window.page = Main.Page.Game;
             window.recorded = false;
             if (window.playing >= 0 && campaign.mapFile(window.playing) !== mapFile) {

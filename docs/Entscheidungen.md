@@ -374,3 +374,14 @@ Vom Menschen am 2026-11-08 gewünscht: bessere Modelle für Gegner und Türme, G
 - **Kosten:** Zehn Gegner mit je acht Posen sind 80 Meshes, rund 15 MB im Programm, und 80 Modelle statt 10 in der Szene. Leere Posen zeichnen nichts. Alle Monster teilen eine Textur (`monsters.png`).
 - **Pakete:** Die Pakete liegen nicht im Repository. `import_assets.py` liest Zips: das GitHub-Zip von KayKit als `kaykit-medieval-hexagon.zip`, die glTF-Ordner von Quaternius als `ultimate-monsters.zip`.
 - **Nicht:** Animationen für Treffer, Tod oder Angriff, Schweben der Flieger. Die Zuordnung der Monster zu den Gegnern ist ein erster Wurf und darf sich ändern.
+
+## E-42 Icon, Intro und Ladevorhang
+
+Wunsch des Menschen (2026-11-06, beauftragt 2026-11-08): ein Icon und ein Lade- oder Splash-Screen mit kleinem Intro.
+
+- **Icon:** Ein Steinturm mit Fahne im Eisen-Achteck, in den Farben von `Theme.qml`. Es ist eigener Inhalt: `scripts/make_icon.py` zeichnet es aus Vielecken mit weichen Kanten, jede Größe für sich, ohne Bibliothek. Daraus entstehen `icon.png` (256 Pixel, Fenster und Intro) und `src/app/qtowerdefense.ico` (16 bis 256 Pixel, PNG im ICO, für die Programmdatei über `qtowerdefense.rc`). Das Fenster bekommt es mit `QGuiApplication::setWindowIcon`. Android und iOS brauchen später eigene Icons in ihren Paketen.
+- **Intro:** `SplashScreen.qml` liegt über allen Seiten. Beim Start wächst das Emblem herein, darunter der Titel, nach gut zwei Sekunden blendet es aus. Ein Tap beendet es früher. Es deckt den ersten Aufbau des Fensters ab.
+- **Ladevorhang:** Beim Start einer Karte, auch bei Neustart und geladenem Spielstand, fällt derselbe Vorhang mit „Die Karte wird geladen …“. Er fällt sofort und blendet nur beim Heben aus. Gezählt wird mit `FrameAnimation`, das im Thread der Oberfläche vor jedem Bild tickt und dabei Bilder anfordert. `frameSwapped` käme aus dem Render-Thread, ein QML-Handler darauf liefe dort. Zwei Bilder lang bleibt die Szene unsichtbar: Das erste mit dem Vorhang allein ist gezeichnet, bevor das nächste mit der Szene Meshes, Texturen und Shader lädt, im threaded wie im basic Render-Loop. Danach zeichnet die Szene drei Bilder hinter dem Vorhang, dann hebt er sich. Solange er hängt, nimmt er alle Taps, Finger und das Mausrad.
+- **Steuerschnittstelle:** Mit `--control` gibt es weder Intro noch Vorhang. Bots, Rauchtest und Screenshots wollen das Spiel sehen, und ein Vorhang machte aufeinanderfolgende Bilder gleich. `main.cpp` setzt dazu `AppInfo::setControlled` vor dem Laden des Fensters, QML liest `AppInfo.controlled`. Die Kommandozeile liest nur der Parser.
+- **Nicht:** Ein Fortschrittsbalken. Qt Quick 3D lädt im Render-Thread in einem Stück, einen echten Fortschritt gibt es nicht. Ein nativer Splash des Betriebssystems vor dem Start von Qt, auf Android ein Thema der Plattform.
+

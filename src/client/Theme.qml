@@ -231,4 +231,16 @@ QtObject {
 
     // The darkest plank, the lightest one has the color wood. Text must be readable on that one.
     readonly property real darkestPlank: 0.85
+
+    // The splash screen at the start and the curtain while a map loads (E-42).
+    readonly property int introMillis: 2200
+    readonly property int curtainMillis: 350 // to fade in and out
+    readonly property int emblemMillis: 900 // the emblem grows into its place
+    readonly property int curtainAloneFrames: 2 // frames of the curtain before the scene shows
+    readonly property int curtainFrames: 3 // frames of the scene behind the curtain before it lifts
+    readonly property int emblemPixels: 256 // the size of icon.png
+    readonly property real emblemShare: 0.38 // of the short side of the window
+    readonly property real emblemStart: 0.6 // the size the emblem grows from
+    readonly property real splashTitle: 0.09 // of the short side
+    readonly property real splashNote: 0.035
 }

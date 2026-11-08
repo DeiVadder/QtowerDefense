@@ -17,6 +17,9 @@ class AppInfo : public QObject
     /// Whether the platform has windows that a player opens and closes, not apps that own the
     /// screen (Android, iOS).
     Q_PROPERTY(bool windowed READ windowed CONSTANT)
+    /// Whether bots or tools play through the control interface: no intro, no curtain (E-42).
+    /// The program sets it before the first window.
+    Q_PROPERTY(bool controlled READ controlled CONSTANT)
 
 public:
     explicit AppInfo(QObject *parent = nullptr);
@@ -24,6 +27,8 @@ public:
     [[nodiscard]] QString version() const;
     [[nodiscard]] QString windowTitle() const;
     [[nodiscard]] static bool windowed();
+    [[nodiscard]] static bool controlled();
+    static void setControlled(bool controlled);
 };
 
 } // namespace qtd::client

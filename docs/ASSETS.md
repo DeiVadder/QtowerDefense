@@ -92,3 +92,4 @@ von Hand ändern. Jedes Modell ist ein Mesh mit der Textur des Pakets, Gegner ha
 | `wave.ogg` | Interface Sounds, https://kenney.nl/assets/interface-sounds | Kenney | CC0 | 2026-11-06 | bong_001.ogg, unverändert |
 | `won.ogg` | Music Jingles, https://kenney.nl/assets/music-jingles | Kenney | CC0 | 2026-11-06 | jingles_STEEL00.ogg, unverändert |
 | `lost.ogg` | Music Jingles, https://kenney.nl/assets/music-jingles | Kenney | CC0 | 2026-11-06 | jingles_PIZZI00.ogg, unverändert |
+| `icon.png`, `src/app/qtowerdefense.ico` | eigene Zeichnung, `scripts/make_icon.py` | QtowerDefense | wie das Projekt | 2026-11-08 | – |

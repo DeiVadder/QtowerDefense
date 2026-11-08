@@ -4,6 +4,7 @@
 
 - **Etappe:** 0 bis 12 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
+- **Dazu aus `feature/13-splash`:** Eigenes Icon für Fenster und Programmdatei, Intro beim Start und ein Vorhang beim Laden einer Karte (E-42).
 - **Dazu aus `feature/neue-modelle`:** Gegner sind Monster von Quaternius und laufen mit acht gebackenen Posen je Typ, Türme kommen aus dem KayKit Medieval Hexagon Pack (E-41).
 - **Dazu aus `feature/13-uebersetzung`:** Deutsche Übersetzung aller Texte, Sprachwahl in den Einstellungen (System, Englisch, Deutsch), übersetzte Namen für Türme, Zauber und Abschnitte, englische Pluralformen, `check_translations.py` in der Schnellprüfung (E-40).
 - **Dazu aus `feature/12-werte`:** Zielkorridore in `docs/Balancing.md`, geprüft von `scripts/balancing.py` als Stufe der Vollprüfung. Gegner rund 2,6-mal so zäh, Türme neu abgestimmt, der gute Bot rechnet Verlangsamen und spart nicht mehr auf jeden besseren Plan (E-39). Der gute Bot gewinnt jede Karte, der naive rund 70 % der Kampagne, jeder Turm wird genutzt.
@@ -39,8 +40,8 @@
 
 ## Nächster Schritt
 
-1. Etappe 13 (Feinschliff) weiter: UI-Skalierung, Qualitätsstufen, Leistung, Mobile-Prüfung.
-2. Wunsch des Menschen (2026-11-06), bei Gelegenheit: ein Icon für das Spiel und ein Lade- oder Splash-Screen mit kleinem Intro, Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
+1. Etappe 13 (Feinschliff) weiter: UI-Skalierung, Qualitätsstufen, Leistung, Mobile-Prüfung. Für die Leistung: Das erste Zeichnen einer Karte stand auf dem versteckten Desktop rund 6 Sekunden (gemessen 2026-11-08 im Test des Ladevorhangs, E-42), vermutlich Shader und die 80 Meshes der Gegner (E-41). Messen, ob das auch auf dem sichtbaren Desktop so ist.
+2. Wunsch des Menschen (2026-11-06), bei Gelegenheit: Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
 
 ## Bekannte Mängel und offene Punkte
 
@@ -69,7 +70,7 @@
   - Falscher Alarm bei `__has_include(<foo/1.2/bar.h>)` und bei auskommentierten Link-Zeilen.
   - Eine getestete Datei mit Nicht-ASCII-Namen sprengt den OpenCppCoverage-Export (`scripts/coverage.py`).
   - Ohne lokalen Branch `dev` scheitert `check_length` laut, der Hook blockiert dann. `BASELINE_NAME` steht in `scripts/check_length.py` doppelt.
-- **MSVC-Absturz C1001, ungeklärt, dreimal gesehen (zuletzt in Etappe 9 in `tst_game_session.cpp`, ein zweiter Build lief durch):** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen. Am 2026-11-07 traten C1001, LNK1136 und frisch gelinkte, sofort abstürzende Programme gehäuft auf. Der Mensch nannte als mögliche Ursache eine zu hohe CPU-Spannung im alten BIOS und hat es aktualisiert. Kommen die Fehler danach wieder, ist die CPU vermutlich weiter instabil.
+- **MSVC-Absturz C1001, ungeklärt, dreimal gesehen (zuletzt in Etappe 9 in `tst_game_session.cpp`, ein zweiter Build lief durch):** Interner Compilerfehler in frischen Klonen, jeweils in Dateien, die das Feature nicht änderte: im Review von `feature/llvm-update` im Coverage-Build (`src/app/main.cpp`, Header `ranges`), im Review von `feature/enums-statt-strings` in `tests/qml/tst_qml.cpp`. Eine Wiederholung ohne Änderung lief jeweils durch, 36 Einzelläufe blieben ohne Absturz. Beide Dateien gehören zum Client, QtCraft lief parallel. Ein Zusammenhang mit LLVM im `PATH` ist nicht ausgeschlossen. Tritt es wieder auf: Lauf wiederholen und hier ergänzen. Am 2026-11-07 traten C1001, LNK1136 und frisch gelinkte, sofort abstürzende Programme gehäuft auf. Der Mensch nannte als mögliche Ursache eine zu hohe CPU-Spannung im alten BIOS und hat es aktualisiert. Kommen die Fehler danach wieder, ist die CPU vermutlich weiter instabil. Am 2026-11-08 nach dem BIOS-Update wieder einmal: `tst_client_window.exe` stürzte frisch gelinkt sofort ab (0xC0000005, auch bei `-functions`), nach Löschen und neuem Linken lief es.
 - **Auftrag, Sache des Menschen:** `QtowerDefense-Agent-Auftrag.md` nennt für `clang-tidy` und `clang-format` noch den Pfad der VS Build Tools. Gültig ist jetzt E-22.
 - **Plugin `qtd-lsp`:** Am 2026-11-04 vom Menschen in einer neuen Sitzung geprüft: Es lädt, `clangd` fand bei fertigem Index alle Verwendungen von `projectVersion`. Bei laufendem Index fehlten Treffer ohne Warnung (Regel in `CLAUDE.md`). `qmlls` wurde dort nicht abgefragt, nur seine LSP-Initialisierung ist geprüft. clangds Hinweis auf ein unbenutztes `<compare>` in `version.h` ist ein Fehlalarm (`operator<=>`).
 - **OpenCppCoverage-Setup** hat einen HKLM-Uninstall-Schlüssel und einen Benutzer-`PATH`-Eintrag außerhalb von `C:\dev` hinterlassen (`docs/Building.md`).

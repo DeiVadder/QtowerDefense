@@ -4,6 +4,16 @@
 
 namespace qtd::client {
 
+namespace {
+
+bool &controlledFlag()
+{
+    static bool flag = false;
+    return flag;
+}
+
+} // namespace
+
 AppInfo::AppInfo(QObject *parent) : QObject(parent) {}
 
 QString AppInfo::version() const
@@ -23,6 +33,16 @@ bool AppInfo::windowed()
 #else
     return true;
 #endif
+}
+
+bool AppInfo::controlled()
+{
+    return controlledFlag();
+}
+
+void AppInfo::setControlled(bool controlled)
+{
+    controlledFlag() = controlled;
 }
 
 } // namespace qtd::client

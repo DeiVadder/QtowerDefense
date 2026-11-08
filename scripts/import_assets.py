@@ -415,6 +415,10 @@ def asset_list(sounds):
         lines.append(row(f"{name}.png", pack, f"Farben von {part} geändert, als Palette, oder colormap.png"))
     for name, (pack, _) in SOUNDS.items():
         lines.append(row(f"{name}.ogg", pack, f"{sounds[name]}, unverändert"))
+    lines.append(
+        "| `icon.png`, `src/app/qtowerdefense.ico` | eigene Zeichnung, `scripts/make_icon.py` "
+        "| QtowerDefense | wie das Projekt | 2026-11-08 | – |"
+    )
     return "\n".join(lines) + "\n"
 
 

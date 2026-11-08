@@ -325,6 +325,17 @@
     </message>
 </context>
 <context>
+    <name>SplashScreen</name>
+    <message>
+        <source>QtowerDefense</source>
+        <translation>QtowerDefense</translation>
+    </message>
+    <message>
+        <source>Loading the map…</source>
+        <translation>Die Karte wird geladen …</translation>
+    </message>
+</context>
+<context>
     <name>TowerCard</name>
     <message>
         <source>Ballista</source>
