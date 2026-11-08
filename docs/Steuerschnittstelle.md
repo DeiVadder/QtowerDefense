@@ -25,7 +25,7 @@ Unknown keys are errors. Numbers in requests must be exact integers. Numbers tha
 | `collectCoin` | `coin` (the id of a coin) | Runs the command: the coin pays its `value`. The answer adds `result`, `unknownCoin` once it is gone |
 | `saveReplay` | `file`, up to 4096 characters | Writes the game so far as a replay. This is also how a game is saved |
 | `loadGame` | `map` (file), `file` | Goes on with a saved game and drops the current one. Needs no running game. If it fails, the current game stays |
-| `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG, before a game it shows the world map. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points |
+| `screenshot` | `file`, up to 4096 characters | Real game only. Saves the window as a PNG, before a game it shows the world map. The answer adds `screenshot` with `width`, `height` and `colors`, the number of different colours at 32 x 32 points. While the window is not on the screen (not yet shown, hidden or minimised) the answer is `ok: false` with "the window is not on the screen yet": ask again a little later |
 | `pause`, `resume` | none | Real game only. Stops or starts real time |
 | `quit` | none | Real game only. Ends the program after the answer |
 

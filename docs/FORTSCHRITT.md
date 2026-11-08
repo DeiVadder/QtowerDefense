@@ -40,7 +40,7 @@
 
 ## Nächster Schritt
 
-1. Etappe 13 (Feinschliff) weiter: UI-Skalierung, Qualitätsstufen, Leistung, Mobile-Prüfung. Für die Leistung: Das erste Zeichnen einer Karte stand auf dem versteckten Desktop rund 6 Sekunden (gemessen 2026-11-08 im Test des Ladevorhangs, E-42), vermutlich Shader und die 80 Meshes der Gegner (E-41). Messen, ob das auch auf dem sichtbaren Desktop so ist.
+1. Etappe 13 (Feinschliff) weiter: UI-Skalierung, Qualitätsstufen, Leistung, Mobile-Prüfung. Für die Leistung: Das erste Zeichnen einer Karte kostet im Release-Build rund 0,5 Sekunden, im Debug-Build rund 4,5 Sekunden (gemessen 2026-11-09 auf der RTX 5060 Ti). Die 6 Sekunden aus dem Test des Ladevorhangs (E-42) waren der Debug-Build. Der dabei gefundene Absturz nach einem frühen Screenshot ist behoben (E-43).
 2. Wunsch des Menschen (2026-11-06), bei Gelegenheit: Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
 
 ## Bekannte Mängel und offene Punkte

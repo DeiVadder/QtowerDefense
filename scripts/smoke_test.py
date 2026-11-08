@@ -25,6 +25,8 @@ FRAME_SECONDS = 5
 SILENCE_SECONDS = 2
 # An empty scene with the HUD shows 6 colours, the map at least 18.
 MIN_COLORS = 12
+SHOT_WAIT_SECONDS = 0.2
+SHOT_TRIES = int(10 / SHOT_WAIT_SECONDS)
 # Section 4 of the assignment: 60 frames per second with 200 enemies.
 MIN_FRAMES_PER_SECOND = 60
 # What a frame may cost, on the CPU and on the GPU: room for 400 frames per second. The frame rate
@@ -76,15 +78,18 @@ class Game:
         self.log.close()
 
     def ask(self, action, **fields):
+        answer = self.try_ask(action, **fields)
+        if not answer["ok"]:
+            raise SystemExit(f"{action}: {answer['error']}")
+        return answer
+
+    def try_ask(self, action, **fields):
         self.process.stdin.write(json.dumps({"action": action, **fields}) + "\n")
         self.process.stdin.flush()
         line = self.process.stdout.readline()
         if not line:
             raise SystemExit(f"{action}: no answer, see {self.log_path}")
-        answer = json.loads(line)
-        if not answer["ok"]:
-            raise SystemExit(f"{action}: {answer['error']}")
-        return answer
+        return json.loads(line)
 
     def build(self, x, y, tower_type):
         answer = self.ask("buildTower", x=x, y=y, towerType=tower_type)
@@ -99,7 +104,15 @@ class Game:
 
 def screenshot(game, name):
     path = OUT / name
-    picture = game.ask("screenshot", file=str(path))["screenshot"]
+    # The window refuses pictures until it is on the screen (E-43).
+    for _ in range(SHOT_TRIES):
+        answer = game.try_ask("screenshot", file=str(path))
+        if answer["ok"] or "not on the screen" not in answer["error"]:
+            break
+        time.sleep(SHOT_WAIT_SECONDS)
+    if not answer["ok"]:
+        raise SystemExit(f"screenshot: {answer['error']}")
+    picture = answer["screenshot"]
     if picture["colors"] < MIN_COLORS or path.stat().st_size == 0:
         raise SystemExit(f"{name}: empty or of few colours: {picture}")
     print(f"{name}: {picture}")

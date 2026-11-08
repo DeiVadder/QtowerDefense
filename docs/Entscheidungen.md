@@ -385,3 +385,9 @@ Wunsch des Menschen (2026-11-06, beauftragt 2026-11-08): ein Icon und ein Lade- 
 - **Steuerschnittstelle:** Mit `--control` gibt es weder Intro noch Vorhang. Bots, Rauchtest und Screenshots wollen das Spiel sehen, und ein Vorhang machte aufeinanderfolgende Bilder gleich. `main.cpp` setzt dazu `AppInfo::setControlled` vor dem Laden des Fensters, QML liest `AppInfo.controlled`. Die Kommandozeile liest nur der Parser.
 - **Nicht:** Ein Fortschrittsbalken. Qt Quick 3D lädt im Render-Thread in einem Stück, einen echten Fortschritt gibt es nicht. Ein nativer Splash des Betriebssystems vor dem Start von Qt, auf Android ein Thema der Plattform.
 
+## E-43 Kein Screenshot vor dem ersten Bild
+
+Befund (2026-11-09): Ein Screenshot über die Steuerschnittstelle vor dem ersten Bild des Fensters, danach `startMap`, stürzte ab (`0xC0000005` in `Qt6Gui.dll` bei `QRhi::newTexture`). Im Debug-Build geschah das in jedem Lauf, im Release-Build in etwa der Hälfte der Läufe, im threaded wie im basic Render-Loop. Das Fenster war in diesem Moment nicht sichtbar (`isExposed()` falsch, null Bilder). Für ein solches Fenster zeichnet `grabWindow` das Bild mit einem eigenen Renderer. Danach lädt die erste Karte ihre Texturen offenbar über Zustand, der nicht mehr gilt. Die genaue Ursache in Qt ist nicht geklärt, die Regel umgeht sie.
+
+- **Regel:** `screenshot` antwortet mit einem Fehler („the window is not on the screen yet“), solange das Fenster nicht sichtbar ist. Wer ein Bild will, wiederholt die Anfrage. Der Rauchtest tut das bis zu zehn Sekunden lang.
+- **Nicht:** Innerhalb der Anfrage auf das Fenster warten. Das bräuchte eine verschachtelte Ereignisschleife, und darin liefe die nächste Anfrage schon vor der Antwort auf diese.

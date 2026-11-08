@@ -154,6 +154,11 @@ public:
 
     QString saveScreenshot(const QString &file, QJsonObject *answer) override
     {
+        // Before its window is on the screen, Qt draws the picture with a renderer of its own,
+        // and the next map crashed in the textures of the real one (E-43).
+        if (!window_->isExposed()) {
+            return u"the window is not on the screen yet"_s;
+        }
         const QImage image = window_->grabWindow();
         if (image.isNull()) {
             return u"the window gave no picture"_s;

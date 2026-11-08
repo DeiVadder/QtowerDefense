@@ -56,6 +56,14 @@ public:
     {
         return QTest::qWaitForWindowExposed(window_);
     }
+    void hide() const
+    {
+        window_->hide();
+    }
+    [[nodiscard]] bool isExposed() const
+    {
+        return window_->isExposed();
+    }
     [[nodiscard]] GameSession *game() const
     {
         return game_;
@@ -162,6 +170,22 @@ private slots:
         QVERIFY(answer["ok"_L1].toBool());
         QVERIFY(!answer.contains("tick"_L1));
         QVERIFY(answer["screenshot"_L1].toObject()["colors"_L1].toInt() > 8);
+    }
+
+    // Qt would draw the picture of a hidden window with a renderer of its own, and the next map
+    // crashed in the textures of the real one (E-43).
+    static void aHiddenWindowGivesNoPicture()
+    {
+        const QTemporaryDir folder;
+        const ControlledWindow window;
+        window.hide();
+        QVERIFY(!window.isExposed());
+        const QString file = folder.filePath(u"hidden.png"_s);
+        const QJsonObject refused =
+            ask(window.control(), {{"action"_L1, "screenshot"_L1}, {"file"_L1, file}});
+        QVERIFY(!refused["ok"_L1].toBool());
+        QVERIFY(refused["error"_L1].toString().contains(u"not on the screen"_s));
+        QVERIFY(!QFile::exists(file));
     }
 
     static void aBadScreenshotNameIsAnAnswer()
