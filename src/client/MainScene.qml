@@ -11,31 +11,6 @@ View3D {
 
     readonly property real fieldSize: 50
 
-    // The shots of one shape. Fire, ice, poison and magic glow, wood and stone take the light.
-    component ShotModel: Model {
-        id: shotModel
-
-        required property int shot
-        required property GameSession game
-        required property real fieldSize
-        property bool lit: false
-        property bool blended: false
-
-        instanceRoot: shotModel
-        instancing: MapInstances {
-            game: shotModel.game
-            layer: MapInstances.Shots
-            shot: shotModel.shot
-            fieldSize: shotModel.fieldSize
-        }
-        materials: PrincipledMaterial {
-            baseColor: "white"
-            roughness: 0.8
-            lighting: shotModel.lit ? PrincipledMaterial.FragmentLighting :
-                                      PrincipledMaterial.NoLighting
-            alphaMode: shotModel.blended ? PrincipledMaterial.Blend : PrincipledMaterial.Default
-        }
-    }
     property real coinUnit: Theme.smallestUnit // the HUD knows how large a finger is
     property alias quality: looks.quality
     readonly property real fieldOfView: 60
@@ -57,6 +32,31 @@ View3D {
     property real zoom: 1
     property real panX: 0
     property real panZ: 0
+
+    // The shots of one shape. Fire, ice, poison and magic glow, wood and stone take the light.
+    component ShotModel: Model {
+        id: shotModel
+
+        required property int shot
+        required property GameSession game
+        required property real fieldSize
+        property bool lit: false
+        property bool blended: false
+
+        instanceRoot: shotModel
+        instancing: MapInstances {
+            game: shotModel.game
+            layer: MapInstances.Shots
+            shot: shotModel.shot
+            fieldSize: shotModel.fieldSize
+        }
+        materials: PrincipledMaterial {
+            baseColor: "white"
+            lighting: shotModel.lit ? PrincipledMaterial.FragmentLighting :
+                                      PrincipledMaterial.NoLighting
+            alphaMode: shotModel.blended ? PrincipledMaterial.Blend : PrincipledMaterial.Default
+        }
+    }
 
     // Distance at which a camera with the given vertical field of view sees the whole extent.
     function fitCameraDistance(extent: real, fieldOfViewDegrees: real): real {

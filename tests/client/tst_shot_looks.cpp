@@ -24,8 +24,9 @@ namespace {
 constexpr float kFieldSize = 50; // OpenInstances draws 50 units to a field
 constexpr int kLongEnough = 900; // ticks until the first enemy is in range of every tower below
 
-// Training ground with gold for every tower. The towers by index: 0 ballista, 1 twin ballista,
-// 2 bastion, 3 horseshoe, 4 frost spire, 5 venom spire, 6 catapult.
+// The mire siege with gold for every tower and the towers of the catalog (E-37). The towers by
+// index: 0 ballista, 1 twin ballista, 2 bastion, 3 horseshoe, 4 frost spire, 5 venom spire,
+// 6 catapult.
 QString mapFile()
 {
     return QStringLiteral(QTD_TEST_DIR "/shot_map.json");
@@ -70,10 +71,12 @@ private slots:
     // alike.
     static void everyTowerOfTheCatalogShootsItsOwnShot()
     {
-        const qtd::core::ContentLoadResult loaded = qtd::core::loadContentFile(mapFile());
+        // A map of the campaign, which takes its towers from content/catalog.json (E-37).
+        const qtd::core::ContentLoadResult loaded =
+            qtd::core::loadContentFile(QStringLiteral(QTD_CONTENT_DIR "/mire_siege.json"));
         QVERIFY2(loaded.content, qPrintable(loaded.error));
         const std::vector<qtd::core::TowerType> &towers = loaded.content->towers;
-        QCOMPARE(towers.size(), std::size_t{7});
+        QVERIFY(towers.size() >= 7);
         std::vector<std::pair<Shot, QRgb>> looks;
         for (const qtd::core::TowerType &tower : towers) {
             const ShotLook look = qtd::client::shotLookOf(tower);
@@ -84,7 +87,7 @@ private slots:
         QVERIFY(std::ranges::adjacent_find(looks) == looks.end());
         const std::vector<std::pair<Shot, QRgb>>::iterator shapesEnd =
             std::ranges::unique(looks, {}, &std::pair<Shot, QRgb>::first).begin();
-        QVERIFY(std::distance(looks.begin(), shapesEnd) >= 6);
+        QVERIFY(std::distance(looks.begin(), shapesEnd) >= 6); // and nearly all of other shapes
     }
 
     // A shot leaves its tower above the walls, not from inside them.

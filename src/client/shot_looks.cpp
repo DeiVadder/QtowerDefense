@@ -24,10 +24,9 @@ constexpr float kHitHeight = 0.35F; // fields, where it meets an enemy
 constexpr qint64 kDustTicks = 6;
 constexpr float kDustHeight = 0.03F;
 constexpr float kRecoilTicks = 3;
-constexpr float kHeightPerLevel = 0.25F; // kTowerHeightPerLevel in map_instances.cpp
-constexpr float kPulse = 0.15F;          // of its size, how much a fireball pulses
-constexpr float kWobble = 0.2F;          // of its size, how much a glob wobbles
-constexpr float kPulseRate = 2.5F;       // radians a tick
+constexpr float kPulse = 0.15F;    // of its size, how much a fireball pulses
+constexpr float kWobble = 0.2F;    // of its size, how much a glob wobbles
+constexpr float kPulseRate = 2.5F; // radians a tick
 constexpr float kWobbleRate = 3.0F;
 
 ShotLook lookOfDamage(core::DamageType damage)
@@ -55,8 +54,13 @@ std::optional<float> sinceFired(const GameSession &game, const core::Tower &towe
     if (tower.cooldownTicks == 0 || fired < 0) {
         return std::nullopt;
     }
-    // The picture is up to a tick behind the game, like the enemies (GameSession::enemyPlaces).
-    return std::max(0.0F, static_cast<float>(fired) - 1 + static_cast<float>(game.tickShare()));
+    // The picture is up to a tick behind the game, like the enemies (GameSession::enemyPlaces): on
+    // the tick it fires, the picture still shows the moment before.
+    const float time = static_cast<float>(fired) - 1 + static_cast<float>(game.tickShare());
+    if (time < 0) {
+        return std::nullopt;
+    }
+    return time;
 }
 
 /// Turns the y axis of a shape, along which rods and cones lie, into the given direction.
@@ -225,7 +229,8 @@ std::vector<ShotPiece> shotPieces(const GameSession &game, float fieldSize, Shot
             const QPointF away = place - from;
             return QPointF::dotProduct(away, away);
         });
-        const float launch = look.launch * (1 + kHeightPerLevel * static_cast<float>(tower.level));
+        const float launch =
+            look.launch * (1 + kTowerHeightPerLevel * static_cast<float>(tower.level));
         const Flight flight{
             QVector3D(static_cast<float>(from.x()), launch, static_cast<float>(from.y())) *
                 fieldSize,

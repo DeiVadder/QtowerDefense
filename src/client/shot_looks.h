@@ -15,6 +15,9 @@ struct TowerType;
 
 namespace qtd::client {
 
+/// How much higher a tower looks with each level above the first, of its height.
+inline constexpr float kTowerHeightPerLevel = 0.25F;
+
 /// The shapes a shot takes in flight, see MapInstances::Shot (E-52).
 using ShotShape = MapInstances::Shot;
 
@@ -28,7 +31,7 @@ struct ShotLook
     float spread = 0;   // fields between two shots of one volley, across the way
     qint64 stagger = 0; // ticks between two shots of one volley
     float arc = 0;      // fields, how high the way rises above the straight line
-    QVector3D size;     // fields: width, length along the way, height
+    QVector3D size;     // fields: width, length along the way, depth across it
     float spin = 0;     // degrees a tick
     float launch = 1;   // fields above the ground where it leaves a tower of the first level
 };

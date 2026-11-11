@@ -32,7 +32,6 @@ constexpr float kFlatHeight = 0.04F;
 constexpr float kRockHeight = 0.5F;
 constexpr float kTreeHeight = 0.06F; // the model takes the taps, the block hides no other cell
 constexpr float kTowerHeight = 0.7F;
-constexpr float kTowerHeightPerLevel = 0.25F;
 constexpr float kBossScale = 1.8F;
 constexpr int kChosenLight = 150;      // percent, how much brighter the chosen tower is
 constexpr float kRecoilSquash = 0.08F; // of its height, how far a tower gives way when it fires
