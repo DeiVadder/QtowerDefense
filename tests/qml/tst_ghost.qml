@@ -100,6 +100,38 @@ Item {
             tryVerify(() => !ghost.visible);
         }
 
+        // A HUD that keeps clear of a notch (E-55) still means the cell under the pointer.
+        function test_aHudBesideANotchMeansTheCellUnderIt() {
+            const game = create();
+            const ghost = findChild(game.scene, "ghost");
+            const notch = 60;
+            game.hud.anchors.leftMargin = notch;
+            verify(game.scene.game.buyCard(0));
+            game.scene.game.chooseCard(0);
+            // A free cell that no control of the HUD covers.
+            let cell = null;
+            for (let x = 2; x < 10 && !cell; ++x) {
+                const there = game.scene.cellIn(game.hud, x, 5);
+                if (game.scene.game.canBuildAt(x, 5) && !game.hud.childAt(there.x, there.y)) {
+                    cell = Qt.point(x, 5);
+                }
+            }
+            verify(cell);
+            const spot = game.scene.cellOnScreen(cell.x, cell.y);
+            const inHud = game.scene.cellIn(game.hud, cell.x, cell.y);
+            compare(inHud.x, spot.x - notch);
+            mouseMove(game.hud, inHud.x, inHud.y);
+            tryVerify(() => ghost.visible);
+            compare(ghost.x, cell.x * game.scene.fieldSize);
+            findChild(game.hud, "towerList").dropped(inHud.x, inHud.y);
+            compare(game.scene.game.towerCount, 1);
+            // The card flies to the tower, not a notch beside it.
+            const flyer = findChild(game.hud, "flyingCard");
+            tryVerify(() => !flyer.visible);
+            fuzzyCompare(flyer.x + flyer.width / 2, inHud.x, 1);
+            verify(!game.scene.game.canBuildAt(cell.x, cell.y)); // there, not a notch to the left
+        }
+
         // Its colour follows a turn without the pointer moving.
         function test_theColourFollowsATurn() {
             const game = create();

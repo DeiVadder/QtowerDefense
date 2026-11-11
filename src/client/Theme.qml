@@ -46,7 +46,10 @@ QtObject {
         return spell === 0 ? fire : ice;
     }
 
-    readonly property string face: Qt.fontFamilies().includes("Rockwell") ? "Rockwell" : "Georgia"
+    // A slab or serif face of the system: Apple, Windows, Android (E-55). Else what Qt picks.
+    readonly property list<string> faces: ["Rockwell", "Georgia", "Noto Serif"]
+    readonly property string face: faces.find(family => installed.includes(family)) ?? "Georgia"
+    readonly property list<string> installed: Qt.fontFamilies()
 
     // In shares of the unit of the HUD.
     readonly property real gap: 0.25
@@ -79,6 +82,8 @@ QtObject {
     readonly property real signText: 0.36
     readonly property real leftRows: 2 // the rows of buttons above the hand, at most
     readonly property real leftInsets: 3 // the edges of the window and of the frames along them
+    // In units: the buttons at the left with the gaps and edges between them.
+    readonly property real leftHeight: leftRows + (leftRows + 1) * gap + leftInsets * inset
 
     readonly property real cardWidth: 3
     readonly property real cardHeight: 4.25

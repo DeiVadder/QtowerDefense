@@ -17,6 +17,7 @@ Item {
     property real density: Screen.pixelDensity
     property real controlScale: 1 // the setting for the size of the controls
     property bool heroSpeaks: true
+    property bool guiding: false // the guide talks, the save panel waits
     property int best: 0 // the most rounds of this map's endless game before this game
     readonly property real unit: Theme.hudUnit(density, width, controlScale)
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
@@ -34,7 +35,8 @@ Item {
 
     // The ghost of the chosen card stands under the pointer, not under the HUD (E-54).
     function showGhost(at: point, shown: bool) {
-        root.scene?.showGhostAt(at.x, at.y, shown && root.childAt(at.x, at.y) === null);
+        const spot = root.mapToItem(root.scene, at); // the map lies under the notch too
+        root.scene?.showGhostAt(spot.x, spot.y, shown && root.childAt(at.x, at.y) === null);
     }
 
     // A mouse shows the ghost before the tap, a finger only while it drags a card.
@@ -65,9 +67,8 @@ Item {
 
         function onTowerBuilt(x: int, y: int) {
             if (root.scene !== null) {
-                const spot = root.scene.cellOnScreen(x, y);
                 flight.fly(root.game.towerTypes[root.game.selectedTower], root.dropPoint
-                           ?? towerList.chosenCenter(), Qt.point(spot.x, spot.y));
+                           ?? towerList.chosenCenter(), root.scene.cellIn(root, x, y));
             }
         }
     }
@@ -76,14 +77,12 @@ Item {
     Hero {
         id: hero
 
-        speaks: root.heroSpeaks
+        speaks: root.heroSpeaks && !root.game.paused // else the save panel would cover the words
 
         readonly property real ring: root.unit * (Theme.dialGap + Theme.dialButton / 2)
-        readonly property real room: root.height - root.cardUnit * Theme.cardPeek - root.unit * (Theme.leftRows
-                                                                                                 + (Theme.leftRows
-                                                                                                    + 1) * Theme.gap
-                                                                                                 + Theme.leftInsets
-                                                                                                 * Theme.inset)
+        readonly property real room: root.height - root.cardUnit * Theme.cardPeek - root.unit
+                                     * Theme.leftHeight
+
         // A low window has no room for the bow, the clock then stands in a row beside the portrait.
         readonly property bool compact: room - ring < root.unit * Theme.heroSize
 
@@ -365,7 +364,8 @@ Item {
             // A card over the HUD goes back into the hand.
             if (root.scene !== null && root.childAt(x, y) === null) {
                 root.dropPoint = Qt.point(x, y);
-                root.scene.dropCardAt(x, y);
+                const spot = root.mapToItem(root.scene, x, y);
+                root.scene.dropCardAt(spot.x, spot.y);
                 root.dropPoint = null;
             }
         }
@@ -376,7 +376,7 @@ Item {
         id: savePanel
 
         objectName: "savePanel"
-        visible: root.game.paused
+        visible: root.game.paused && !root.guiding
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: Math.max(stats.y + stats.height, hero.compact ? hero.y + hero.size : 0)

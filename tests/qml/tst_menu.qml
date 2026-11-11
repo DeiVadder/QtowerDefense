@@ -43,10 +43,12 @@ Item {
             id: box
 
             required property string file
+            property real notch: 0 // as if the phone had one at the left
             property alias map: map
             property alias world: campaign
 
             anchors.fill: parent
+            SafeArea.additionalMargins.left: notch
 
             WorldMap {
                 id: map
@@ -482,6 +484,22 @@ Item {
             const panel = findChild(menu, "settingsPanel");
             compare(panel.width, menu.width - 2 * menu.margin);
             verify(findChild(menu, "volumeSlider").width >= menu.unit * Theme.settingsTrack);
+        }
+
+        // The frame and the sign keep clear of a notch (E-55).
+        function test_theWorldKeepsClearOfANotch() {
+            const plain = createTemporaryObject(worldComponent, stage, {
+                                                    file: worldFile(90)
+                                                });
+            const frameX = findChild(plain.map, "worldFrame").x;
+            const signX = findChild(plain.map, "worldSign").x;
+            plain.destroy();
+            const made = createTemporaryObject(worldComponent, stage, {
+                                                   file: worldFile(91),
+                                                   notch: 40
+                                               });
+            compare(findChild(made.map, "worldFrame").x, frameX + 40);
+            compare(findChild(made.map, "worldSign").x, signX + 40);
         }
     }
 }
