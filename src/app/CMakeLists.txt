@@ -52,3 +52,19 @@ elseif(ANDROID)
         QT_ANDROID_VERSION_NAME "${PROJECT_VERSION}"
         QT_ANDROID_VERSION_CODE ${qtd_version_code})
 endif()
+
+# A self-contained package for the release (E-49): `cmake --install` copies the game, Qt and its
+# plugins and QML modules beside it, on macOS into the app bundle. Phones and the browser package
+# themselves.
+if(QTD_DESKTOP)
+    include(GNUInstallDirs)
+    install(TARGETS QtowerDefense
+        BUNDLE DESTINATION .
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    qt_generate_deploy_qml_app_script(
+        TARGET QtowerDefense
+        OUTPUT_SCRIPT qtd_deploy_script
+        NO_UNSUPPORTED_PLATFORM_ERROR)
+    install(SCRIPT ${qtd_deploy_script})
+    install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" "${PROJECT_SOURCE_DIR}/README.md" DESTINATION .)
+endif()

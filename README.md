@@ -22,19 +22,37 @@ A hero comments on the battle and holds two spells, Meteor and Deep Freeze.
   levels of picture quality (low, medium, high).
 - **Languages:** English and German.
 
+## Play
+
+- **In the browser:** [deivadder.github.io/QtowerDefense](https://deivadder.github.io/QtowerDefense/)
+  (a large download of about 53 MB, the first start takes a while).
+- **Download:** the [latest release](https://github.com/DeiVadder/QtowerDefense/releases/latest)
+  has a package for Windows, macOS and Linux. Unpack it and start `QtowerDefense`; Qt comes along.
+  - **Windows:** `bin\QtowerDefense.exe`. Windows SmartScreen may warn, the program is not signed.
+    If Windows reports a missing `VCRUNTIME140.dll` or `MSVCP140.dll`, run `bin\vc_redist.x64.exe`
+    once; it installs the Microsoft Visual C++ runtime.
+  - **macOS:** `QtowerDefense.app`, for Apple Silicon and Intel with macOS 14.4 or newer (the oldest Qt 6.12 runs on). The app is
+    not notarized: open it the first time with right-click and *Open*, or run
+    `xattr -dr com.apple.quarantine QtowerDefense.app`.
+  - **Linux:** `bin/QtowerDefense`, built on Ubuntu 24.04 for x86-64. It needs the usual desktop
+    libraries (OpenGL, xcb or Wayland, fontconfig), which every desktop system has.
+
 ## Platforms
 
 | Platform | State |
 |---|---|
-| Windows | Built and tested on every change |
-| Browser (WebAssembly) | Built and played locally; a GitHub Pages workflow is prepared but has never run |
-| macOS, iOS, Android | Prepared in CMake (presets, icons, bundle settings), never built |
+| Windows | Built and tested on every change; release package built by GitHub Actions |
+| macOS | Built and played on Apple Silicon; release package built by GitHub Actions |
+| Linux | Release package built by GitHub Actions |
+| Browser (WebAssembly) | Built and played locally; GitHub Actions publishes it on GitHub Pages |
+| iOS, Android | Prepared in CMake (presets, icons, bundle settings), never built |
 
 The browser build saves progress and settings in the visitor's own browser (IndexedDB). It plays
 its sounds through Web Audio, because Qt 6.12 has no Qt Multimedia for WebAssembly; the sounds were
 checked to decode and start, but nobody has listened to them yet. The download is large (about
 53 MB), so the first start takes a while. It links Qt statically: the source of the game is this
-repository, the source of Qt 6.12.0 is at [download.qt.io](https://download.qt.io/archive/qt/6.12/6.12.0/single/).
+repository, the source of Qt 6.12.0 (which also covers the FFmpeg libraries that Qt Multimedia
+brings into the desktop packages) is at [download.qt.io](https://download.qt.io/archive/qt/6.12/6.12.0/single/).
 
 ## Building
 
@@ -61,7 +79,7 @@ The game finds the Qt DLLs through the `PATH`. To run the tests, build the `debu
 the machine's own paths.
 
 Presets for development and analysis (`debug`, `asan`, `ubsan`, `coverage`) and for the other
-platforms (`macos`, `ios`, `android`, `wasm`) are described in
+platforms (`macos`, `linux`, `ios`, `android`, `wasm`) are described in
 [docs/Building.md](docs/Building.md) (German).
 
 ## Design

@@ -3,7 +3,7 @@
 Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [QtowerDefense-Agent-Auftrag.md](QtowerDefense-Agent-Auftrag.md). Den aktuellen Stand und den nächsten Schritt nennt `docs/FORTSCHRITT.md`, Entscheidungen stehen in `docs/Entscheidungen.md`.
 
 ## Git und Arbeitsablauf
-- Rein lokal, kein Push. Hauptlinie ist `dev`. Nach `main` merged nur der Mensch.
+- Öffentlich auf GitHub als `DeiVadder/QtowerDefense` (E-49). Push nur mit Freigabe des Menschen. Hauptlinie ist `dev`. Nach `main` merged nur der Mensch, Releases sind Tags `v<Version>` auf `main`.
 - **Jede Etappe und jedes Feature bekommt einen eigenen Branch:** `feature/<Etappe>-<kurzname>` oder `feature/<kurzname>`. Nie direkt auf `dev` committen.
 - **Kein Merge ohne unabhängiges Review** durch einen neuen Subagenten, der den Code nicht geschrieben hat. Das gilt auch für kleine Änderungen.
 - Merge nach `dev` als Squash, ein Commit je Etappe (`Stage <Etappe>: ...`). Der Branch bleibt erhalten.
@@ -32,7 +32,7 @@ Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [Qtowe
 - Coverage-Schwellen werden nie gesenkt, um eine Etappe abzuschließen. Findings werden behoben oder einzeln begründet unterdrückt.
 
 ## Werkzeuge
-- Alles liegt unter `C:\dev`, auch neue Werkzeuge. Gebaut wird **nur** mit MSVC und der CMake aus `C:\Dev\Qt\Tools`, nicht mit `g++` oder der CMake aus Strawberry.
+- Alles liegt unter `C:\dev`, auch neue Werkzeuge. Auf diesem Rechner wird **nur** gebaut mit MSVC und der CMake aus `C:\Dev\Qt\Tools`, nicht mit `g++` oder der CMake aus Strawberry.
 - Qt: `C:\Dev\Qt\6.12.0\msvc2022_64`. Module nur ergänzen (`aqt` mit `--noarchives`), das Qt teilt sich das Projekt mit QtCraft.
 - `clang-tidy`, `clang-format`, `clang-cl`: `C:\dev\LLVM\clang+llvm-23.1.5-x86_64-pc-windows-msvc\bin` (E-22). `cppcheck`: `C:\Dev\Strawberry\c\bin`. `qmllint`, `qmlformat`, `qmlls`: `bin` von Qt.
 - **Navigation:** erst LSP (`clangd`, `qmlls`), dann `grep`, ganze Dateien nur wenn nötig. Das LSP gibt es nur in Sitzungen, die nach dem Einrichten des Plugins `qtd-lsp` gestartet wurden.

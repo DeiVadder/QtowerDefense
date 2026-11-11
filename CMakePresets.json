@@ -51,14 +51,27 @@
         },
         {
             "name": "macos",
-            "displayName": "macOS app bundle (E-46, not yet built)",
+            "displayName": "macOS app bundle for Apple Silicon and Intel (E-46, E-49)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_PREFIX_PATH": "$env{QTD_QT_DIR}",
+                "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "14.4"
+            },
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+        },
+        {
+            "name": "linux",
+            "displayName": "Linux desktop, release (E-49)",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_PREFIX_PATH": "$env{QTD_QT_DIR}"
             },
-            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Linux" }
         },
         {
             "name": "ios",
@@ -101,6 +114,7 @@
         { "name": "ubsan", "configurePreset": "ubsan" },
         { "name": "coverage", "configurePreset": "coverage" },
         { "name": "macos", "configurePreset": "macos" },
+        { "name": "linux", "configurePreset": "linux" },
         { "name": "ios", "configurePreset": "ios", "configuration": "Release" },
         { "name": "android", "configurePreset": "android", "targets": ["apk"] },
         { "name": "wasm", "configurePreset": "wasm" }
@@ -114,6 +128,8 @@
         },
         { "name": "debug", "inherits": "base", "configurePreset": "debug" },
         { "name": "release", "inherits": "base", "configurePreset": "release" },
+        { "name": "macos", "inherits": "base", "configurePreset": "macos" },
+        { "name": "linux", "inherits": "base", "configurePreset": "linux" },
         {
             "name": "asan",
             "inherits": "base",

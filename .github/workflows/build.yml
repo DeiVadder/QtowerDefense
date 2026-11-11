@@ -1,0 +1,251 @@
+# Builds the game for Windows, macOS, Linux and the browser (E-49).
+# - Every push and pull request: build, the core and automation tests, a package for each platform.
+# - Push to main: the browser build goes to GitHub Pages (E-47).
+# - Tag v*: a GitHub release with the four packages, the notes come from CHANGELOG.md.
+# Never run so far: the first run shows whether the versions and Qt names below still fit.
+name: Build and release
+
+on:
+  push:
+    branches: [main, dev]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  QT_VERSION: 6.12.0
+  AQT_VERSION: 3.3.0
+  # Qt 6.12 is built with exactly this Emscripten, see doc.qt.io/qt-6/wasm.html.
+  EMSDK_VERSION: 5.0.5
+  QT_MODULES_DESKTOP: qtquick3d qtshadertools qtquicktimeline qtmultimedia
+  # No qtmultimedia: Qt 6.12 has none for WebAssembly, the browser plays through Web Audio (E-47).
+  QT_MODULES_WASM: qtquick3d qtshadertools qtquicktimeline
+
+jobs:
+  desktop:
+    name: ${{ matrix.name }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-2022
+            aqt_host: windows
+            aqt_arch: win64_msvc2022_64
+            qt_dir: msvc2022_64
+            preset: release
+            package: windows-x64
+          - name: macOS
+            os: macos-15
+            aqt_host: mac
+            aqt_arch: clang_64
+            qt_dir: macos
+            preset: macos
+            package: macos
+          - name: Linux
+            os: ubuntu-24.04
+            aqt_host: linux
+            aqt_arch: linux_gcc_64
+            qt_dir: gcc_64
+            preset: linux
+            package: linux-x64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Version
+        run: |
+          version=$(sed -n 's/^project(QtowerDefense VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          echo "QTD_VERSION=$version" >> "$GITHUB_ENV"
+          echo "QTD_PACKAGE=QtowerDefense-$version-${{ matrix.package }}" >> "$GITHUB_ENV"
+
+      - name: Libraries for Qt on Linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-0 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
+            libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libfontconfig1-dev libpulse-dev
+
+      - name: MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
+      - name: Qt
+        run: |
+          pip install "aqtinstall==$AQT_VERSION" ninja
+          read -ra modules <<< "$QT_MODULES_DESKTOP"
+          # The log shows the names aqt offers, should the arch below be wrong.
+          aqt list-qt ${{ matrix.aqt_host }} desktop --arch "$QT_VERSION"
+          aqt install-qt ${{ matrix.aqt_host }} desktop "$QT_VERSION" ${{ matrix.aqt_arch }} \
+            -m "${modules[@]}" -O "$RUNNER_TEMP/Qt"
+          echo "QTD_QT_DIR=$RUNNER_TEMP/Qt/$QT_VERSION/${{ matrix.qt_dir }}" >> "$GITHUB_ENV"
+          # Windows finds the Qt DLLs of the tests through the PATH, like scripts/env.cmd does.
+          if [ "$RUNNER_OS" = Windows ]; then
+            cygpath -w "$RUNNER_TEMP/Qt/$QT_VERSION/${{ matrix.qt_dir }}/bin" >> "$GITHUB_PATH"
+          fi
+
+      - name: Build
+        run: |
+          cmake --preset ${{ matrix.preset }}
+          cmake --build --preset ${{ matrix.preset }}
+
+      # The client tests need a GPU, the runners have none. Core, automation and the golden replays
+      # hold the rules; the golden replays prove the same hashes from every compiler.
+      - name: Tests
+        run: ctest --preset ${{ matrix.preset }} -L "core|automation|golden"
+
+      - name: Package
+        run: |
+          dest="$RUNNER_TEMP/package/$QTD_PACKAGE"
+          cmake --install build/${{ matrix.preset }} --prefix "$dest"
+          case "${{ runner.os }}" in
+            Windows) test -f "$dest/bin/Qt6Core.dll" ;;
+            macOS)
+              test -d "$dest/QtowerDefense.app/Contents/Frameworks/QtCore.framework"
+              # Without a developer account the bundle is only signed ad hoc, see the README.
+              codesign --force --deep --sign - "$dest/QtowerDefense.app" ;;
+            Linux) ls "$dest"/lib/libQt6Core.so* ;;
+          esac
+          mkdir -p dist
+          cd "$RUNNER_TEMP/package"
+          case "${{ runner.os }}" in
+            Windows) 7z a "$GITHUB_WORKSPACE/dist/$QTD_PACKAGE.zip" "$QTD_PACKAGE" ;;
+            macOS) ditto -c -k --keepParent "$QTD_PACKAGE" "$GITHUB_WORKSPACE/dist/$QTD_PACKAGE.zip" ;;
+            Linux) tar -czf "$GITHUB_WORKSPACE/dist/$QTD_PACKAGE.tar.gz" "$QTD_PACKAGE" ;;
+          esac
+          ls -l "$GITHUB_WORKSPACE/dist"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-${{ matrix.package }}
+          path: dist/*
+
+  web:
+    name: Browser
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Version
+        run: |
+          version=$(sed -n 's/^project(QtowerDefense VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          echo "QTD_PACKAGE=QtowerDefense-$version-web" >> "$GITHUB_ENV"
+
+      - name: Qt for the build machine and for WebAssembly
+        run: |
+          pip install "aqtinstall==$AQT_VERSION" ninja
+          read -ra modules <<< "$QT_MODULES_WASM"
+          aqt list-qt all_os wasm --arch "$QT_VERSION"
+          aqt install-qt linux desktop "$QT_VERSION" linux_gcc_64 -m "${modules[@]}" -O "$RUNNER_TEMP/Qt"
+          aqt install-qt all_os wasm "$QT_VERSION" wasm_singlethread -m "${modules[@]}" -O "$RUNNER_TEMP/Qt"
+
+      - name: Emscripten
+        run: |
+          git clone --depth 1 https://github.com/emscripten-core/emsdk.git "$RUNNER_TEMP/emsdk"
+          "$RUNNER_TEMP/emsdk/emsdk" install "$EMSDK_VERSION"
+          "$RUNNER_TEMP/emsdk/emsdk" activate "$EMSDK_VERSION"
+
+      - name: Build
+        env:
+          QTD_QT_DIR: ${{ runner.temp }}/Qt/${{ env.QT_VERSION }}/gcc_64
+          QTD_QT_WASM_DIR: ${{ runner.temp }}/Qt/${{ env.QT_VERSION }}/wasm_singlethread
+        run: |
+          source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
+          cmake --preset wasm
+          cmake --build --preset wasm --target QtowerDefense
+
+      # Qt writes the page beside the program, index.html opens it at the address of the site.
+      # The build links Qt statically, so the page offers the source of both (GPL-3.0 §6, E-48).
+      - name: Page
+        env:
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          ls -l build/wasm/bin
+          mkdir -p site dist
+          notice="<div style=\"position:fixed;right:6px;bottom:4px;font:11px sans-serif;opacity:.7;z-index:10\"><a href=\"$SOURCE_URL\" style=\"color:#ccc\">Source (GPL-3.0-or-later)</a> &middot; <a href=\"https://download.qt.io/archive/qt/6.12/6.12.0/single/\" style=\"color:#ccc\">Qt 6.12.0 source</a></div>"
+          awk -v notice="$notice" '/<\/body>/ && !done { print notice; done = 1 } { print }' \
+            build/wasm/bin/QtowerDefense.html > site/index.html
+          grep -q "Source (GPL-3.0-or-later)" site/index.html
+          cp build/wasm/bin/QtowerDefense.js build/wasm/bin/QtowerDefense.wasm build/wasm/bin/qtloader.js site/
+          cp build/wasm/bin/qtlogo.svg site/ || true
+          cp -r site "$QTD_PACKAGE"
+          zip -r "dist/$QTD_PACKAGE.zip" "$QTD_PACKAGE"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-web
+          path: dist/*
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  pages:
+    name: GitHub Pages
+    needs: web
+    # The github-pages environment allows the default branch only.
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  release:
+    name: GitHub release
+    needs: [desktop, web]
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: package-*
+          path: dist
+          merge-multiple: true
+
+      # The tag must name the version in CMakeLists.txt, the notes are its section in CHANGELOG.md.
+      - name: Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(sed -n 's/^project(QtowerDefense VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          if [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $version in CMakeLists.txt" >&2
+            exit 1
+          fi
+          awk -v head="## [$version]" '
+            index($0, head) == 1 { on = 1; next }
+            on && /^## \[/ { exit }
+            on { print }' CHANGELOG.md > notes.md
+          test -s notes.md
+          ls -l dist
+          gh release create "$GITHUB_REF_NAME" dist/* --title "QtowerDefense $version" --notes-file notes.md
