@@ -83,8 +83,9 @@
       position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
       display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 14px;
       padding: 6px 12px; font: 11px system-ui, sans-serif; color: #c9c2b4;
+      pointer-events: none; /* only the links take a click, the game gets the rest */
     }
-    footer a { color: #c9c2b4; }
+    footer a { color: #c9c2b4; pointer-events: auto; }
     footer .qt { display: inline-flex; align-items: center; gap: 6px; }
     footer .qt img { height: 16px; width: auto; }
     /* While the game runs, the footer keeps out of the way. */
@@ -111,7 +112,7 @@
 
   <footer>
     <span class="qt"><img src="qtlogo.svg" alt="Qt">Built with Qt @QTD_QT_VERSION@ for WebAssembly</span>
-    <a href="https://github.com/DeiVadder/QtowerDefense">Source (GPL-3.0-or-later)</a>
+    <a href="@QTD_SOURCE_URL@">Source (GPL-3.0-or-later)</a>
     <a href="https://download.qt.io/archive/qt/@QTD_QT_MINOR@/@QTD_QT_VERSION@/single/">Qt @QTD_QT_VERSION@ source</a>
   </footer>
 
@@ -161,30 +162,46 @@
       try { return !!document.createElement("canvas").getContext("webgl2"); } catch { return false; }
     }
 
-    // Downloads the program with progress. Without a readable stream the loader fetches it itself.
-    async function download() {
-      const response = await fetch(WASM_FILE);
-      if (!response.ok) throw new Error(`${WASM_FILE}: HTTP ${response.status}`);
+    // Shows that the browser now compiles the rest, once.
+    let compilingShown = false;
+    function compiling() {
+      if (compilingShown) return;
+      compilingShown = true;
+      progress(null);
+      status.textContent = "Forging the towers…";
+      detail.textContent = "The browser compiles the game and its shaders, this takes a moment.";
+    }
+
+    // The response with its bytes counted on their way to the compiler.
+    function counted(response) {
       const header = Number(response.headers.get("Content-Length")) || 0;
       const encoded = (response.headers.get("Content-Encoding") || "identity") !== "identity";
       const total = encoded ? WASM_BYTES : (header || WASM_BYTES);
-      if (!response.body || !response.body.getReader) return response.arrayBuffer();
-
-      const reader = response.body.getReader();
-      const chunks = [];
       let received = 0;
-      for (;;) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        chunks.push(value);
-        received += value.length;
-        progress(total ? received / total : null);
-        detail.textContent = total ? `${mb(received)} of ${mb(total)} MB` : `${mb(received)} MB`;
+      const body = response.body.pipeThrough(new TransformStream({
+        transform(chunk, controller) {
+          received += chunk.length;
+          progress(total ? received / total : null);
+          detail.textContent = total ? `${mb(received)} of ${mb(total)} MB` : `${mb(received)} MB`;
+          controller.enqueue(chunk);
+        },
+        flush: compiling,
+      }));
+      return new Response(body, { headers: { "Content-Type": "application/wasm" } });
+    }
+
+    // Compiles the program while it downloads and counts the bytes. A browser that cannot stream
+    // compiles it after the download.
+    async function instantiate(imports) {
+      const response = await fetch(WASM_FILE);
+      if (!response.ok) throw new Error(`${WASM_FILE}: HTTP ${response.status}`);
+      if (WebAssembly.instantiateStreaming && response.body && typeof TransformStream === "function") {
+        return WebAssembly.instantiateStreaming(counted(response), imports);
       }
-      const binary = new Uint8Array(received);
-      let offset = 0;
-      for (const chunk of chunks) { binary.set(chunk, offset); offset += chunk.length; }
-      return binary.buffer;
+      progress(null);
+      const binary = await response.arrayBuffer();
+      compiling();
+      return WebAssembly.instantiate(binary, imports);
     }
 
     async function init() {
@@ -196,16 +213,6 @@
       try {
         status.textContent = "Fetching the realm…";
         progress(WASM_BYTES ? 0 : null);
-        let wasmBinary = null;
-        try {
-          wasmBinary = await download();
-        } catch (error) {
-          console.warn("Download with progress failed, the Qt loader tries itself:", error);
-        }
-
-        progress(null);
-        status.textContent = "Forging the towers…";
-        detail.textContent = "The browser compiles the game and its shaders, this takes a moment.";
 
         const config = {
           qt: {
@@ -216,7 +223,6 @@
               progress(1);
               loader.classList.add("done");
               document.body.classList.add("running");
-              setTimeout(() => loader.remove(), 700);
             },
             onExit: exit => {
               loader.classList.remove("done");
@@ -229,7 +235,15 @@
             },
           },
         };
-        if (wasmBinary) config.wasmBinary = wasmBinary;
+        // Emscripten calls this instead of loading the program itself.
+        config.instantiateWasm = (imports, ready) => {
+          instantiate(imports).then(result => ready(result.instance, result.module), error => {
+            console.error(error);
+            fail("The game could not be loaded. Details are in the browser console.");
+            detail.textContent = String(error && error.message || error);
+          });
+          return {};
+        };
         await qtLoad(config);
       } catch (error) {
         console.error(error);

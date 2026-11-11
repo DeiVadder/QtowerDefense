@@ -40,18 +40,29 @@ elseif(EMSCRIPTEN)
     # EM_ASM writes JavaScript, and its $0 is no C++ name.
     set_source_files_properties(web_storage.cpp PROPERTIES
         COMPILE_OPTIONS -Wno-dollar-in-identifier-extension)
-    # The game's own loading page replaces the one Qt writes, the icon goes beside it (E-51).
-    add_custom_command(TARGET QtowerDefense POST_BUILD
+    # The game's own loading page goes beside the one Qt writes, as index.html, with the icon (E-51).
+    # Qt writes its page at every configure, so ours has a name of its own.
+    set(QTD_SOURCE_URL "https://github.com/DeiVadder/QtowerDefense"
+        CACHE STRING "Where the loading page of the browser build points for the source (E-48)")
+    set(qtd_web_dir "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+    set(qtd_web_template "${CMAKE_CURRENT_SOURCE_DIR}/web/index.html.in")
+    add_custom_command(
+        OUTPUT "${qtd_web_dir}/index.html" "${qtd_web_dir}/qtowerdefense.png"
         COMMAND ${CMAKE_COMMAND}
-            -DTEMPLATE=${CMAKE_CURRENT_SOURCE_DIR}/web/index.html.in
-            -DWASM=$<TARGET_FILE_DIR:QtowerDefense>/QtowerDefense.wasm
-            -DOUTPUT=$<TARGET_FILE_DIR:QtowerDefense>/QtowerDefense.html
+            -DTEMPLATE=${qtd_web_template}
+            -DWASM=${qtd_web_dir}/QtowerDefense.wasm
+            -DOUTPUT=${qtd_web_dir}/index.html
             -DQT_VERSION=${Qt6_VERSION}
+            -DSOURCE_URL=${QTD_SOURCE_URL}
             -P ${PROJECT_SOURCE_DIR}/cmake/web_page.cmake
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
             ${PROJECT_SOURCE_DIR}/src/client/assets/icon.png
-            $<TARGET_FILE_DIR:QtowerDefense>/qtowerdefense.png
+            ${qtd_web_dir}/qtowerdefense.png
+        DEPENDS QtowerDefense ${qtd_web_template} ${PROJECT_SOURCE_DIR}/cmake/web_page.cmake
+            ${PROJECT_SOURCE_DIR}/src/client/assets/icon.png
         VERBATIM)
+    add_custom_target(qtd_web_page ALL
+        DEPENDS "${qtd_web_dir}/index.html" "${qtd_web_dir}/qtowerdefense.png")
 elseif(ANDROID)
     # The manifest comes from Qt's template, the folder adds only the launcher icons.
     math(EXPR qtd_version_code

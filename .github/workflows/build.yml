@@ -172,16 +172,16 @@ jobs:
           QTD_QT_WASM_DIR: ${{ runner.temp }}/Qt/${{ env.QT_VERSION }}/wasm_singlethread
         run: |
           source "$RUNNER_TEMP/emsdk/emsdk_env.sh"
-          cmake --preset wasm
-          cmake --build --preset wasm --target QtowerDefense
+          cmake --preset wasm -DQTD_SOURCE_URL="${{ github.server_url }}/${{ github.repository }}"
+          cmake --build --preset wasm --target QtowerDefense qtd_web_page
 
-      # The build writes the game's own page beside the program (E-51), index.html opens it at the
-      # address of the site. It links Qt statically, so the page offers the source of both (E-48).
+      # The build writes the game's own page beside the program as index.html (E-51), so it opens at
+      # the address of the site. It links Qt statically, so the page offers the source of both (E-48).
       - name: Page
         run: |
           ls -l build/wasm/bin
           mkdir -p site dist
-          cp build/wasm/bin/QtowerDefense.html site/index.html
+          cp build/wasm/bin/index.html site/index.html
           grep -q "Source (GPL-3.0-or-later)" site/index.html
           grep -q "Built with Qt" site/index.html
           cp build/wasm/bin/QtowerDefense.js build/wasm/bin/QtowerDefense.wasm build/wasm/bin/qtloader.js \
