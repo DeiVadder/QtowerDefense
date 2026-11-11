@@ -5,6 +5,7 @@
 - **Etappe:** 0 bis 12 sind geprüft und in `dev` (Etappe 2: `37fe03f`, Etappe 3: `3bba48d`). `feature/llvm-update` (`87ceb1a`, E-22), `feature/enums-statt-strings` (`5bb0021`) und `feature/typ-index` (`b1e4ad8`) sind geprüft und in `dev`.
 - **In `dev`:** in `qtd_core` Festkomma (E-14), PCG32 (E-15), Inhalte aus JSON mit Validierung (E-16), Tick, Befehl „Turm bauen", Gegner auf Pfad, Welle, Gold, Leben, Sieg und Niederlage (E-17), Zustands-Hash (E-18), Replays (E-20), `TickClock` (E-21). `qtd_headless` mit Karte, Seed, Läufen, Skript, Replay-Prüfung, Aufzeichnung und Benchmark. Neun Golden Replays. Keine Anbindung an den Client.
 - **Dazu aus `feature/13-web-loader`:** Eigener Ladebildschirm im Browser mit Fortschritt, Tipps und dem Hinweis auf Qt (E-51).
+- **Dazu aus `feature/13-shots`:** Jeder Turm schießt sein eigenes Geschoss mit eigener Bahn, das Katapult landet im Staub, Türme geben beim Schuss nach (E-52).
 - **Dazu aus `feature/release-1.0.0`:** Version 1.0.0, `CHANGELOG.md`, Workflow `build.yml` für Windows, macOS, Linux und Browser mit Paketen, Pages und GitHub-Release, `cmake --install` mit Qt-Deployment, Preset `linux`, macOS als Universal-Bundle ab 14.4 (E-50). macOS hier erstmals gebaut und gespielt.
 - **Dazu aus `feature/13-splash`:** Eigenes Icon für Fenster und Programmdatei, Intro beim Start und ein Vorhang beim Laden einer Karte (E-42).
 - **Dazu aus `feature/neue-modelle`:** Gegner sind Monster von Quaternius und laufen mit acht gebackenen Posen je Typ, Türme kommen aus dem KayKit Medieval Hexagon Pack (E-41).

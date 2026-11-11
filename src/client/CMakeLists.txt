@@ -24,6 +24,7 @@ qt_add_qml_module(qtd_client
         landscape.cpp landscape.h
         landscape_view.cpp landscape_view.h
         map_instances.cpp map_instances.h
+        shot_looks.cpp shot_looks.h
         scenery_instances.cpp scenery_instances.h
         screen_control.cpp screen_control.h
         terrain_mesh.cpp terrain_mesh.h

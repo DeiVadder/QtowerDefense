@@ -17,6 +17,8 @@ browser.
 - **Endless mode:** the waves keep coming and grow stronger, with a best score for each section.
 - **7 tower types** with two upgrades each, selling for a partial refund, and a target priority
   for each tower (first, last, strongest, nearest).
+- **Every tower shoots its own way:** bolts, a volley of arrows, a glob of venom, a boulder that
+  lands in dust, fireballs and ice shards, and the tower gives way as it fires.
 - **8 enemy types and 2 bosses** with damage types, resistances, slowing, poison and regeneration.
 - **Cards and dice:** towers come as cards, roll the dice for new ones, keep up to five in your
   hand and drag one onto a free field of the grid; towers turn in quarter steps.
