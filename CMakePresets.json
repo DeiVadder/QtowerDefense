@@ -48,6 +48,39 @@
             "inherits": "base",
             "displayName": "Coverage (unoptimized with PDBs for OpenCppCoverage)",
             "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
+        },
+        {
+            "name": "macos",
+            "displayName": "macOS app bundle (E-46, not yet built)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "CMAKE_PREFIX_PATH": "$env{QTD_QT_DIR}"
+            },
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+        },
+        {
+            "name": "ios",
+            "displayName": "iOS app for Xcode (E-46, not yet built)",
+            "generator": "Xcode",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "toolchainFile": "$env{QTD_QT_IOS_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+            "cacheVariables": { "QT_HOST_PATH": "$env{QTD_QT_DIR}" },
+            "condition": { "type": "equals", "lhs": "${hostSystemName}", "rhs": "Darwin" }
+        },
+        {
+            "name": "android",
+            "displayName": "Android APK, arm64 (E-46, not yet built)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "toolchainFile": "$env{QTD_QT_ANDROID_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
+                "QT_HOST_PATH": "$env{QTD_QT_DIR}",
+                "ANDROID_SDK_ROOT": "$env{ANDROID_SDK_ROOT}",
+                "ANDROID_NDK_ROOT": "$env{ANDROID_NDK_ROOT}"
+            }
         }
     ],
     "buildPresets": [
@@ -55,7 +88,10 @@
         { "name": "release", "configurePreset": "release" },
         { "name": "asan", "configurePreset": "asan" },
         { "name": "ubsan", "configurePreset": "ubsan" },
-        { "name": "coverage", "configurePreset": "coverage" }
+        { "name": "coverage", "configurePreset": "coverage" },
+        { "name": "macos", "configurePreset": "macos" },
+        { "name": "ios", "configurePreset": "ios", "configuration": "Release" },
+        { "name": "android", "configurePreset": "android", "targets": ["apk"] }
     ],
     "testPresets": [
         {

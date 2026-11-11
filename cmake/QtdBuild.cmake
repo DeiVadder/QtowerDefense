@@ -1,10 +1,16 @@
 # Project-wide build helpers.
 
 # Strict warnings for first-party code. Qt headers are imported targets and so come in through
-# /external:I, which keeps third-party code out of /W4 /WX.
+# /external:I (MSVC) or -isystem (Clang, GCC), which keeps third-party code out of the warnings.
 function(qtd_set_strict_warnings target)
-    target_compile_options(${target} PRIVATE
-        /W4 /WX /permissive- /utf-8 /Zc:__cplusplus /external:W0)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE
+            /W4 /permissive- /utf-8 /Zc:__cplusplus /external:W0
+            $<$<BOOL:${QTD_WARNINGS_AS_ERRORS}>:/WX>)
+    else()
+        target_compile_options(${target} PRIVATE
+            -Wall -Wextra -Wpedantic $<$<BOOL:${QTD_WARNINGS_AS_ERRORS}>:-Werror>)
+    endif()
 endfunction()
 
 # Qt is not instrumented, so the container annotations of the MSVC STL must stay off: a std::vector

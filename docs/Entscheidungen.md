@@ -409,3 +409,16 @@ Aus Etappe 13 (2026-11-09), nach dem Auftrag: Rendering in einem Budget, das sch
 - **Eine Stelle:** `RenderQuality.qml` sagt, was eine Stufe einschaltet. `MainScene` und `WorldScene` lesen beide daraus.
 - **Einstellungsbrett:** Mit sechs Zeilen passt es in niedrigen Fenstern nicht mehr ganz. Die Zeilen liegen in einer `Flickable`, die nur scrollt, wenn der Platz fehlt. Ein Finger schiebt sie senkrecht, auch über dem Lautstärkeregler: Der hält erst fest, wenn der Finger sich seitwärts bewegt, ein Tippen setzt den Wert beim Loslassen. Ein langes Halten ohne Bewegung setzt nichts, wie bei den Knöpfen. Die Tastatur scrollt die Zeilen nicht zum Fokus mit, das reicht für Touch und Maus.
 - **Nicht:** Eine automatische Wahl nach gemessener Bildrate. Dafür fehlt noch die Messung auf echten schwachen Geräten (Mobile-Prüfung).
+
+## E-46 macOS, iOS und Android vorbereitet
+
+Auftrag des Menschen (2026-11-09): die drei Plattformen vorbereiten, ohne etwas zu installieren und ohne zu testen. Nichts davon ist je gebaut worden, alles hier ist ungeprüft.
+
+- **Was gebaut wird:** Auf Android und iOS nur das Spiel. Tests und `qtd_headless` brauchen einen Desktop, dort fragt `find_package` auch Test und QuickTest nicht ab (`QTD_DESKTOP`). Auf macOS alles wie auf Windows.
+- **Warnungen:** Außer bei MSVC laufen `-Wall -Wextra -Wpedantic` ohne `-Werror`, bis der erste Build sauber ist. Dann `QTD_WARNINGS_AS_ERRORS` als Vorgabe einschalten.
+- **App-Kennung:** `io.github.qtowerdefense` für Bundle und Paket, in `src/app/CMakeLists.txt`. Ein Platzhalter: Vor dem ersten Hochladen in einen Store festlegen, danach lässt sie sich nicht mehr ändern.
+- **Icons:** `scripts/make_icon.py` zeichnet auch `qtowerdefense.icns` für macOS, die Launcher-Icons von Android in fünf Dichten und ein Bild von 1024 Pixeln für iOS. Das iOS-Bild liegt auf `IRON_DARK` und ist ein PNG ohne Alphakanal (RGB), denn der App Store lehnt schon den Kanal ab, auch wenn jedes Pixel deckt. Xcode macht die übrigen Größen daraus. Der Katalog liegt als Resource im Bundle.
+- **Android:** Kein eigenes Manifest, Qt nimmt seine Vorlage. Name, Paket, Version und Icon kommen aus den Target-Eigenschaften `QT_ANDROID_*`, der Ordner `src/app/android` liefert nur die Icons. Mindest- und Ziel-SDK bleiben bei Qts Vorgabe. Ob `QT_ANDROID_APP_NAME` und `QT_ANDROID_APP_ICON` in Qt 6.12 so heißen, ist nicht nachgeschlagen; beim ersten Build prüfen.
+- **Apple:** Die `Info.plist` erzeugen CMake und Qt aus den Eigenschaften `MACOSX_BUNDLE_*`.
+- **Presets:** `macos`, `ios` und `android`, die Pfade kommen aus Umgebungsvariablen (`docs/Building.md`).
+- **Offen für die Mobile-Prüfung:** Ausrichtung (heute dreht sich das Spiel mit dem Gerät; ob Hochformat taugt, ist ungeprüft), sichere Bereiche um Notch und Kamera, Signieren, Shader-Kosten auf echten Geräten, AAB für den Play Store.

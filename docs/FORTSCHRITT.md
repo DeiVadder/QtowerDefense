@@ -40,7 +40,7 @@
 
 ## Nächster Schritt
 
-1. Etappe 13 (Feinschliff) weiter: Leistung, Mobile-Prüfung. Die UI-Skalierung hat eine Einstellung für die Größe der Bedienung (E-44), dazu gibt es Qualitätsstufen (E-45). Für die Leistung: Das erste Zeichnen einer Karte kostet im Release-Build rund 0,5 Sekunden, im Debug-Build rund 4,5 Sekunden (gemessen 2026-11-09 auf der RTX 5060 Ti). Die 6 Sekunden aus dem Test des Ladevorhangs (E-42) waren der Debug-Build. Der dabei gefundene Absturz nach einem frühen Screenshot ist behoben (E-43).
+1. Etappe 13 (Feinschliff) weiter: Leistung, Mobile-Prüfung. Die UI-Skalierung hat eine Einstellung für die Größe der Bedienung (E-44), dazu gibt es Qualitätsstufen (E-45). macOS, iOS und Android sind vorbereitet, aber nie gebaut (E-46); für die Mobile-Prüfung fehlen die Werkzeuge. Für die Leistung: Das erste Zeichnen einer Karte kostet im Release-Build rund 0,5 Sekunden, im Debug-Build rund 4,5 Sekunden (gemessen 2026-11-09 auf der RTX 5060 Ti). Die 6 Sekunden aus dem Test des Ladevorhangs (E-42) waren der Debug-Build. Der dabei gefundene Absturz nach einem frühen Screenshot ist behoben (E-43).
 2. Wunsch des Menschen (2026-11-06), bei Gelegenheit: Sprachausgabe des Helden, Achteck-Knöpfe wie Demo A.
 
 ## Bekannte Mängel und offene Punkte

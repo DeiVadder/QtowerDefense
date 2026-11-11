@@ -2,11 +2,15 @@
 
     python scripts/make_icon.py
 
-Writes src/client/assets/icon.png (256 pixels, the window and the splash screen) and
-src/app/qtowerdefense.ico (16 to 256 pixels, the program on Windows). Every size is drawn on its
-own, with smooth edges: each pixel row is sampled SAMPLES times, spans cover pixels in part.
+Writes src/client/assets/icon.png (256 pixels, the window and the splash screen),
+src/app/qtowerdefense.ico (16 to 256 pixels, the program on Windows), and for the other platforms
+(E-46) src/app/macos/qtowerdefense.icns, the launcher icons of Android under
+src/app/android/res/mipmap-*/ and the App Store icon of iOS under src/app/ios/Assets.xcassets/.
+Every size is drawn on its own, with smooth edges: each pixel row is sampled SAMPLES times, spans
+cover pixels in part.
 """
 
+import json
 import math
 import struct
 import sys
@@ -16,6 +20,12 @@ from qtd_common import REPO
 
 SAMPLES = 4
 SIZES = (16, 24, 32, 48, 64, 128, 256)
+# The pictures of an icns file by their type, see the Apple icon format.
+ICNS_TYPES = ((b"icp4", 16), (b"icp5", 32), (b"icp6", 64), (b"ic07", 128), (b"ic08", 256),
+              (b"ic09", 512), (b"ic10", 1024))  # fmt: skip
+# The launcher icon of Android in each density bucket, 48 dp each.
+ANDROID_SIZES = (("mdpi", 48), ("hdpi", 72), ("xhdpi", 96), ("xxhdpi", 144), ("xxxhdpi", 192))
+IOS_SIZE = 1024
 IRON_DARK = (0x1E, 0x21, 0x24)
 IRON = (0x4A, 0x4F, 0x54)
 IRON_LIGHT = (0x86, 0x8D, 0x92)
@@ -115,16 +125,24 @@ def picture(size):
     return pixels
 
 
-def png(pixels):
+def opaque(pixels, color):
+    """The picture over a solid color: the App Store takes no icon with transparent pixels."""
+    return [[over((*color, 1.0), pixel[:3], pixel[3])[:3] + (1.0,) for pixel in line]
+            for line in pixels]  # fmt: skip
+
+
+def png(pixels, alpha=True):
+    """RGBA, or RGB without the alpha channel, which the App Store refuses even when it is opaque."""
     size = len(pixels)
+    channels = (lambda r, g, b, a: (r, g, b, a * 255)) if alpha else (lambda r, g, b, a: (r, g, b))
     raw = b"".join(
-        b"\0" + bytes(round(v) for r, g, b, a in line for v in (r, g, b, a * 255)) for line in pixels
+        b"\0" + bytes(round(v) for pixel in line for v in channels(*pixel)) for line in pixels
     )
 
     def chunk(kind, data):
         return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
 
-    header = struct.pack(">IIBBBBB", size, size, 8, 6, 0, 0, 0)
+    header = struct.pack(">IIBBBBB", size, size, 8, 6 if alpha else 2, 0, 0, 0)
     return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(raw, 9))
             + chunk(b"IEND", b""))  # fmt: skip
 
@@ -141,10 +159,46 @@ def ico(images):
     return head + entries + data
 
 
+def icns(images):
+    """An Apple icon file: a header, then each picture as PNG with its type and length."""
+    entries = b"".join(kind + struct.pack(">I", 8 + len(data)) + data for kind, data in images)
+    return b"icns" + struct.pack(">I", 8 + len(entries)) + entries
+
+
+def ios_catalog(folder, image):
+    """An asset catalog with one icon of 1024 pixels, Xcode makes the other sizes from it."""
+    icon_set = folder / "AppIcon.appiconset"
+    icon_set.mkdir(parents=True, exist_ok=True)
+    (icon_set / "icon.png").write_bytes(image)
+    info = {"author": "xcode", "version": 1}
+    contents = {"images": [{"filename": "icon.png", "idiom": "universal", "platform": "ios",
+                            "size": f"{IOS_SIZE}x{IOS_SIZE}"}], "info": info}  # fmt: skip
+    (icon_set / "Contents.json").write_text(json.dumps(contents, indent=2) + "\n",
+                                              encoding="utf-8", newline="\n")
+    (folder / "Contents.json").write_text(json.dumps({"info": info}, indent=2) + "\n",
+                                          encoding="utf-8", newline="\n")
+
+
+def android_icons(res, pictures):
+    """The launcher icon in each density bucket, as res/mipmap-<bucket>/ic_launcher.png."""
+    for bucket, size in ANDROID_SIZES:
+        folder = res / f"mipmap-{bucket}"
+        folder.mkdir(parents=True, exist_ok=True)
+        (folder / "ic_launcher.png").write_bytes(png(pictures[size]))
+
+
 def main():
-    images = [(size, png(picture(size))) for size in SIZES]
+    wanted = set(SIZES) | {size for _, size in ICNS_TYPES} | {size for _, size in ANDROID_SIZES}
+    pictures = {size: picture(size) for size in sorted(wanted)}
+    images = [(size, png(pictures[size])) for size in SIZES]
+    app = REPO / "src" / "app"
     (REPO / "src" / "client" / "assets" / "icon.png").write_bytes(images[-1][1])
-    (REPO / "src" / "app" / "qtowerdefense.ico").write_bytes(ico(images))
+    (app / "qtowerdefense.ico").write_bytes(ico(images))
+    (app / "macos").mkdir(exist_ok=True)
+    (app / "macos" / "qtowerdefense.icns").write_bytes(
+        icns([(kind, png(pictures[size])) for kind, size in ICNS_TYPES]))
+    android_icons(app / "android" / "res", pictures)
+    ios_catalog(app / "ios" / "Assets.xcassets", png(opaque(pictures[IOS_SIZE], IRON_DARK), alpha=False))
     return 0
 
 

@@ -30,6 +30,15 @@ cmd /c ".\scripts\setup-hooks.cmd"
 - Protokolle je Stufe: `build/verify-logs/`.
 - Übersetzungen: Neue Texte mit `cmake --build --preset debug --target update_translations` in `src/client/i18n/*.ts` holen und übersetzen (E-40). `scripts/check_translations.py` meldet, was fehlt.
 
+## Andere Plattformen (E-46, noch nie gebaut)
+
+Vorbereitet, aber ohne die Werkzeuge nicht geprüft. Android baut mit der Clang des NDK, nicht mit MSVC; das ist die Ausnahme zur Regel in CLAUDE.md. Gebaut wird je Plattform nur das Spiel, ohne Tests und `qtd_headless`. Warnungen brechen dort den Build nicht ab, bis er einmal sauber durchläuft (`QTD_WARNINGS_AS_ERRORS`).
+
+- **macOS** (auf einem Mac): Qt 6.12 für macOS, `QTD_QT_DIR` darauf. `cmake --preset macos && cmake --build --preset macos` ergibt `build/macos/bin/QtowerDefense.app`. Zum Weitergeben `macdeployqt` mit `-qmldir=src/client`, dann signieren und notarisieren.
+- **iOS** (auf einem Mac mit Xcode): Qt 6.12 für iOS in `QTD_QT_IOS_DIR`, Qt für macOS in `QTD_QT_DIR` (Host-Werkzeuge). `cmake --preset ios` erzeugt ein Xcode-Projekt in `build/ios`. Signieren mit dem eigenen Team in Xcode (`DEVELOPMENT_TEAM`).
+- **Android** (auch auf diesem Rechner): Qt 6.12 für Android arm64 in `QTD_QT_ANDROID_DIR`, Qt für den Host in `QTD_QT_DIR`, dazu `ANDROID_SDK_ROOT`, `ANDROID_NDK_ROOT` und ein JDK. `cmake --preset android && cmake --build --preset android` ergibt ein APK im Gradle-Ordner unter `build/android/src/app/` (der genaue Name hängt von der Qt-Version ab, ungeprüft). Ohne Schlüssel ist ein Release-APK unsigniert und lässt sich nicht installieren. Für den Play Store braucht es ein AAB und einen eigenen Schlüssel (`QT_ANDROID_KEYSTORE_*`).
+- Neue Werkzeuge gehören nach `C:\dev`. Für Android kämen dort das SDK, das NDK, ein JDK und Qt für Android hinzu; mit `aqt` nur ergänzen (Qt wird mit QtCraft geteilt).
+
 ## Installierte Werkzeuge
 
 Downloads liegen in `C:\dev\Tools\downloads-qtd`. Das LLVM-Archiv (859 MB) wurde nach dem Entpacken entfernt, seine Prüfsumme stammt aus dem GitHub-Release und stimmte beim Herunterladen.
