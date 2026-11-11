@@ -58,6 +58,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `TerrainPicture` | class | `terrain_picture.h` | The colors of the ground. |
 | `Translation` | class | `translation.h` | The language of the texts. |
 | `Translation::Choice` | enum class | `translation.h` |  |
+| `WebAudio` | class | `web_audio.h` | The sounds of the game in the browser, through Web Audio: Qt 6.12 for WebAssembly ships no Qt Multimedia (E-47). |
 | `WorldSession` | class | `world_session.h` | The campaign world for QML: its sections, which are open and the stars won (E-32). |
 
 ## core

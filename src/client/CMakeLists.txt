@@ -4,9 +4,9 @@ if(QTD_SOUND)
     set(qtd_sound_module QtMultimedia)
     set(qtd_sound_library Qt6::Multimedia)
 else()
-    # The same type without sound, for builds without Qt Multimedia (E-47).
-    set_source_files_properties(silent/GameSounds.qml PROPERTIES QT_RESOURCE_ALIAS GameSounds.qml)
-    set(qtd_sounds silent/GameSounds.qml)
+    # Without Qt Multimedia the same sounds play through Web Audio, only in the browser (E-47).
+    set_source_files_properties(web/GameSounds.qml PROPERTIES QT_RESOURCE_ALIAS GameSounds.qml)
+    set(qtd_sounds web/GameSounds.qml)
     set(qtd_sound_module "")
     set(qtd_sound_library "")
 endif()
@@ -30,6 +30,7 @@ qt_add_qml_module(qtd_client
         terrain_picture.cpp terrain_picture.h
         translation.cpp translation.h
         world_session.cpp world_session.h
+        web_audio.cpp web_audio.h
     QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml EndPanel.qml FramedPanel.qml GameIcon.qml ${qtd_sounds} Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml GameSettings.qml RenderQuality.qml MainMenu.qml SettingsPanel.qml SplashScreen.qml WordSign.qml ChainSign.qml
         IconPaths.js Main.qml MainScene.qml Theme.qml TowerCard.qml WorldMap.qml WorldPainting.qml WorldScene.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D ${qtd_sound_library})
@@ -75,4 +76,10 @@ if(MSVC)
     get_target_property(qtd_client_sources qtd_client SOURCES)
     list(FILTER qtd_client_sources INCLUDE REGEX "/\\.rcc/qmlcache/.*\\.cpp$")
     set_source_files_properties(${qtd_client_sources} PROPERTIES COMPILE_OPTIONS /wd4702)
+endif()
+
+if(EMSCRIPTEN)
+    # EM_ASM writes JavaScript, and its $0 is no C++ name.
+    set_source_files_properties(web_audio.cpp PROPERTIES
+        COMPILE_OPTIONS -Wno-dollar-in-identifier-extension)
 endif()

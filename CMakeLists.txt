@@ -24,7 +24,8 @@ else()
 endif()
 option(QTD_WARNINGS_AS_ERRORS "Fail the build on warnings of first-party code" ${qtd_errors_default})
 
-# Qt 6.12 for WebAssembly ships no Qt Multimedia: the browser build is silent (E-47).
+# Sound through Qt Multimedia. Qt 6.12 for WebAssembly ships none: without it, the game plays
+# through Web Audio, which only the browser has (E-47).
 if(EMSCRIPTEN)
     set(QTD_SOUND OFF)
 else()

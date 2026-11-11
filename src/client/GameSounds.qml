@@ -32,39 +32,39 @@ Item {
         // In the order of GameSession.Cue.
         readonly property list<Sound> sounds: [
             Sound {
-                name: "build"
+                name: Theme.cueSounds[GameSession.Build]
                 loudness: box.loudness
             },
             Sound {
-                name: "upgrade"
+                name: Theme.cueSounds[GameSession.Upgrade]
                 loudness: box.loudness
             },
             Sound {
-                name: "sell"
+                name: Theme.cueSounds[GameSession.Sell]
                 loudness: box.loudness
             },
             Sound {
-                name: "spell"
+                name: Theme.cueSounds[GameSession.Spell]
                 loudness: box.loudness
             },
             Sound {
-                name: "wave"
+                name: Theme.cueSounds[GameSession.Wave]
                 loudness: box.loudness
             },
             Sound {
-                name: "won"
+                name: Theme.cueSounds[GameSession.Won]
                 loudness: box.loudness
             },
             Sound {
-                name: "lost"
+                name: Theme.cueSounds[GameSession.Lost]
                 loudness: box.loudness
             },
             Sound {
-                name: "upgrade"
+                name: Theme.cueSounds[GameSession.Roll]
                 loudness: box.loudness
             },
             Sound {
-                name: "sell"
+                name: Theme.cueSounds[GameSession.Coin]
                 loudness: box.loudness
             }
         ]
@@ -72,10 +72,7 @@ Item {
 
     required property GameSession game
     property real volume: 1 // from 0 to 1, as the settings say, as the ear hears it
-    // What the speakers get: the ear hears loudness on a logarithmic scale, so half way on the
-    // slider is a tenth of the power.
-    readonly property real loudness: (Math.pow(Theme.loudnessRange, volume) - 1) / (
-                                         Theme.loudnessRange - 1)
+    readonly property real loudness: Theme.loudness(volume) // what the speakers get
 
     Loader {
         id: speakers

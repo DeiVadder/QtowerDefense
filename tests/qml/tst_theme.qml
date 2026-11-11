@@ -154,5 +154,17 @@ Item {
         function test_theTextOfTheThemeCanBeRead(data) {
             verify(contrast(data.front, data.back) >= 4.5, data.tag);
         }
+
+        // Both kinds of GameSounds take the sound of a cue from the theme (E-47).
+        function test_everyCueHasASound() {
+            compare(Theme.cueSounds.length, GameSession.Coin + 1);
+        }
+
+        // The ear hears loudness on a logarithmic scale: half way is a tenth of the power.
+        function test_theLoudnessFollowsTheEar() {
+            compare(Theme.loudness(0), 0);
+            compare(Theme.loudness(1), 1);
+            fuzzyCompare(Theme.loudness(0.5), 9 / 99, 1e-9);
+        }
     }
 }

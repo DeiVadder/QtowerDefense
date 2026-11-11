@@ -141,6 +141,12 @@ QtObject {
         return Math.min(scale * Math.max(smallestUnit, density * fingerSize), width / unitsAcross);
     }
 
+    // What the speakers get for a volume from 0 to 1: the ear hears loudness on a logarithmic
+    // scale, so half way on the slider is a tenth of the power.
+    function loudness(volume: real): real {
+        return (Math.pow(loudnessRange, volume) - 1) / (loudnessRange - 1);
+    }
+
     // The world map (E-32): muted land on a grey sea, the fog covers what is not open.
     readonly property color worldSea: "#3f565c"
     readonly property color worldShore: "#b9a77e"
@@ -213,6 +219,9 @@ QtObject {
     readonly property real sliderTrack: 0.2
     readonly property real sliderKnob: 0.55
     readonly property real loudnessRange: 100 // from the quietest step of the slider to the loudest
+    // The sound of each GameSession.Cue, in its order: a file in assets, without ".ogg".
+    readonly property list<string> cueSounds: ["build", "upgrade", "sell", "spell", "wave", "won",
+        "lost", "upgrade", "sell"]
     readonly property int volumeStep: 10 // percent per press of an arrow key
     // Narrower halves of the menu give the settings all their width: margins, label, track, percent.
     readonly property real settingsWidest: 4 * endMargin + settingsLabel + settingsTrack
