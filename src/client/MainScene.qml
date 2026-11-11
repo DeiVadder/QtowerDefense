@@ -29,6 +29,9 @@ View3D {
     property real gridStrength: Theme.gridFaint
     // Other fingers must not touch the map then: a finger on a card would pass through to it.
     property bool cardInHand: false
+    // The cell under the finger or the mouse while a card is chosen: there the ghost of its tower
+    // stands. Nothing while no card is chosen or the pointer is off the map.
+    property var ghostCell: undefined
     property real zoom: 1
     property real panX: 0
     property real panZ: 0
@@ -114,6 +117,11 @@ View3D {
         return true;
     }
 
+    // Shows where the chosen card would stand. Off the map, or over the HUD, it shows nothing.
+    function showGhostAt(x: real, y: real, onMap: bool) {
+        ghostCell = onMap && game.chosenCard >= 0 ? cellOf(pick(x, y)) : undefined;
+    }
+
     function tapAt(x: real, y: real): bool {
         const hit = pick(x, y);
         if (game.selectedSpell >= 0) {
@@ -194,6 +202,12 @@ View3D {
         target: null
         // 120 is one notch of a wheel, touchpads send many small steps.
         onWheel: event => root.zoomBy(Math.pow(1.1, event.angleDelta.y / 120))
+    }
+
+    onCardInHandChanged: {
+        if (!cardInHand) {
+            ghostCell = undefined;
+        }
     }
 
     TapHandler {
@@ -399,6 +413,62 @@ View3D {
             game: root.game
             fieldSize: root.fieldSize
             blended: true
+        }
+
+        // The ghost of the chosen tower (E-54): its model on each of its cells, see-through, over
+        // tiles that are green where it can be built and red where not.
+        Node {
+            id: ghost
+
+            readonly property bool shown: root.ghostCell !== undefined && root.game.chosenCard >= 0
+            readonly property var anchorCell: root.game.selectedShape.find(cell => cell.anchor)
+                                              ?? Qt.point(0, 0)
+            // canBuildAt notifies nothing: the binding reads what it depends on.
+            readonly property bool fits: shown && root.game.selectedRotation >= 0
+                                         && root.game.selectedShape.length > 0 && root.game.gold
+                                         >= 0 && root.game.towerCount >= 0 && root.game.canBuildAt(
+                                             root.ghostCell.x, root.ghostCell.y)
+
+            objectName: "ghost"
+            visible: shown
+            x: shown ? root.ghostCell.x * root.fieldSize : 0
+            z: shown ? root.ghostCell.y * root.fieldSize : 0
+
+            Repeater3D {
+                model: root.game.selectedShape
+
+                delegate: Node {
+                    id: ghostCell
+
+                    required property var modelData
+
+                    x: (modelData.x - ghost.anchorCell.x) * root.fieldSize
+                    z: (modelData.y - ghost.anchorCell.y) * root.fieldSize
+
+                    Model {
+                        source: "#Rectangle"
+                        y: 1.5
+                        eulerRotation.x: -90
+                        scale: Qt.vector3d(0.0095 * root.fieldSize, 0.0095 * root.fieldSize, 1)
+                        castsShadows: false
+                        receivesShadows: false
+                        materials: PrincipledMaterial {
+                            baseColor: ghost.fits ? "#702cde85" : "#80ff5a4a"
+                            lighting: PrincipledMaterial.NoLighting
+                            alphaMode: PrincipledMaterial.Blend
+                        }
+                    }
+
+                    AssetModel {
+                        name: root.game.towerModels[root.game.selectedTower] ?? ""
+                        fallback: "#Cube"
+                        opacity: ghost.fits ? 0.6 : 0.35
+                        castsShadows: false
+                        y: found ? 0 : root.fieldSize / 2
+                        scale: Qt.vector3d(1, 1, 1).times(0.9 * root.fieldSize / size)
+                    }
+                }
+            }
         }
 
         // A spell where it lands: it swells to its radius and fades. It has no say in the game.

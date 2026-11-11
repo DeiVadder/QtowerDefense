@@ -32,6 +32,20 @@ Item {
 
     signal leave // back to the world map
 
+    // The ghost of the chosen card stands under the pointer, not under the HUD (E-54).
+    function showGhost(at: point, shown: bool) {
+        root.scene?.showGhostAt(at.x, at.y, shown && root.childAt(at.x, at.y) === null);
+    }
+
+    // A mouse shows the ghost before the tap, a finger only while it drags a card.
+    HoverHandler {
+        enabled: root.game.chosenCard >= 0 && !towerList.dragging
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onPointChanged: root.showGhost(point.position, hovered)
+        onHoveredChanged: root.showGhost(point.position, hovered)
+        onEnabledChanged: root.showGhost(point.position, enabled && hovered)
+    }
+
     Binding {
         when: root.scene !== null
         target: root.scene
@@ -346,6 +360,7 @@ Item {
         maxWidth: parent.width - 2 * (Math.max(placement.width, cardButtons.width) + root.unit
                                       * Theme.gap * 2)
         lowered: root.game.chosenSellValue >= 0
+        onHeldChanged: root.showGhost(held, dragging)
         onDropped: (x, y) => {
             // A card over the HUD goes back into the hand.
             if (root.scene !== null && root.childAt(x, y) === null) {

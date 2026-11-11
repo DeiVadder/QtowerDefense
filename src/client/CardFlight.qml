@@ -34,7 +34,7 @@ Item {
     TowerCard {
         objectName: "heldCard"
         x: root.held.x - width / 2
-        y: root.held.y - height / 2
+        y: root.held.y - height // above the finger, which points at the ghost of the tower
         visible: root.holding
         info: root.heldInfo
         unit: root.unit
