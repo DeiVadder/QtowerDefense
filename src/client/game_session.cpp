@@ -515,7 +515,7 @@ std::vector<QPointF> GameSession::enemyPlaces() const
         return places;
     }
     const bool moving = game_->simulation().state().status == core::GameStatus::Running;
-    const double share = static_cast<double>(clock_.pendingMillionths()) / kMillionthsPerTick;
+    const double share = tickShare();
     places.reserve(game_->simulation().state().enemies.size());
     std::ranges::transform(game_->simulation().state().enemies,
                            std::back_inserter(places),
@@ -530,6 +530,14 @@ std::vector<QPointF> GameSession::enemyPlaces() const
                                return from + (place - from) * share;
                            });
     return places;
+}
+
+double GameSession::tickShare() const
+{
+    if (!game_ || game_->simulation().state().status != core::GameStatus::Running) {
+        return 1;
+    }
+    return static_cast<double>(clock_.pendingMillionths()) / kMillionthsPerTick;
 }
 
 void GameSession::applicationStateChanged(Qt::ApplicationState state)

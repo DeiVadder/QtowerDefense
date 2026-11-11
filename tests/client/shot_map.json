@@ -1,0 +1,151 @@
+{
+    "formatVersion": 1,
+    "startGold": 5000,
+    "startLives": 15,
+    "earlyCallTicksPerGold": 15,
+    "gridWidth": 17,
+    "gridHeight": 11,
+    "path": [
+        {
+            "x": 0,
+            "y": 2
+        },
+        {
+            "x": 8,
+            "y": 2
+        },
+        {
+            "x": 8,
+            "y": 8
+        },
+        {
+            "x": 16,
+            "y": 8
+        }
+    ],
+    "obstacles": [
+        {
+            "terrain": "rock",
+            "x": 2,
+            "y": 5
+        },
+        {
+            "terrain": "rock",
+            "x": 3,
+            "y": 5
+        },
+        {
+            "terrain": "rock",
+            "x": 2,
+            "y": 6
+        },
+        {
+            "terrain": "tree",
+            "x": 13,
+            "y": 2
+        },
+        {
+            "terrain": "tree",
+            "x": 14,
+            "y": 2
+        },
+        {
+            "terrain": "tree",
+            "x": 14,
+            "y": 3
+        },
+        {
+            "terrain": "tree",
+            "x": 5,
+            "y": 9
+        },
+        {
+            "terrain": "water",
+            "x": 1,
+            "y": 8
+        },
+        {
+            "terrain": "water",
+            "x": 2,
+            "y": 8
+        },
+        {
+            "terrain": "water",
+            "x": 1,
+            "y": 9
+        },
+        {
+            "terrain": "water",
+            "x": 2,
+            "y": 9
+        },
+        {
+            "terrain": "water",
+            "x": 3,
+            "y": 9
+        }
+    ],
+    "catalog": "../../content/catalog.json",
+    "wave": [
+        {
+            "enemy": "mire_goblin",
+            "count": 6,
+            "delayTicks": 60,
+            "intervalTicks": 45
+        },
+        {
+            "enemy": "stone_troll",
+            "count": 2,
+            "delayTicks": 90,
+            "intervalTicks": 90
+        },
+        {
+            "enemy": "swamp_rat",
+            "count": 10,
+            "delayTicks": 150,
+            "intervalTicks": 20
+        },
+        {
+            "enemy": "iron_beetle",
+            "count": 4,
+            "delayTicks": 150,
+            "intervalTicks": 60
+        },
+        {
+            "enemy": "ember_imp",
+            "count": 5,
+            "delayTicks": 150,
+            "intervalTicks": 40
+        },
+        {
+            "enemy": "frost_wraith",
+            "count": 5,
+            "delayTicks": 150,
+            "intervalTicks": 40
+        },
+        {
+            "enemy": "moss_shaman",
+            "count": 3,
+            "delayTicks": 150,
+            "intervalTicks": 60
+        },
+        {
+            "enemy": "bog_titan",
+            "count": 1,
+            "delayTicks": 240,
+            "intervalTicks": 1
+        },
+        {
+            "enemy": "hex_warden",
+            "count": 3,
+            "delayTicks": 150,
+            "intervalTicks": 60
+        },
+        {
+            "enemy": "cinder_drake",
+            "count": 1,
+            "delayTicks": 240,
+            "intervalTicks": 1
+        }
+    ]
+}

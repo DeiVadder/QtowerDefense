@@ -10,6 +10,7 @@ View3D {
     required property GameSession game
 
     readonly property real fieldSize: 50
+
     property real coinUnit: Theme.smallestUnit // the HUD knows how large a finger is
     property alias quality: looks.quality
     readonly property real fieldOfView: 60
@@ -31,6 +32,32 @@ View3D {
     property real zoom: 1
     property real panX: 0
     property real panZ: 0
+
+    // The shots of one shape. Fire, ice, poison and magic glow, wood and stone take the light.
+    component ShotModel: Model {
+        id: shotModel
+
+        required property int shot
+        required property GameSession game
+        required property real fieldSize
+        property bool lit: false
+        property bool blended: false
+
+        instanceRoot: shotModel
+        instancing: MapInstances {
+            game: shotModel.game
+            layer: MapInstances.Shots
+            shot: shotModel.shot
+            fieldSize: shotModel.fieldSize
+        }
+        materials: PrincipledMaterial {
+            baseColor: "white"
+            roughness: 0.8 // wood and stone, matt
+            lighting: shotModel.lit ? PrincipledMaterial.FragmentLighting :
+                                      PrincipledMaterial.NoLighting
+            alphaMode: shotModel.blended ? PrincipledMaterial.Blend : PrincipledMaterial.Default
+        }
+    }
 
     // Distance at which a camera with the given vertical field of view sees the whole extent.
     function fitCameraDistance(extent: real, fieldOfViewDegrees: real): real {
@@ -325,20 +352,53 @@ View3D {
             }
         }
 
-        Model {
-            id: shots
-
+        // Every tower type has a shot of its own (E-52): bolts, a fireball, a volley of arrows, a
+        // shard of ice, a glob of poison and a boulder with dust where it lands.
+        ShotModel {
+            shot: MapInstances.Bolt
+            source: "#Cylinder"
+            game: root.game
+            fieldSize: root.fieldSize
+            lit: true
+        }
+        ShotModel {
+            shot: MapInstances.Fireball
             source: "#Sphere"
-            instanceRoot: shots
-            instancing: MapInstances {
-                game: root.game
-                layer: MapInstances.Shots
-                fieldSize: root.fieldSize
-            }
-            materials: PrincipledMaterial {
-                baseColor: "white"
-                lighting: PrincipledMaterial.NoLighting
-            }
+            game: root.game
+            fieldSize: root.fieldSize
+        }
+        ShotModel {
+            shot: MapInstances.Arrow
+            source: "#Cylinder"
+            game: root.game
+            fieldSize: root.fieldSize
+            lit: true
+        }
+        ShotModel {
+            shot: MapInstances.Shard
+            source: "#Cone"
+            game: root.game
+            fieldSize: root.fieldSize
+        }
+        ShotModel {
+            shot: MapInstances.Glob
+            source: "#Sphere"
+            game: root.game
+            fieldSize: root.fieldSize
+        }
+        ShotModel {
+            shot: MapInstances.Boulder
+            source: "#Sphere"
+            game: root.game
+            fieldSize: root.fieldSize
+            lit: true
+        }
+        ShotModel {
+            shot: MapInstances.Dust
+            source: "#Cylinder"
+            game: root.game
+            fieldSize: root.fieldSize
+            blended: true
         }
 
         // A spell where it lands: it swells to its radius and fades. It has no say in the game.

@@ -25,6 +25,8 @@ class MapInstances : public QQuick3DInstancing
     Q_PROPERTY(int typeIndex READ typeIndex WRITE setTypeIndex NOTIFY typeIndexChanged)
     // Of an enemy with walk frames, the one frame drawn here; -1 draws all, without frames.
     Q_PROPERTY(int walkFrame READ walkFrame WRITE setWalkFrame NOTIFY walkFrameChanged)
+    // Of the layer Shots, the one shape drawn here (E-52).
+    Q_PROPERTY(Shot shot READ shot WRITE setShot NOTIFY shotChanged)
 
 public:
     enum class Layer : quint8 {
@@ -34,9 +36,21 @@ public:
         Enemies,    // the enemies of one type
         Rocks,
         Trees,
-        Shots, // what is on its way from a tower that just fired
+        Shots, // what is on its way from a tower that just fired, of one shape
     };
     Q_ENUM(Layer)
+
+    /// The shapes a shot takes in flight, see shot_looks.h. QML draws each with its own model.
+    enum class Shot : quint8 {
+        Bolt,     // a long thin rod along its way, the ballistas
+        Fireball, // a glowing ball that pulses
+        Arrow,    // a thin rod in a volley
+        Shard,    // a cone of ice that turns around its way
+        Glob,     // a ball of poison that wobbles
+        Boulder,  // a stone that tumbles in a high arc
+        Dust,     // where a boulder lands: a ring that grows to the splash radius and fades
+    };
+    Q_ENUM(Shot)
 
     explicit MapInstances(QQuick3DObject *parent = nullptr);
 
@@ -47,6 +61,7 @@ public:
     [[nodiscard]] float modelSize() const;
     [[nodiscard]] int typeIndex() const;
     [[nodiscard]] int walkFrame() const;
+    [[nodiscard]] Shot shot() const;
 
     void setGame(GameSession *game);
     void setLayer(Layer layer);
@@ -55,6 +70,7 @@ public:
     void setEnemyScale(float scale);
     void setTypeIndex(int index);
     void setWalkFrame(int frame);
+    void setShot(Shot shot);
 
 signals:
     void gameChanged();
@@ -64,6 +80,7 @@ signals:
     void modelSizeChanged();
     void typeIndexChanged();
     void walkFrameChanged();
+    void shotChanged();
 
 protected:
     QByteArray getInstanceBuffer(int *instanceCount) override;
@@ -78,6 +95,7 @@ private:
     float modelSize_ = 1; // the edge of what TowerLooks draws, in its own units
     int typeIndex_ = 0;
     int walkFrame_ = -1;
+    Shot shot_ = Shot::Bolt;
 };
 
 } // namespace qtd::client

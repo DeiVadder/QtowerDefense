@@ -205,6 +205,9 @@ public:
     /// Where enemies are drawn: between their last two ticks, as the display runs faster than the
     /// game. So the picture is up to a tick behind the game.
     [[nodiscard]] std::vector<QPointF> enemyPlaces() const;
+    /// How far the picture is between the last two ticks, from 0 to 1, as enemyPlaces() draws
+    /// them; 1 while the game stands still.
+    [[nodiscard]] double tickShare() const;
 
     /// The current game, for the control interface, nothing without a game.
     [[nodiscard]] core::ReplayRecorder *recorder();

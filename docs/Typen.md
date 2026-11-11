@@ -45,6 +45,7 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `Piece` | struct | `map_instances.cpp` |  |
 | `MapInstances` | class | `map_instances.h` | Draws one layer of a game with a single model: a map has hundreds of cells, and the number of enemies changes with every wave. |
 | `MapInstances::Layer` | enum class | `map_instances.h` |  |
+| `MapInstances::Shot` | enum class | `map_instances.h` | The shapes a shot takes in flight, see shot_looks.h. |
 | `Cells` | using | `scenery_instances.cpp` |  |
 | `Plant` | struct | `scenery_instances.cpp` |  |
 | `SceneryInstances` | class | `scenery_instances.h` | The places of one kind of scenery. |
@@ -52,6 +53,10 @@ der LSP-Symbolsuche nachsehen, ob es ihn schon gibt.
 | `ScreenControl::Mailbox` | struct | `screen_control.cpp` | The way from the thread that reads to the control. |
 | `ScreenControl::ScreenGame` | class | `screen_control.cpp` | The game on the screen, as the control interface sees it. |
 | `ScreenControl` | class | `screen_control.h` | The control interface in the real game: requests play the game on the screen. |
+| `Flight` | struct | `shot_looks.cpp` |  |
+| `ShotLook` | struct | `shot_looks.h` | How the shot of one tower type looks. |
+| `ShotPiece` | struct | `shot_looks.h` | One shot in the picture, in the units of the map. |
+| `ShotShape` | using | `shot_looks.h` | The shapes a shot takes in flight, see MapInstances::Shot (E-52). |
 | `Vertex` | struct | `terrain_mesh.cpp` |  |
 | `TerrainMesh` | class | `terrain_mesh.h` | The ground as one mesh, in the coordinates of the map: the board and the land around it. |
 | `GridCellPicture` | class | `terrain_picture.h` | One cell of the grid that shows where towers go: a thin frame, the rest is clear. |

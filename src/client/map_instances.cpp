@@ -1,5 +1,6 @@
 #include "client/map_instances.h"
 
+#include "client/shot_looks.h"
 #include "core/content.h"
 
 #include <QColor>
@@ -31,17 +32,14 @@ constexpr float kFlatHeight = 0.04F;
 constexpr float kRockHeight = 0.5F;
 constexpr float kTreeHeight = 0.06F; // the model takes the taps, the block hides no other cell
 constexpr float kTowerHeight = 0.7F;
-constexpr float kTowerHeightPerLevel = 0.25F;
 constexpr float kBossScale = 1.8F;
-constexpr int kChosenLight = 150; // percent, how much brighter the chosen tower is
+constexpr int kChosenLight = 150;      // percent, how much brighter the chosen tower is
+constexpr float kRecoilSquash = 0.08F; // of its height, how far a tower gives way when it fires
 
 constexpr float kHopHeight = 0.08F; // of a field, how far a walking enemy leaves the ground
 constexpr float kHopsPerField = 2.5F;
-constexpr qint64 kStrideTenths = 9;  // of a field, the way of one walk cycle
-constexpr qint64 kShotTicks = 6;     // how long a shot is seen after the tower fired
-constexpr float kShotSize = 0.0015F; // of a field per unit of the sphere
-constexpr float kShotHeight = 0.6F;  // of a field, where it leaves the tower
-constexpr int kAheadRaw = 1000;      // how far along the path an enemy looks to see where it goes
+constexpr qint64 kStrideTenths = 9; // of a field, the way of one walk cycle
+constexpr int kAheadRaw = 1000;     // how far along the path an enemy looks to see where it goes
 
 struct Piece
 {
@@ -96,21 +94,6 @@ std::vector<Piece> boardPieces(const GameSession &game, float fieldSize)
         }
     }
     return pieces;
-}
-
-QColor colorOf(core::DamageType damage)
-{
-    switch (damage) {
-    case core::DamageType::Physical:
-        break;
-    case core::DamageType::Magic:
-        return QColor(0x8e5bd0);
-    case core::DamageType::Fire:
-        return QColor(0xd9622b);
-    case core::DamageType::Ice:
-        return QColor(0x6fc3e8);
-    }
-    return QColor(0xc9a227);
 }
 
 /// What stands on the cells of one terrain.
@@ -203,51 +186,20 @@ towerLooks(const GameSession &game, float fieldSize, float modelSize, int typeIn
         const QColor color = tower.id == game.chosenTower()
                                  ? QColor(Qt::white)
                                  : QColor(Qt::white).darker(kChosenLight);
-        const float height = width * (1 + kTowerHeightPerLevel * static_cast<float>(tower.level));
+        // A tower that just fired gives way a little and swells, then stands up again (E-52).
+        const float kick = recoilOf(game, tower);
+        const float height = width * (1 + kTowerHeightPerLevel * static_cast<float>(tower.level)) *
+                             (1 - kRecoilSquash * kick);
+        const float girth = width * (1 + kRecoilSquash / 2 * kick);
         std::ranges::transform(core::footprintAt(type, tower.cell, tower.rotation),
                                std::back_inserter(pieces),
                                [&](core::Cell cell) {
                                    return Piece{QVector3D(static_cast<float>(cell.x) * fieldSize,
                                                           kFlatHeight * fieldSize,
                                                           static_cast<float>(cell.y) * fieldSize),
-                                                QVector3D(width, height, width),
+                                                QVector3D(girth, height, girth),
                                                 color};
                                });
-    }
-    return pieces;
-}
-
-/// A picture only: the simulation hits at once, and it does not tell the target. A shot flies to
-/// the nearest enemy, which most of the time is the target.
-std::vector<Piece> shotPieces(const GameSession &game, float fieldSize)
-{
-    std::vector<Piece> pieces;
-    const std::vector<QPointF> places = game.enemyPlaces();
-    if (places.empty()) {
-        return pieces;
-    }
-    const core::Simulation &simulation = *game.simulation();
-    for (const core::Tower &tower : simulation.state().towers) {
-        const core::TowerType &type = simulation.content().towers[tower.type];
-        const qint64 flown =
-            type.levels[static_cast<std::size_t>(tower.level)].cooldownTicks - tower.cooldownTicks;
-        // An upgrade may shorten the cooldown below what is left of it.
-        if (tower.cooldownTicks == 0 || flown < 0 || flown >= kShotTicks) {
-            continue;
-        }
-        const QPointF from(static_cast<double>(tower.cell.x), static_cast<double>(tower.cell.y));
-        const std::vector<QPointF>::const_iterator nearest =
-            std::ranges::min_element(places, {}, [from](QPointF place) {
-                const QPointF away = place - from;
-                return QPointF::dotProduct(away, away);
-            });
-        const QPointF place =
-            from + (*nearest - from) * static_cast<double>(flown) / static_cast<double>(kShotTicks);
-        pieces.push_back({QVector3D(static_cast<float>(place.x()) * fieldSize,
-                                    kShotHeight * fieldSize,
-                                    static_cast<float>(place.y()) * fieldSize),
-                          QVector3D(1, 1, 1) * kShotSize * fieldSize,
-                          colorOf(type.damageType)});
     }
     return pieces;
 }
@@ -348,8 +300,9 @@ void MapInstances::setGame(GameSession *game)
         connect(game_, &GameSession::stateChanged, this, [this] {
             markDirtyFor({Layer::Enemies, Layer::Shots});
         });
-        connect(
-            game_, &GameSession::frameChanged, this, [this] { markDirtyFor({Layer::Enemies}); });
+        connect(game_, &GameSession::frameChanged, this, [this] {
+            markDirtyFor({Layer::Enemies, Layer::Shots, Layer::TowerLooks});
+        });
     }
     markDirty();
     emit gameChanged();
@@ -414,6 +367,20 @@ void MapInstances::setWalkFrame(int frame)
     }
 }
 
+MapInstances::Shot MapInstances::shot() const
+{
+    return shot_;
+}
+
+void MapInstances::setShot(Shot shot)
+{
+    if (shot_ != shot) {
+        shot_ = shot;
+        markDirty();
+        emit shotChanged();
+    }
+}
+
 void MapInstances::markDirtyFor(std::initializer_list<Layer> layers)
 {
     if (std::ranges::find(layers, layer_) != layers.end()) {
@@ -439,7 +406,12 @@ QByteArray MapInstances::getInstanceBuffer(int *instanceCount)
             pieces = enemyPieces(*game_, fieldSize_, enemyScale_, typeIndex_, walkFrame_);
             break;
         case Layer::Shots:
-            pieces = shotPieces(*game_, fieldSize_);
+            std::ranges::transform(shotPieces(*game_, fieldSize_, shot_),
+                                   std::back_inserter(pieces),
+                                   [](const ShotPiece &shot) {
+                                       return Piece{
+                                           shot.position, shot.scale, shot.color, shot.angles};
+                                   });
             break;
         case Layer::Rocks:
             pieces = decorPieces(*game_, fieldSize_, modelSize_, core::Terrain::Rock);
