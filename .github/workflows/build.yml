@@ -71,11 +71,30 @@ jobs:
 
       - name: Libraries for Qt on Linux
         if: runner.os == 'Linux'
+        # The runner's mirror is sometimes not found ("Temporary failure resolving
+        # 'azure.archive.ubuntu.com'", three times on 2026-11-11). Try again, then the main archive.
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-0 \
-            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0 \
-            libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libfontconfig1-dev libpulse-dev
+          packages=(libgl-dev libegl-dev libxkbcommon-dev libxkbcommon-x11-0
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-render-util0
+            libxcb-shape0 libxcb-xinerama0 libxcb-xkb1 libxcb-randr0 libfontconfig1-dev libpulse-dev)
+          apt=(sudo apt-get -o Acquire::Retries=3)
+          for attempt in 1 2 3 4 5; do
+            if "${apt[@]}" update && "${apt[@]}" install -y "${packages[@]}"; then
+              exit 0
+            fi
+            echo "::warning::apt-get failed, attempt $attempt of 5"
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            if [ "$attempt" -eq 2 ]; then
+              for list in /etc/apt/sources.list /etc/apt/sources.list.d/ubuntu.sources; do
+                if [ -f "$list" ]; then
+                  sudo sed -i 's#http://azure\.archive\.ubuntu\.com#http://archive.ubuntu.com#g' "$list"
+                fi
+              done
+            fi
+            sleep $((attempt * 15))
+          done
 
       - name: MSVC
         if: runner.os == 'Windows'
