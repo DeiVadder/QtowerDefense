@@ -209,19 +209,6 @@ View3D {
         }
     }
 
-    // A mouse shows the ghost before the tap, a finger only while it drags a card.
-    HoverHandler {
-        enabled: root.game.chosenCard >= 0 && !root.cardInHand
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        onPointChanged: root.showGhostAt(point.position.x, point.position.y, hovered)
-        onHoveredChanged: {
-            if (!hovered) {
-                root.ghostCell = undefined;
-            }
-        }
-        onEnabledChanged: root.ghostCell = undefined
-    }
-
     TapHandler {
         enabled: !root.cardInHand
         onTapped: eventPoint => root.tapAt(eventPoint.position.x, eventPoint.position.y)
@@ -435,8 +422,11 @@ View3D {
             readonly property bool shown: root.ghostCell !== undefined && root.game.chosenCard >= 0
             readonly property var anchorCell: root.game.selectedShape.find(cell => cell.anchor)
                                               ?? Qt.point(0, 0)
-            readonly property bool fits: shown && root.game.canBuildAt(root.ghostCell.x,
-                                                                       root.ghostCell.y)
+            // canBuildAt notifies nothing: the binding reads what it depends on.
+            readonly property bool fits: shown && root.game.selectedRotation >= 0
+                                         && root.game.selectedShape.length > 0 && root.game.gold
+                                         >= 0 && root.game.towerCount >= 0 && root.game.canBuildAt(
+                                             root.ghostCell.x, root.ghostCell.y)
 
             objectName: "ghost"
             visible: shown
