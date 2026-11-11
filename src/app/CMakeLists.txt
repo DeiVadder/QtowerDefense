@@ -53,7 +53,7 @@ elseif(ANDROID)
         QT_ANDROID_VERSION_CODE ${qtd_version_code})
 endif()
 
-# A self-contained package for the release (E-49): `cmake --install` copies the game, Qt and its
+# A self-contained package for the release (E-50): `cmake --install` copies the game, Qt and its
 # plugins and QML modules beside it, on macOS into the app bundle. Phones and the browser package
 # themselves.
 if(QTD_DESKTOP)
