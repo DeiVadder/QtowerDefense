@@ -170,6 +170,17 @@ Item {
             verify(!game.session.paused);
         }
 
+        // A game the player had paused stays paused after Skip.
+        function test_skippingKeepsAPause() {
+            const game = create();
+            game.guide.wanted = false;
+            game.session.paused = true;
+            game.guide.wanted = true;
+            mouseClick(findChild(game.guide, "guideSkip"));
+            verify(!guideOf(game).visible);
+            verify(game.session.paused);
+        }
+
         function test_withoutTheWishThereIsNoGuide() {
             const game = create();
             game.guide.wanted = false;

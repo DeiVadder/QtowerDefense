@@ -52,6 +52,9 @@ Item {
     }
 
     function begin() {
+        if (!game) {
+            return; // the game comes later, Component.onCompleted begins then
+        }
         built = false;
         step = Guide.Step.Roll;
         running = true;
