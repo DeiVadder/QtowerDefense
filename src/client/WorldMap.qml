@@ -128,6 +128,9 @@ FramedPanel {
 
         anchors.fill: parent
         anchors.margins: root.unit * Theme.gap
+        // Clear of the notch and the rounded corners of a phone (E-55).
+        anchors.leftMargin: root.unit * Theme.gap + root.SafeArea.margins.left
+        anchors.rightMargin: root.unit * Theme.gap + root.SafeArea.margins.right
         anchors.bottomMargin: root.unit * (Theme.worldPanel + Theme.gap * 2)
         color: Theme.ironDark
         border.color: Theme.iron
@@ -210,6 +213,8 @@ FramedPanel {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: root.unit * Theme.gap
+        anchors.leftMargin: frame.anchors.leftMargin
+        anchors.rightMargin: frame.anchors.rightMargin
         height: root.unit * Theme.worldPanel
         unit: root.unit
         seed: Theme.signSeed

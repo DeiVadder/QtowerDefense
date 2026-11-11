@@ -35,6 +35,7 @@ Item {
                 anchors.fill: parent
                 game: session
                 scene: scene
+                guiding: guide.visible // as in Main.qml
             }
 
             Guide {
@@ -156,6 +157,20 @@ Item {
             findChild(game.hud, "towerList").dropped(spot.x, spot.y);
             compare(game.session.towerCount, 1);
             compare(guideOf(game).step, Guide.Start);
+        }
+
+        // The guide talks alone: the hero is silent in every pause, the save panel waits for the guide.
+        function test_theGuideTalksAlone() {
+            const game = create();
+            verify(game.session.paused);
+            verify(!findChild(game.hud, "savePanel").visible);
+            verify(!findChild(game.hud, "hero").speaks);
+            mouseClick(findChild(game.guide, "guideSkip"));
+            game.session.paused = true;
+            verify(findChild(game.hud, "savePanel").visible);
+            verify(!findChild(game.hud, "hero").speaks);
+            game.session.paused = false;
+            verify(findChild(game.hud, "hero").speaks);
         }
 
         // Skipping leaves the game as the player had it before the guide stopped it.

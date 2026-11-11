@@ -36,6 +36,8 @@ browser.
 - **Windows** (x64), **macOS** (Apple Silicon and Intel, macOS 14.4 or newer) and **Linux** (x64)
   as self-contained packages with Qt.
 - **Browser** (WebAssembly) on GitHub Pages; progress and settings stay in the browser.
+- **iOS and Android** build from source and play in the simulator and emulator, in landscape and
+  clear of the notch; there are no store packages.
 
 ### Under the hood
 
@@ -49,7 +51,7 @@ browser.
 
 - The packages are not signed: Windows SmartScreen and macOS Gatekeeper warn on the first start
   (see the README).
-- iOS and Android are prepared in CMake but not built.
+- iOS and Android are tested only in the simulator and emulator, not on devices.
 - The browser download is about 53 MB.
 
 [1.0.0]: https://github.com/DeiVadder/QtowerDefense/releases/tag/v1.0.0

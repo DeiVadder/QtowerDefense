@@ -553,6 +553,12 @@ View3D {
         return blockTopOnScreen(cellX, cellY, 0);
     }
 
+    // The same in the coordinates of another item: the HUD keeps clear of a notch, the map not.
+    function cellIn(item: Item, cellX: int, cellY: int): point {
+        const spot = cellOnScreen(cellX, cellY);
+        return mapToItem(item, spot.x, spot.y);
+    }
+
     // Over the map, under the HUD: the HUD asks for its children under a dropped card.
     CoinLayer {
         objectName: "coins"

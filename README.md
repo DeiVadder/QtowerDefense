@@ -45,7 +45,7 @@ A hero comments on the battle and holds two spells, Meteor and Deep Freeze.
 | macOS | Built and played on Apple Silicon; release package built by GitHub Actions |
 | Linux | Release package built by GitHub Actions |
 | Browser (WebAssembly) | Built and played locally; GitHub Actions publishes it on GitHub Pages |
-| iOS, Android | Prepared in CMake (presets, icons, bundle settings), never built |
+| iOS, Android | Build from source; played in the iOS simulator and Android emulator, not on devices, no store packages |
 
 The browser build saves progress and settings in the visitor's own browser (IndexedDB). It plays
 its sounds through Web Audio, because Qt 6.12 has no Qt Multimedia for WebAssembly; the sounds were

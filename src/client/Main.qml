@@ -97,10 +97,14 @@ Window {
 
         objectName: "hud"
         anchors.fill: parent
+        // The controls keep clear of the notch and the rounded corners of a phone, the map not (E-55).
+        anchors.leftMargin: window.contentItem.SafeArea.margins.left
+        anchors.rightMargin: window.contentItem.SafeArea.margins.right
         visible: window.page === Main.Page.Game
         game: session
         scene: gameScene
         heroSpeaks: gameSettings.heroSpeaks
+        guiding: guide.visible
         controlScale: window.controlScale
         best: window.best
         onLeave: {
@@ -111,6 +115,8 @@ Window {
 
     // Over the HUD, beside it: what lies under a dropped card stays the HUD's own question.
     Guide {
+        id: guide
+
         anchors.fill: parent
         game: session
         unit: hud.unit

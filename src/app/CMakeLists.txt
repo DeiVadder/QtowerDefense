@@ -26,7 +26,14 @@ elseif(APPLE)
         set_source_files_properties(ios/Assets.xcassets PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
         target_sources(QtowerDefense PRIVATE ios/Assets.xcassets)
         set_target_properties(QtowerDefense PROPERTIES
-            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon")
+            XCODE_ATTRIBUTE_ASSETCATALOG_COMPILER_APPICON_NAME "AppIcon"
+            # The game is drawn for landscape (E-55).
+            MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/ios/Info.plist.in")
+        # The sounds play through AVFoundation. The FFmpeg backend of Qt Multimedia has no build
+        # for the simulator and would only make the app bigger.
+        if(TARGET Qt6::QFFmpegMediaPlugin)
+            qt_import_plugins(QtowerDefense EXCLUDE Qt6::QFFmpegMediaPlugin)
+        endif()
     else()
         set(qtd_icon macos/qtowerdefense.icns)
         set_source_files_properties(${qtd_icon} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
@@ -64,7 +71,7 @@ elseif(EMSCRIPTEN)
     add_custom_target(qtd_web_page ALL
         DEPENDS "${qtd_web_dir}/index.html" "${qtd_web_dir}/qtowerdefense.png")
 elseif(ANDROID)
-    # The manifest comes from Qt's template, the folder adds only the launcher icons.
+    # The folder holds Qt's manifest, set to landscape (E-55), and the launcher icons.
     math(EXPR qtd_version_code
          "${PROJECT_VERSION_MAJOR} * 10000 + ${PROJECT_VERSION_MINOR} * 100 + ${PROJECT_VERSION_PATCH}")
     set_target_properties(QtowerDefense PROPERTIES
