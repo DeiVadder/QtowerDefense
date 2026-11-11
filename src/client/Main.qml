@@ -103,12 +103,23 @@ Window {
         heroSpeaks: gameSettings.heroSpeaks
         controlScale: window.controlScale
         best: window.best
-        guide: !gameSettings.guided && !AppInfo.controlled // a program plays by itself
-        onGuided: gameSettings.guided = true
         onLeave: {
             window.keepRounds();
             window.page = Main.Page.World;
         }
+    }
+
+    // Over the HUD, beside it: what lies under a dropped card stays the HUD's own question.
+    Guide {
+        anchors.fill: parent
+        game: session
+        unit: hud.unit
+        targets: hud.guideTargets
+        // A program plays by itself under --control.
+        wanted: !gameSettings.guided && !AppInfo.controlled && hud.visible && !hud.gameOver &&
+                !hud.failed
+
+        onFinished: gameSettings.guided = true
     }
 
     WorldMap {

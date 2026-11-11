@@ -16,16 +16,35 @@ Item {
 
         Item {
             property alias hud: hud
+            property alias guide: guide
+            property alias scene: scene
             property alias session: session
 
             anchors.fill: parent
+
+            MainScene {
+                id: scene
+
+                anchors.fill: parent
+                game: session
+            }
 
             Hud {
                 id: hud
 
                 anchors.fill: parent
                 game: session
-                guide: true
+                scene: scene
+            }
+
+            Guide {
+                id: guide
+
+                anchors.fill: parent
+                game: session
+                unit: hud.unit
+                targets: hud.guideTargets
+                wanted: true
             }
 
             GameSession {
@@ -40,7 +59,7 @@ Item {
         id: spyComponent
 
         SignalSpy {
-            signalName: "guided"
+            signalName: "finished"
         }
     }
 
@@ -55,7 +74,7 @@ Item {
         }
 
         function guideOf(game) {
-            return findChild(game.hud, "guideSign").parent;
+            return game.guide;
         }
 
         function centerOf(item, root) {
@@ -64,7 +83,7 @@ Item {
 
         // The ring lies around the control the step is about.
         function ringsAround(game, name) {
-            const ring = findChild(game.hud, "guideRing");
+            const ring = findChild(game.guide, "guideRing");
             const target = centerOf(findChild(game.hud, name), ring.parent);
             return ring.visible && target.x > ring.x && target.x < ring.x + ring.width && target.y
                     > ring.y && target.y < ring.y + ring.height;
@@ -75,14 +94,14 @@ Item {
             verify(guideOf(game).visible);
             verify(game.session.paused);
             tryVerify(() => ringsAround(game, "rollButton"));
-            compare(findChild(game.hud, "guideText").text,
+            compare(findChild(game.guide, "guideText").text,
                     "Towers come as cards. Tap the dice to roll for one.");
         }
 
         function test_eachStepWaitsForThePlayer() {
             const game = create();
             const spy = createTemporaryObject(spyComponent, stage, {
-                                                  target: game.hud
+                                                  target: game.guide
                                               });
             const guide = guideOf(game);
             mouseClick(findChild(game.hud, "rollButton"));
@@ -93,7 +112,7 @@ Item {
             tryVerify(() => ringsAround(game, "rotateButton"));
             mouseClick(findChild(game.hud, "rotateButton"));
             compare(guide.step, Guide.Build);
-            tryVerify(() => !findChild(game.hud, "guideRing").visible); // the whole map is meant
+            tryVerify(() => !findChild(game.guide, "guideRing").visible); // the whole map is meant
             verify(game.session.paused);
             verify(game.session.buildTower(4, 4));
             compare(guide.step, Guide.Start);
@@ -124,16 +143,28 @@ Item {
             compare(guide.step, Guide.Turn);
             wait(2 * Theme.swingTime + Theme.swingRest
                  + 50); // a swinging sign is not where it seems
-            mouseClick(findChild(game.hud, "guideNext"));
+            mouseClick(findChild(game.guide, "guideNext"));
             compare(guide.step, Guide.Build);
         }
 
+        // The guide lies over the map, yet a card dragged onto the map still builds there.
+        function test_aDroppedCardBuildsDuringTheGuide() {
+            const game = create();
+            verify(game.session.buyCard(0));
+            game.session.chooseCard(0);
+            const spot = game.scene.cellOnScreen(4, 4);
+            findChild(game.hud, "towerList").dropped(spot.x, spot.y);
+            compare(game.session.towerCount, 1);
+            compare(guideOf(game).step, Guide.Start);
+        }
+
+        // Skipping leaves the game as the player had it before the guide stopped it.
         function test_skippingLetsTheGameRun() {
             const game = create();
             const spy = createTemporaryObject(spyComponent, stage, {
-                                                  target: game.hud
+                                                  target: game.guide
                                               });
-            mouseClick(findChild(game.hud, "guideSkip"));
+            mouseClick(findChild(game.guide, "guideSkip"));
             compare(spy.count, 1);
             verify(!guideOf(game).visible);
             verify(!game.session.paused);
@@ -141,10 +172,10 @@ Item {
 
         function test_withoutTheWishThereIsNoGuide() {
             const game = create();
-            game.hud.guide = false;
+            game.guide.wanted = false;
             verify(!guideOf(game).visible);
             game.session.paused = false;
-            game.hud.guide = true; // a new wish starts at the beginning
+            game.guide.wanted = true; // a new wish starts at the beginning
             compare(guideOf(game).step, Guide.Roll);
             verify(game.session.paused);
         }

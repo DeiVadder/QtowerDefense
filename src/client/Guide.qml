@@ -20,17 +20,15 @@ Item {
 
     required property GameSession game
     required property real unit
-    property bool wanted:
-        false // the HUD wants the guide: a game on the screen, never guided before
-    property Item rollTarget: null
-    property Item handTarget: null
-    property Item turnTarget: null
-    property Item startTarget: null
+    // A game on the screen that was never guided before.
+    property bool wanted: false
+    property list<Item> targets: [] // the dice, the hand, the rotate button, the pause button
 
     property bool running: false
     property int step: Guide.Step.Roll
     property int rotationAtTurn: 0
     property bool built: false
+    property bool pausedBefore: false // how the player had the game when the guide began
     property rect hole: Qt.rect(0, 0, 0, 0)
 
     readonly property list<string> lines: [qsTr(
@@ -57,6 +55,7 @@ Item {
         built = false;
         step = Guide.Step.Roll;
         running = true;
+        pausedBefore = game.paused;
         game.paused = true;
         settle();
     }
@@ -71,7 +70,7 @@ Item {
     }
 
     function targetOf(which: int): Item {
-        return [rollTarget, handTarget, turnTarget, null, startTarget][which] ?? null;
+        return [targets[0], targets[1], targets[2], null, targets[3]][which] ?? null;
     }
 
     function done(which: int): bool {
@@ -208,7 +207,8 @@ Item {
 
         objectName: "guideSign"
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height * 0.3 // below the words of the hero
+        // Below the words of the hero; while building, higher, to leave the middle of the map free.
+        y: parent.height * (root.step === Guide.Step.Build ? 0.12 : 0.3)
         width: Math.min(root.unit * 11, parent.width - 2 * root.unit * Theme.gap)
         height: words.height + buttons.height + 3 * root.unit * Theme.gap + chain
         unit: root.unit
@@ -261,7 +261,7 @@ Item {
                 unit: root.unit
                 text: qsTr("Skip the guide")
                 onClicked: {
-                    root.game.paused = false; // as if the guide had never stopped the game
+                    root.game.paused = root.pausedBefore; // as if the guide had never stopped it
                     root.finish();
                 }
             }

@@ -68,7 +68,7 @@
     </message>
     <message>
         <source>Now tap a free field beside the path to build there. You can also drag the card onto the map.</source>
-        <translation>Tippe jetzt auf ein freies Feld neben dem Weg, um dort zu bauen. Du kannst die Karte auch auf die Karte ziehen.</translation>
+        <translation>Tippe jetzt auf ein freies Feld neben dem Weg, um dort zu bauen. Du kannst die Karte auch auf das Spielfeld ziehen.</translation>
     </message>
     <message>
         <source>The enemies wait for you. Tap play when you are ready. Good luck!</source>
