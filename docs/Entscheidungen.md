@@ -501,3 +501,16 @@ Wunsch des Menschen (2026-11-11): Bisher schoss jeder Turm dieselbe Kugel in der
 - **Ids im Code:** `shotLookOf` erkennt die Türme des Katalogs an ihrer Id, wie `IconPaths.js` und `TowerCard.qml`. Das ist Absicht: Das Aussehen gehört zum Client, nicht in die Inhalte der Simulation. Ein neuer Turm ohne Eintrag bekommt das Aussehen seiner Schadensart.
 - **Grenzen:** Ein Schuss fliegt zum jeweils nächsten Gegner, das Ziel wird nicht gemerkt; ein Fels kann im Flug zu einem anderen Gegner wechseln, der Staub wandert mit. Stirbt der letzte Gegner, verschwinden Schüsse und Staub sofort.
 - **Geprüft:** `tst_client_shot_looks` (kein Turm des Katalogs sieht aus wie ein anderer, Start über den Mauern, Fels und Staub, Salve, Rückstoß) und Screenshots über `--control` mit allen sieben Türmen an einem Weg (macOS).
+
+## E-53 Einführung im ersten Spiel
+
+Wunsch des Menschen (2026-11-11): Beim ersten Start wird man „stumpf ins Spiel geworfen“; es braucht eine Führung: hier würfeln, hier wählen, hier drehen, hier bauen.
+
+- **Ablauf:** `Guide.qml` über dem HUD (in `Main.qml`, neben dem HUD, damit es nicht als Teil des HUD eine gezogene Karte abfängt) führt durch fünf Schritte: würfeln, Karte wählen, drehen, bauen, Zeit starten. Jeder Schritt zeigt auf sein Bedienelement (Ring in der Akzentfarbe, Rest abgedunkelt) und erklärt es auf einem Schild im Stil der Heldensprüche. Beim Bauen ist die ganze Karte gemeint, dort fehlt der Ring.
+- **Warten statt Weiterklicken:** Ein Schritt endet, wenn der Spieler ihn getan hat, erkannt am Zustand von `GameSession` (Hand, gewählte Karte, Drehung, gebauter Turm, Pause). Wer mehr auf einmal tut, etwa direkt eine Karte auf die Karte zieht, überspringt die erledigten Schritte. Nur das Drehen hat „Weiter“, weil es nicht nötig ist. „Einführung überspringen“ beendet sie jederzeit und lässt das Spiel, wie es vor der Führung war. Beim Bauen rückt das Schild nach oben, damit die Mitte der Karte frei bleibt.
+- **Pause:** Die Führung hält das Spiel an, bis der Spieler im letzten Schritt selbst auf Start tippt. So läuft keine Welle, während er liest.
+- **Nur einmal:** `GameSettings.guided` merkt sich, dass die Führung fertig oder übersprungen ist. Wer das erste Spiel vorher verlässt, bekommt sie im nächsten von vorn. Unter `--control` gibt es keine Führung, dort spielt ein Programm.
+- **Nicht blockierend:** Die Abdunklung nimmt keine Eingaben, nur das Schild. Der Ring folgt seinem Ziel in jedem Bild (`FrameAnimation`), weil die Hand wächst und sich das Fenster ändert.
+- **Neu in `GameSession`:** `selectedRotation`, die Drehung des Turms in der Hand, für den Schritt „drehen“ (bei einem Turm aus einem Feld ändert sich die Form nicht).
+- **Offen:** Ein Knopf in den Einstellungen, der die Führung erneut zeigt, fehlt; bis dahin `guided=false` in `settings.ini`.
+- **Geprüft:** `tst_guide.qml` (Start pausiert und zeigt auf den Würfel, jeder Schritt wartet, vorauseilen, Drehen auslassen, überspringen, neuer Wunsch beginnt von vorn) und Bilder der Schritte aus dem Test auf macOS.

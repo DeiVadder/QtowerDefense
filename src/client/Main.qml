@@ -109,6 +109,19 @@ Window {
         }
     }
 
+    // Over the HUD, beside it: what lies under a dropped card stays the HUD's own question.
+    Guide {
+        anchors.fill: parent
+        game: session
+        unit: hud.unit
+        targets: hud.guideTargets
+        // A program plays by itself under --control.
+        wanted: !gameSettings.guided && !AppInfo.controlled && hud.visible && !hud.gameOver &&
+                !hud.failed
+
+        onFinished: gameSettings.guided = true
+    }
+
     WorldMap {
         objectName: "worldMap"
         anchors.fill: parent

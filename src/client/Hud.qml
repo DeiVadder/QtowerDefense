@@ -22,6 +22,8 @@ Item {
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
     readonly property bool gameOver: game.won || game.lost
     readonly property bool failed: game.error.length > 0
+    // What the guide of the first game points at, step by step (E-53).
+    readonly property list<Item> guideTargets: [rollButton, towerList, rotateButton, pauseButton]
     // Content may bring more spells than this client has words for: they keep their id.
     readonly property var spellNames: ({
                                            meteor: qsTr("Meteor"),
@@ -233,6 +235,8 @@ Item {
         height: hero.compact ? button : hero.size + hero.ring
 
         HudButton {
+            id: pauseButton
+
             objectName: "pauseButton"
             x: topButtons.placed(0).x
             y: topButtons.placed(0).y
@@ -456,6 +460,8 @@ Item {
         spacing: root.unit * Theme.gap
 
         HudButton {
+            id: rollButton
+
             objectName: "rollButton"
             unit: root.unit
             icon: "dice"
@@ -526,6 +532,8 @@ Item {
         }
 
         HudButton {
+            id: rotateButton
+
             objectName: "rotateButton"
             unit: root.unit
             icon: "rotate"
