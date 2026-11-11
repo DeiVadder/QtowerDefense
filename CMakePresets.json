@@ -51,7 +51,7 @@
         },
         {
             "name": "macos",
-            "displayName": "macOS app bundle for Apple Silicon and Intel (E-46, E-49)",
+            "displayName": "macOS app bundle for Apple Silicon and Intel (E-46, E-50)",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
@@ -64,7 +64,7 @@
         },
         {
             "name": "linux",
-            "displayName": "Linux desktop, release (E-49)",
+            "displayName": "Linux desktop, release (E-50)",
             "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {

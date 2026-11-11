@@ -1,4 +1,4 @@
-# Builds the game for Windows, macOS, Linux and the browser (E-49).
+# Builds the game for Windows, macOS, Linux and the browser (E-50).
 # - Every push and pull request: build, the core and automation tests, a package for each platform.
 # - Push to main: the browser build goes to GitHub Pages (E-47).
 # - Tag v*: a GitHub release with the four packages, the notes come from CHANGELOG.md.
@@ -87,10 +87,14 @@ jobs:
         run: |
           pip install "aqtinstall==$AQT_VERSION" ninja
           read -ra modules <<< "$QT_MODULES_DESKTOP"
-          # The log shows the names aqt offers, should the arch below be wrong.
-          aqt list-qt ${{ matrix.aqt_host }} desktop --arch "$QT_VERSION"
-          aqt install-qt ${{ matrix.aqt_host }} desktop "$QT_VERSION" ${{ matrix.aqt_arch }} \
-            -m "${modules[@]}" -O "$RUNNER_TEMP/Qt"
+          if [ "$RUNNER_OS" = Windows ]; then
+            # aqt 3.3.0 cannot read the Windows repository of Qt 6.12, see the script.
+            python .github/scripts/install_qt_windows.py "$QT_VERSION" ${{ matrix.qt_dir }} \
+              "$RUNNER_TEMP/Qt" "${modules[@]}"
+          else
+            aqt install-qt ${{ matrix.aqt_host }} desktop "$QT_VERSION" ${{ matrix.aqt_arch }} \
+              -m "${modules[@]}" -O "$RUNNER_TEMP/Qt"
+          fi
           echo "QTD_QT_DIR=$RUNNER_TEMP/Qt/$QT_VERSION/${{ matrix.qt_dir }}" >> "$GITHUB_ENV"
           # Windows finds the Qt DLLs of the tests through the PATH, like scripts/env.cmd does.
           if [ "$RUNNER_OS" = Windows ]; then
