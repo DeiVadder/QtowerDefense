@@ -81,6 +81,17 @@
                 "ANDROID_SDK_ROOT": "$env{ANDROID_SDK_ROOT}",
                 "ANDROID_NDK_ROOT": "$env{ANDROID_NDK_ROOT}"
             }
+        },
+        {
+            "name": "wasm",
+            "displayName": "WebAssembly for the browser, single-threaded (E-47)",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "toolchainFile": "$env{QTD_QT_WASM_DIR}/lib/cmake/Qt6/qt.toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "MinSizeRel",
+                "QT_HOST_PATH": "$env{QTD_QT_DIR}"
+            }
         }
     ],
     "buildPresets": [
@@ -91,7 +102,8 @@
         { "name": "coverage", "configurePreset": "coverage" },
         { "name": "macos", "configurePreset": "macos" },
         { "name": "ios", "configurePreset": "ios", "configuration": "Release" },
-        { "name": "android", "configurePreset": "android", "targets": ["apk"] }
+        { "name": "android", "configurePreset": "android", "targets": ["apk"] },
+        { "name": "wasm", "configurePreset": "wasm" }
     ],
     "testPresets": [
         {

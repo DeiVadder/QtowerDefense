@@ -1,6 +1,11 @@
 qt_add_executable(QtowerDefense WIN32 MACOSX_BUNDLE main.cpp)
 target_link_libraries(QtowerDefense PRIVATE qtd_client qtd_clientplugin)
 qtd_set_strict_warnings(QtowerDefense)
+# The program has no QML of its own. Static Qt (browser, iOS) and the Android packaging find the QML
+# modules to bring along only by scanning the QML of the client.
+set_target_properties(QtowerDefense PROPERTIES
+    QT_QML_ROOT_PATH "${PROJECT_SOURCE_DIR}/src/client"
+    QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS "${PROJECT_SOURCE_DIR}/src/client")
 
 # The name of the app on Apple and Android. Change it before the first upload to a store: the stores
 # keep an app by it (E-46).
@@ -28,6 +33,13 @@ elseif(APPLE)
         target_sources(QtowerDefense PRIVATE ${qtd_icon})
         set_target_properties(QtowerDefense PROPERTIES MACOSX_BUNDLE_ICON_FILE qtowerdefense.icns)
     endif()
+elseif(EMSCRIPTEN)
+    # The saves live in the IndexedDB of the browser (E-47).
+    target_sources(QtowerDefense PRIVATE web_storage.cpp web_storage.h)
+    target_link_options(QtowerDefense PRIVATE -lidbfs.js)
+    # EM_ASM writes JavaScript, and its $0 is no C++ name.
+    set_source_files_properties(web_storage.cpp PROPERTIES
+        COMPILE_OPTIONS -Wno-dollar-in-identifier-extension)
 elseif(ANDROID)
     # The manifest comes from Qt's template, the folder adds only the launcher icons.
     math(EXPR qtd_version_code

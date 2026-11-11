@@ -36,8 +36,14 @@ Window {
         }
     }
 
+    // Without windows of its own (phones, the browser) the game fills the screen or the page (E-47).
     function applyFullScreen() {
-        if (AppInfo.windowed && visible) {
+        if (!visible) {
+            return;
+        }
+        if (!AppInfo.windowed) {
+            visibility = Window.FullScreen;
+        } else {
             visibility = gameSettings.fullScreen ? Window.FullScreen : Window.Windowed;
         }
     }

@@ -28,7 +28,7 @@ QString AppInfo::windowTitle() const
 
 bool AppInfo::windowed()
 {
-#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS)
+#if defined(Q_OS_ANDROID) || defined(Q_OS_IOS) || defined(Q_OS_WASM)
     return false;
 #else
     return true;

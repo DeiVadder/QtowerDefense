@@ -13,6 +13,10 @@
 #include <QStandardPaths>
 #include <QtQml/qqmlextensionplugin.h>
 
+#ifdef Q_OS_WASM
+#include "web_storage.h"
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <memory>
@@ -51,6 +55,9 @@ void useSaveFile(const QQmlApplicationEngine &engine)
 int run(int argc, char *argv[], bool *controlled)
 {
     qtd::client::configureGraphics();
+    // The folder of settings and saves is named after it. The browser has no program file to take
+    // the name from and calls every program "this.program".
+    QCoreApplication::setApplicationName(u"QtowerDefense"_s);
     const QGuiApplication app(argc, argv);
     QGuiApplication::setWindowIcon(QIcon(u":/assets/icon.png"_s));
 
@@ -67,7 +74,18 @@ int run(int argc, char *argv[], bool *controlled)
         Qt::QueuedConnection);
     *controlled = parser.isSet(u"control"_s);
     qtd::client::AppInfo::setControlled(*controlled); // before the window: no intro (E-42)
+#ifdef Q_OS_WASM
+    // The settings and saves of the last visit come from the browser first (E-47). exec() does not
+    // return in the browser, the engine on this stack stays.
+    qtd::app::openWebStorage(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation),
+                             [&engine] {
+                                 engine.loadFromModule("QtowerDefense.Client", "Main");
+                                 useSaveFile(engine);
+                             });
+    return QGuiApplication::exec();
+#else
     engine.loadFromModule("QtowerDefense.Client", "Main");
+#endif
 
     if (!*controlled) {
         useSaveFile(engine);

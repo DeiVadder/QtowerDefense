@@ -1,10 +1,21 @@
 qt_add_library(qtd_client STATIC)
+if(QTD_SOUND)
+    set(qtd_sounds GameSounds.qml)
+    set(qtd_sound_module QtMultimedia)
+    set(qtd_sound_library Qt6::Multimedia)
+else()
+    # The same type without sound, for builds without Qt Multimedia (E-47).
+    set_source_files_properties(silent/GameSounds.qml PROPERTIES QT_RESOURCE_ALIAS GameSounds.qml)
+    set(qtd_sounds silent/GameSounds.qml)
+    set(qtd_sound_module "")
+    set(qtd_sound_library "")
+endif()
 set_source_files_properties(Theme.qml PROPERTIES QT_QML_SINGLETON_TYPE TRUE)
 qt_add_qml_module(qtd_client
     URI QtowerDefense.Client
     VERSION 1.0
     CLASS_NAME QtowerDefenseClientPlugin
-    DEPENDENCIES QtQuick3D QtMultimedia
+    DEPENDENCIES QtQuick3D ${qtd_sound_module}
     SOURCES
         app_info.cpp app_info.h
         game_session.cpp game_session_cards.cpp game_session_looks.cpp game_session_save.cpp game_session.h
@@ -19,9 +30,9 @@ qt_add_qml_module(qtd_client
         terrain_picture.cpp terrain_picture.h
         translation.cpp translation.h
         world_session.cpp world_session.h
-    QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml EndPanel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml GameSettings.qml RenderQuality.qml MainMenu.qml SettingsPanel.qml SplashScreen.qml WordSign.qml ChainSign.qml
+    QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml EndPanel.qml FramedPanel.qml GameIcon.qml ${qtd_sounds} Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml GameSettings.qml RenderQuality.qml MainMenu.qml SettingsPanel.qml SplashScreen.qml WordSign.qml ChainSign.qml
         IconPaths.js Main.qml MainScene.qml Theme.qml TowerCard.qml WorldMap.qml WorldPainting.qml WorldScene.qml)
-target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
+target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D ${qtd_sound_library})
 # rhi/qrhi.h, only for the GPU time of a frame.
 target_link_libraries(qtd_client PRIVATE Qt6::GuiPrivate)
 qtd_set_strict_warnings(qtd_client)
@@ -59,7 +70,9 @@ qt_add_resources(qtd_client "qtd_assets"
     FILES ${qtd_assets})
 
 # Generated code of qmlcachegen is third-party code in the sense of the warning rule: C4702 comes
-# from Qt templates that it instantiates, not from anything in this project.
-get_target_property(qtd_client_sources qtd_client SOURCES)
-list(FILTER qtd_client_sources INCLUDE REGEX "/\\.rcc/qmlcache/.*\\.cpp$")
-set_source_files_properties(${qtd_client_sources} PROPERTIES COMPILE_OPTIONS /wd4702)
+# from Qt templates that it instantiates, not from anything in this project. Only MSVC knows it.
+if(MSVC)
+    get_target_property(qtd_client_sources qtd_client SOURCES)
+    list(FILTER qtd_client_sources INCLUDE REGEX "/\\.rcc/qmlcache/.*\\.cpp$")
+    set_source_files_properties(${qtd_client_sources} PROPERTIES COMPILE_OPTIONS /wd4702)
+endif()

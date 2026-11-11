@@ -422,3 +422,22 @@ Auftrag des Menschen (2026-11-09): die drei Plattformen vorbereiten, ohne etwas 
 - **Apple:** Die `Info.plist` erzeugen CMake und Qt aus den Eigenschaften `MACOSX_BUNDLE_*`.
 - **Presets:** `macos`, `ios` und `android`, die Pfade kommen aus Umgebungsvariablen (`docs/Building.md`).
 - **Offen für die Mobile-Prüfung:** Ausrichtung (heute dreht sich das Spiel mit dem Gerät; ob Hochformat taugt, ist ungeprüft), sichere Bereiche um Notch und Kamera, Signieren, Shader-Kosten auf echten Geräten, AAB für den Play Store.
+
+## E-47 Das Spiel im Browser (WebAssembly)
+
+Wunsch des Menschen (2026-11-09): ein Build für den Browser auf GitHub Pages. Am selben Tag hier gebaut (Emscripten in `C:\dev\emsdk`, Qt für WebAssembly über `aqt`) und im eingebauten Browser gespielt: Menü, Weltkarte, Karte mit 3D-Landschaft und Gegnern laufen, die Einstellungen kommen nach dem Neuladen aus IndexedDB zurück. Der Workflow für Pages selbst lief noch nie.
+
+- **Qt-Build:** Qt 6.12 für WebAssembly in der einsträngigen Variante (`wasm_singlethread`) mit Emscripten 5.0.5, der Version, mit der Qt 6.12 gebaut ist (Qt-Doku „Qt for WebAssembly“). Einsträngig, weil Threads `SharedArrayBuffer` und damit die Header COOP und COEP brauchen, die GitHub Pages nicht setzt. Die Simulation braucht keine Threads; Qt Quick zeichnet dann im basic Render-Loop, mit dem Vorhang und Intro schon laufen (E-42).
+- **Speichern:** Im Browser liegt das Dateisystem im Speicher und ist nach dem Neuladen leer. `src/app/web_storage.cpp` hängt deshalb den Ordner der App-Daten (Einstellungen, Welt, laufendes Spiel) als IDBFS ein. Vor dem Laden des Fensters kommen die Dateien des letzten Besuchs aus IndexedDB zurück; das Programm wartet darauf mit einem Timer, denn ohne Asyncify kann es nicht blockieren. Geschrieben wird zuerst in den Speicher, alle fünf Sekunden und beim Verlassen der Seite nach IndexedDB. Wer die Seite in den Sekunden nach einem Speichern hart schließt, verliert also höchstens diese. Scheitert das Laden, schreibt der Besuch nichts zurück: Der Abgleich machte IndexedDB sonst so leer wie den Speicher.
+- **Wie ein Telefon:** `AppInfo.windowed` ist im Browser falsch. Es gibt keinen Knopf zum Beenden und keinen Vollbild-Schalter, die Qualität steht vorgegeben auf Mittel (E-45). Ohne eigene Fenster geht das Fenster auf Vollbild: im Browser füllt es die Seite statt als 1280×720 mit Titelleiste darin zu stehen, auf Telefonen verdeckt es die Statusleiste.
+- **Seite:** Qt schreibt neben das Programm eine HTML-Seite mit Loader. Der Workflow `.github/workflows/pages.yml` kopiert sie als `index.html` mit `.js`, `.wasm` und `qtloader.js` nach Pages. Er baut auf GitHub, nicht hier: Qt für Linux und für WebAssembly über `aqt`, Emscripten über `emsdk`. Er läuft nach einem Push auf `main` oder von Hand, nie gemacht. In den Einstellungen des Repositorys muss Pages auf „GitHub Actions“ stehen.
+- **Ohne Ton:** Qt 6.12 für WebAssembly enthält kein Qt Multimedia. `QTD_SOUND` ist dort aus, und `src/client/silent/GameSounds.qml` steht unter demselben Namen für den Typ mit Ton: dieselben Eigenschaften, kein Klang.
+- **Was der Bau gezeigt hat:**
+  - `QQuick3D::idealSurfaceFormat()` probiert einen OpenGL-Kontext und stürzt im Browser ab, weil es vor der Anwendung läuft. Dort setzt `configureGraphics()` nur Tiefe 24 und Stencil 8, WebGL 2 braucht keine Version.
+  - Statisches Qt bringt nur die QML-Module mit, die `qmlimportscanner` findet. Das Programm hat kein eigenes QML, deshalb zeigt `QT_QML_IMPORT_SCANNER_EXTRA_ROOT_PATHS` auf das QML des Clients; ohne fehlte `QtCore` (`Settings`). `QT_QML_ROOT_PATH` daneben ist dasselbe für die Android-Pakete.
+  - Der Name des Programms heißt im Browser `this.program`. `main.cpp` setzt ihn deshalb ausdrücklich, sonst hieße der Datenordner so.
+  - `/wd4702` für den Code von qmlcachegen gilt nur noch unter MSVC.
+- **Offen, mit Risiko:**
+  - Größe: Das `.wasm` hat optimiert 53 MB, davon 17 MB Assets. Der erste Start lädt lange und kompiliert die Shader im Browser.
+  - `wasm-opt` aus Emscripten stürzte hier zweimal ab und lief beim dritten Mal durch. Ob das am Rechner liegt (siehe die Abstürze von MSVC) oder an Binaryen, ist offen; auf GitHub zeigt es sich beim ersten Lauf.
+  - Bildrate im Browser und Verhalten auf Telefonen im Browser sind ungemessen.

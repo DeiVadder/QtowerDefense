@@ -15,7 +15,7 @@ class AppInfo : public QObject
     Q_PROPERTY(QString version READ version CONSTANT)
     Q_PROPERTY(QString windowTitle READ windowTitle CONSTANT)
     /// Whether the platform has windows that a player opens and closes, not apps that own the
-    /// screen (Android, iOS).
+    /// screen (Android, iOS) or a page of the browser (WebAssembly, E-47).
     Q_PROPERTY(bool windowed READ windowed CONSTANT)
     /// Whether bots or tools play through the control interface: no intro, no curtain (E-42).
     /// The program sets it before the first window.
