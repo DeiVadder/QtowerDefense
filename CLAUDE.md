@@ -3,7 +3,7 @@
 Fantasy-Tower-Defense mit Qt 6.12, CMake und Qt Quick 3D. Verbindlich ist [QtowerDefense-Agent-Auftrag.md](QtowerDefense-Agent-Auftrag.md). Den aktuellen Stand und den nächsten Schritt nennt `docs/FORTSCHRITT.md`, Entscheidungen stehen in `docs/Entscheidungen.md`.
 
 ## Git und Arbeitsablauf
-- Rein lokal, kein Push. Hauptlinie ist `dev`. Nach `main` merged nur der Mensch.
+- Hauptlinie ist `dev`. Nach `main` merged nur der Mensch. Push nur zum Mac (Remote `mac`, `dev` als `desktop/dev`), nie nach GitHub: Das macht der Agent auf dem Mac (E-49).
 - **Jede Etappe und jedes Feature bekommt einen eigenen Branch:** `feature/<Etappe>-<kurzname>` oder `feature/<kurzname>`. Nie direkt auf `dev` committen.
 - **Kein Merge ohne unabhängiges Review** durch einen neuen Subagenten, der den Code nicht geschrieben hat. Das gilt auch für kleine Änderungen.
 - Merge nach `dev` als Squash, ein Commit je Etappe (`Stage <Etappe>: ...`). Der Branch bleibt erhalten.

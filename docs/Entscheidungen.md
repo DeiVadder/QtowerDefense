@@ -452,3 +452,12 @@ Entscheidung des Menschen (2026-11-09): Der Code steht unter der GNU General Pub
 - **„Oder später":** Wie es die FSF empfiehlt. Qt steht nur unter Version 3 (`GPL-3.0-only`); das fertige Programm mit Qt wird deshalb unter Version 3 weitergegeben, unser Code allein darf später auch unter einer neueren Version stehen.
 - **Rechteinhaber:** „Copyright (C) 2026 The QtowerDefense authors", Wunsch des Menschen. Die Zeile steht in der README, über dem Hinweis auf die Lizenz.
 - **Offen:** ob Quelldateien Köpfe mit SPDX-Kennung bekommen. Bis dahin gilt, was die README sagt.
+
+## E-49 Push zum Mac
+
+Entscheidung des Menschen (2026-11-11): Der Stand geht über den Mac nach GitHub, wie bei QtCraft. Das ersetzt den Satz „rein lokal: keine Remotes, kein Push" aus dem Abschnitt Git des Auftrags.
+
+- **Weg:** Remote `mac` ist `qtcraft-mac:qtowerdefense-sync.git`, ein leeres Repository auf dem Mac. Der SSH-Zugang dorthin erlaubt nur Git, und das Repository nimmt nur Branches unter `desktop/` an. `dev` geht deshalb als `desktop/dev` hinüber: `git push mac dev:refs/heads/desktop/dev`.
+- **GitHub nur vom Mac:** Von hier geht nichts direkt nach GitHub. Der Agent auf dem Mac holt den Stand ab, legt das Repository auf GitHub an und bereitet das Release vor.
+- **Unverändert:** Gepusht wird nur `dev` nach einem Merge, keine Feature-Branches. Nach `main` merged nur der Mensch.
+- **Erster Push:** `dcf9d9f` mit Stage 13, ohne grüne volle Prüfung: Die Platte war voll, der Mensch wollte den Stand trotzdem auf dem Mac.
