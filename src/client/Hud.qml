@@ -346,6 +346,9 @@ Item {
         maxWidth: parent.width - 2 * (Math.max(placement.width, cardButtons.width) + root.unit
                                       * Theme.gap * 2)
         lowered: root.game.chosenSellValue >= 0
+        onHeldChanged: root.scene?.showGhostAt(held.x, held.y, dragging && root.childAt(held.x,
+                                                                                        held.y)
+                                               === null)
         onDropped: (x, y) => {
             // A card over the HUD goes back into the hand.
             if (root.scene !== null && root.childAt(x, y) === null) {

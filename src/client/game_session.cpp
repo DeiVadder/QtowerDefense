@@ -129,6 +129,13 @@ bool GameSession::buildTower(int x, int y)
     return true;
 }
 
+bool GameSession::canBuildAt(int x, int y) const
+{
+    return game_ && game_->simulation().check(
+                        core::BuildTowerCommand{{x, y}, selectedTower_, selectedRotation_}) ==
+                        core::CommandResult::Accepted;
+}
+
 bool GameSession::chooseTowerAt(int x, int y)
 {
     if (!game_) {

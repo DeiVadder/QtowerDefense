@@ -121,6 +121,22 @@ private slots:
         QVERIFY(!game.lost());
     }
 
+    // The ghost of a card asks before the build (E-54): the answer matches the build, and asking
+    // changes nothing.
+    static void askingWhereATowerFitsChangesNothing()
+    {
+        GameSession game;
+        game.startGame(mapFile(), 7);
+        QVERIFY(game.canBuildAt(10, 6));
+        QVERIFY(!game.canBuildAt(8, 4)); // the path
+        QVERIFY(!game.canBuildAt(-1, 0));
+        QCOMPARE(game.gold(), 120);
+        QCOMPARE(game.towerCount(), 0);
+        QVERIFY(game.buildTower(10, 6));
+        QVERIFY(!game.canBuildAt(10, 6)); // taken now
+        QVERIFY(!game.buildTower(10, 6));
+    }
+
     void aTowerCostsGoldAndStands()
     {
         GameSession game;

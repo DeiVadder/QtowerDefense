@@ -102,6 +102,9 @@ public:
     Q_INVOKABLE void restart();
     /// Puts a tower of the selected type on a cell, true if the game took the command.
     Q_INVOKABLE bool buildTower(int x, int y);
+    /// Whether buildTower(x, y) would build the chosen tower there, turned as chosen. Changes
+    /// nothing.
+    Q_INVOKABLE bool canBuildAt(int x, int y) const;
     /// Chooses the tower that takes this cell, true if there is one.
     Q_INVOKABLE bool chooseTowerAt(int x, int y);
     Q_INVOKABLE void clearChosenTower();

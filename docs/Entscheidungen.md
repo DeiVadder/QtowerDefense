@@ -514,3 +514,12 @@ Wunsch des Menschen (2026-11-11): Beim ersten Start wird man „stumpf ins Spiel
 - **Neu in `GameSession`:** `selectedRotation`, die Drehung des Turms in der Hand, für den Schritt „drehen“ (bei einem Turm aus einem Feld ändert sich die Form nicht).
 - **Offen:** Ein Knopf in den Einstellungen, der die Führung erneut zeigt, fehlt; bis dahin `guided=false` in `settings.ini`.
 - **Geprüft:** `tst_guide.qml` (Start pausiert und zeigt auf den Würfel, jeder Schritt wartet, vorauseilen, Drehen auslassen, überspringen, neuer Wunsch beginnt von vorn) und Bilder der Schritte aus dem Test auf macOS.
+
+## E-54 Geisterbild beim Platzieren
+
+Wunsch des Menschen (2026-11-11): Beim Platzieren eines Turms soll ein Geisterbild zeigen, wo er stehen wird.
+
+- **Bild:** Solange eine Karte gewählt ist, steht ihr Turm durchscheinend auf dem Feld unter dem Zeiger, auf jedem Feld seiner Form wie der gebaute Turm, gedreht wie gewählt. Darunter liegen Kacheln: grün, wo er gebaut werden kann, rot, wo nicht (Weg, Hindernis, besetzt, außerhalb, zu wenig Gold). Der rote Turm ist blasser.
+- **Wann:** Mit der Maus beim Überfahren der Karte (`HoverHandler`), mit dem Finger während eine Karte gezogen wird. Über dem HUD, außerhalb der Karte und ohne gewählte Karte gibt es kein Geisterbild. Ein Tipp auf die Karte baut wie bisher sofort; ein Tipp, der erst zeigt und dann baut, wäre ein Umbau der Bedienung und ist nicht Teil davon.
+- **Prüfung ohne Bauen:** `GameSession::canBuildAt` fragt `Simulation::check`, also dieselbe Regel wie der Bau, ohne den Zustand zu ändern.
+- **Geprüft:** `tst_client_game_session` (Antwort wie der Bau, ändert nichts), `tst_ghost.qml` (zeigt nur mit Karte, grün und rot, verschwindet mit der Karte und über dem HUD) und Bilder aus dem Test auf macOS.
