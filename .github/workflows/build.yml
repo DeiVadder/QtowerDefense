@@ -2,7 +2,7 @@
 # - Every push and pull request: build, the core and automation tests, a package for each platform.
 # - Push to main: the browser build goes to GitHub Pages (E-47).
 # - Tag v*: a GitHub release with the four packages, the notes come from CHANGELOG.md.
-# Never run so far: the first run shows whether the versions and Qt names below still fit.
+# First run 2026-11-11: macOS, Linux, browser and Pages green; Windows needed its own Qt installer.
 name: Build and release
 
 on:
