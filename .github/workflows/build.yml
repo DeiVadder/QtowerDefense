@@ -175,20 +175,17 @@ jobs:
           cmake --preset wasm
           cmake --build --preset wasm --target QtowerDefense
 
-      # Qt writes the page beside the program, index.html opens it at the address of the site.
-      # The build links Qt statically, so the page offers the source of both (GPL-3.0 §6, E-48).
+      # The build writes the game's own page beside the program (E-51), index.html opens it at the
+      # address of the site. It links Qt statically, so the page offers the source of both (E-48).
       - name: Page
-        env:
-          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
           ls -l build/wasm/bin
           mkdir -p site dist
-          notice="<div style=\"position:fixed;right:6px;bottom:4px;font:11px sans-serif;opacity:.7;z-index:10\"><a href=\"$SOURCE_URL\" style=\"color:#ccc\">Source (GPL-3.0-or-later)</a> &middot; <a href=\"https://download.qt.io/archive/qt/6.12/6.12.0/single/\" style=\"color:#ccc\">Qt 6.12.0 source</a></div>"
-          awk -v notice="$notice" '/<\/body>/ && !done { print notice; done = 1 } { print }' \
-            build/wasm/bin/QtowerDefense.html > site/index.html
+          cp build/wasm/bin/QtowerDefense.html site/index.html
           grep -q "Source (GPL-3.0-or-later)" site/index.html
-          cp build/wasm/bin/QtowerDefense.js build/wasm/bin/QtowerDefense.wasm build/wasm/bin/qtloader.js site/
-          cp build/wasm/bin/qtlogo.svg site/ || true
+          grep -q "Built with Qt" site/index.html
+          cp build/wasm/bin/QtowerDefense.js build/wasm/bin/QtowerDefense.wasm build/wasm/bin/qtloader.js \
+            build/wasm/bin/qtlogo.svg build/wasm/bin/qtowerdefense.png site/
           cp -r site "$QTD_PACKAGE"
           zip -r "dist/$QTD_PACKAGE.zip" "$QTD_PACKAGE"
 

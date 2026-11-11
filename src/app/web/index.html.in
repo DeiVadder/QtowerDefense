@@ -1,0 +1,245 @@
+<!doctype html>
+<!--
+  The page of the browser build (E-47, E-51). cmake/web_page.cmake writes it beside the program as
+  QtowerDefense.html and fills in the size of the .wasm, so the bar can show real progress.
+  SPDX-License-Identifier: GPL-3.0-or-later
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- One CSS pixel is one device independent pixel of Qt, as on Qt's own page. -->
+  <meta name="viewport" content="width=device-width, height=device-height, user-scalable=0">
+  <meta name="description" content="QtowerDefense, a fantasy tower defense game in 3D, built with Qt.">
+  <title>QtowerDefense</title>
+  <link rel="icon" type="image/png" href="qtowerdefense.png">
+  <style>
+    :root {
+      --wood: #6b4426; --wood-dark: #2f1c0f; --burnt: #22130a;
+      --iron: #4a4f54; --iron-light: #868d92; --iron-dark: #1e2124;
+      --text: #f4e3c1; --gold: #f2c23e; --accent: #2cde85; --danger: #ffc4bc;
+      --face: Rockwell, "Rockwell Nova", Georgia, "Times New Roman", serif;
+    }
+    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: var(--iron-dark); }
+    #screen { width: 100%; height: 100%; }
+
+    #loader {
+      position: fixed; inset: 0; z-index: 5;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 18px; padding: 16px; box-sizing: border-box;
+      color: var(--text); font-family: var(--face); text-align: center;
+      /* Stones of a castle wall, as behind the menu of the game. */
+      background:
+        radial-gradient(ellipse at center, rgba(0,0,0,0) 30%, rgba(0,0,0,.65) 100%),
+        repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 3px, transparent 3px 46px),
+        repeating-linear-gradient(90deg, rgba(0,0,0,.28) 0 3px, transparent 3px 92px),
+        linear-gradient(#34383c, #25292c);
+      transition: opacity .6s ease;
+    }
+    #loader.done { opacity: 0; pointer-events: none; }
+
+    .crest {
+      width: min(36vmin, 176px); height: auto; image-rendering: auto;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.6));
+      animation: bob 2.6s ease-in-out infinite;
+    }
+    @keyframes bob { 50% { transform: translateY(-8px); } }
+
+    h1 {
+      margin: 0; font-size: clamp(28px, 7vmin, 52px); letter-spacing: .02em; color: var(--gold);
+      text-shadow: 0 2px 0 var(--burnt), 0 0 18px rgba(242,194,62,.25);
+    }
+
+    /* A wooden sign with an iron frame, like the buttons of the game. */
+    .sign {
+      width: min(420px, 100%); box-sizing: border-box; padding: 14px 16px 12px;
+      background:
+        repeating-linear-gradient(0deg, rgba(0,0,0,.10) 0 2px, transparent 2px 9px),
+        linear-gradient(var(--wood), #5a381f);
+      border: 3px solid var(--iron); border-radius: 6px;
+      box-shadow: inset 0 0 0 1px var(--iron-light), inset 0 -4px 0 rgba(0,0,0,.25),
+                  0 8px 20px rgba(0,0,0,.5);
+    }
+    .bar {
+      height: 14px; border-radius: 7px; overflow: hidden;
+      background: var(--wood-dark); border: 2px solid var(--iron-dark);
+    }
+    .fill {
+      height: 100%; width: 0%; background: var(--accent);
+      box-shadow: 0 0 10px var(--accent), inset 0 2px 0 rgba(255,255,255,.35);
+      transition: width .25s ease-out;
+    }
+    .bar.unknown .fill { width: 30%; animation: sweep 1.4s ease-in-out infinite; }
+    @keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
+    #status { margin-top: 10px; font-size: 16px; min-height: 1.3em; }
+    #detail { font-size: 12px; opacity: .75; min-height: 1.2em; font-family: system-ui, sans-serif; }
+    #status.error { color: var(--danger); }
+
+    #tip {
+      max-width: min(420px, 100%); min-height: 2.6em; margin: 0;
+      font-size: 14px; font-style: italic; opacity: .85; transition: opacity .4s ease;
+    }
+
+    footer {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+      display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 4px 14px;
+      padding: 6px 12px; font: 11px system-ui, sans-serif; color: #c9c2b4;
+    }
+    footer a { color: #c9c2b4; }
+    footer .qt { display: inline-flex; align-items: center; gap: 6px; }
+    footer .qt img { height: 16px; width: auto; }
+    /* While the game runs, the footer keeps out of the way. */
+    body.running footer { left: auto; padding: 2px 6px; opacity: .55; }
+    body.running footer .qt { display: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .crest, .bar.unknown .fill { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="loader" role="status" aria-live="polite">
+    <img class="crest" src="qtowerdefense.png" width="256" height="256" alt="">
+    <h1>QtowerDefense</h1>
+    <div class="sign">
+      <div class="bar" id="bar"><div class="fill" id="fill"></div></div>
+      <div id="status">Opening the gates…</div>
+      <div id="detail"></div>
+    </div>
+    <p id="tip"></p>
+    <noscript><p>QtowerDefense needs JavaScript and WebGL 2.</p></noscript>
+  </div>
+  <div id="screen"></div>
+
+  <footer>
+    <span class="qt"><img src="qtlogo.svg" alt="Qt">Built with Qt @QTD_QT_VERSION@ for WebAssembly</span>
+    <a href="https://github.com/DeiVadder/QtowerDefense">Source (GPL-3.0-or-later)</a>
+    <a href="https://download.qt.io/archive/qt/@QTD_QT_MINOR@/@QTD_QT_VERSION@/single/">Qt @QTD_QT_VERSION@ source</a>
+  </footer>
+
+  <script>
+    const WASM_FILE = "QtowerDefense.wasm";
+    // Written by cmake/web_page.cmake; a gzip-compressing server reports a different length.
+    const WASM_BYTES = Number("@QTD_WASM_BYTES@") || 0;
+    const TIPS = [
+      "Turn a tower in quarter steps before you drop it on the grid.",
+      "Call the next wave early for bonus gold.",
+      "Keep up to five cards in your hand and roll the dice for new ones.",
+      "Every tower picks its target: first, last, strongest or nearest.",
+      "Poison stops enemies from regenerating.",
+      "Deep Freeze slows a whole crowd; Meteor ends it.",
+      "Win with all your lives for three stars.",
+      "In endless mode the waves never stop, only grow stronger.",
+    ];
+
+    const loader = document.getElementById("loader");
+    const bar = document.getElementById("bar");
+    const fill = document.getElementById("fill");
+    const status = document.getElementById("status");
+    const detail = document.getElementById("detail");
+    const tip = document.getElementById("tip");
+
+    let tipIndex = Math.floor(Math.random() * TIPS.length);
+    function nextTip() {
+      tip.style.opacity = 0;
+      setTimeout(() => { tip.textContent = TIPS[tipIndex++ % TIPS.length]; tip.style.opacity = .85; }, 400);
+    }
+    tip.textContent = TIPS[tipIndex++ % TIPS.length];
+    const tipTimer = setInterval(nextTip, 6000);
+
+    const mb = bytes => (bytes / 1048576).toFixed(1);
+    function progress(fraction) {
+      bar.classList.toggle("unknown", fraction === null);
+      if (fraction !== null) fill.style.width = `${Math.round(Math.min(fraction, 1) * 100)}%`;
+    }
+    function fail(text) {
+      clearInterval(tipTimer);
+      progress(0);
+      status.textContent = text;
+      status.classList.add("error");
+    }
+
+    function webGl2() {
+      try { return !!document.createElement("canvas").getContext("webgl2"); } catch { return false; }
+    }
+
+    // Downloads the program with progress. Without a readable stream the loader fetches it itself.
+    async function download() {
+      const response = await fetch(WASM_FILE);
+      if (!response.ok) throw new Error(`${WASM_FILE}: HTTP ${response.status}`);
+      const header = Number(response.headers.get("Content-Length")) || 0;
+      const encoded = (response.headers.get("Content-Encoding") || "identity") !== "identity";
+      const total = encoded ? WASM_BYTES : (header || WASM_BYTES);
+      if (!response.body || !response.body.getReader) return response.arrayBuffer();
+
+      const reader = response.body.getReader();
+      const chunks = [];
+      let received = 0;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.length;
+        progress(total ? received / total : null);
+        detail.textContent = total ? `${mb(received)} of ${mb(total)} MB` : `${mb(received)} MB`;
+      }
+      const binary = new Uint8Array(received);
+      let offset = 0;
+      for (const chunk of chunks) { binary.set(chunk, offset); offset += chunk.length; }
+      return binary.buffer;
+    }
+
+    async function init() {
+      if (!webGl2()) {
+        fail("This browser has no WebGL 2, which the game needs for its 3D world.");
+        return;
+      }
+      const screen = document.getElementById("screen");
+      try {
+        status.textContent = "Fetching the realm…";
+        progress(WASM_BYTES ? 0 : null);
+        let wasmBinary = null;
+        try {
+          wasmBinary = await download();
+        } catch (error) {
+          console.warn("Download with progress failed, the Qt loader tries itself:", error);
+        }
+
+        progress(null);
+        status.textContent = "Forging the towers…";
+        detail.textContent = "The browser compiles the game and its shaders, this takes a moment.";
+
+        const config = {
+          qt: {
+            containerElements: [screen],
+            entryFunction: window.QtowerDefense_entry,
+            onLoaded: () => {
+              clearInterval(tipTimer);
+              progress(1);
+              loader.classList.add("done");
+              document.body.classList.add("running");
+              setTimeout(() => loader.remove(), 700);
+            },
+            onExit: exit => {
+              loader.classList.remove("done");
+              document.body.classList.remove("running");
+              let text = "The game has ended";
+              if (exit.code !== undefined) text += ` with code ${exit.code}`;
+              if (exit.text !== undefined) text += ` (${exit.text})`;
+              fail(text + ". Reload the page to play again.");
+              detail.textContent = "";
+            },
+          },
+        };
+        if (wasmBinary) config.wasmBinary = wasmBinary;
+        await qtLoad(config);
+      } catch (error) {
+        console.error(error);
+        fail("The game could not start. Details are in the browser console.");
+        detail.textContent = String(error && error.message || error);
+      }
+    }
+    window.addEventListener("load", init);
+  </script>
+  <script src="QtowerDefense.js"></script>
+  <script src="qtloader.js"></script>
+</body>
+</html>

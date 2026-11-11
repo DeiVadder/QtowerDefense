@@ -40,6 +40,18 @@ elseif(EMSCRIPTEN)
     # EM_ASM writes JavaScript, and its $0 is no C++ name.
     set_source_files_properties(web_storage.cpp PROPERTIES
         COMPILE_OPTIONS -Wno-dollar-in-identifier-extension)
+    # The game's own loading page replaces the one Qt writes, the icon goes beside it (E-51).
+    add_custom_command(TARGET QtowerDefense POST_BUILD
+        COMMAND ${CMAKE_COMMAND}
+            -DTEMPLATE=${CMAKE_CURRENT_SOURCE_DIR}/web/index.html.in
+            -DWASM=$<TARGET_FILE_DIR:QtowerDefense>/QtowerDefense.wasm
+            -DOUTPUT=$<TARGET_FILE_DIR:QtowerDefense>/QtowerDefense.html
+            -DQT_VERSION=${Qt6_VERSION}
+            -P ${PROJECT_SOURCE_DIR}/cmake/web_page.cmake
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${PROJECT_SOURCE_DIR}/src/client/assets/icon.png
+            $<TARGET_FILE_DIR:QtowerDefense>/qtowerdefense.png
+        VERBATIM)
 elseif(ANDROID)
     # The manifest comes from Qt's template, the folder adds only the launcher icons.
     math(EXPR qtd_version_code
