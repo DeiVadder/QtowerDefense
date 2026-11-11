@@ -126,6 +126,7 @@ FramedPanel {
     Rectangle {
         id: frame
 
+        objectName: "worldFrame"
         anchors.fill: parent
         anchors.margins: root.unit * Theme.gap
         // Clear of the notch and the rounded corners of a phone (E-55).

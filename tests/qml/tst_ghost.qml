@@ -125,6 +125,10 @@ Item {
             compare(ghost.x, cell.x * game.scene.fieldSize);
             findChild(game.hud, "towerList").dropped(inHud.x, inHud.y);
             compare(game.scene.game.towerCount, 1);
+            // The card flies to the tower, not a notch beside it.
+            const flyer = findChild(game.hud, "flyingCard");
+            tryVerify(() => !flyer.visible);
+            fuzzyCompare(flyer.x + flyer.width / 2, inHud.x, 1);
             verify(!game.scene.game.canBuildAt(cell.x, cell.y)); // there, not a notch to the left
         }
 
