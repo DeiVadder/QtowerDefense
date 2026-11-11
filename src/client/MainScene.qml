@@ -11,6 +11,7 @@ View3D {
 
     readonly property real fieldSize: 50
     property real coinUnit: Theme.smallestUnit // the HUD knows how large a finger is
+    property alias quality: looks.quality
     readonly property real fieldOfView: 60
     readonly property real groundWidth: (game.gridSize.width + 2) * fieldSize
     readonly property real groundDepth: (game.gridSize.height + 2) * fieldSize
@@ -109,7 +110,10 @@ View3D {
     camera: sceneCamera
 
     environment: SceneEnvironment {
+        objectName: "sceneEnvironment"
         backgroundMode: SceneEnvironment.Color
+        antialiasingMode: looks.antialiasingMode
+        antialiasingQuality: looks.antialiasingQuality
         clearColor: landscape.sky
         fog: Fog {
             enabled: true
@@ -119,6 +123,10 @@ View3D {
                                                                  root.fieldOfView)
             depthFar: 3 * root.zoom * root.fitCameraDistance(root.groundExtent, root.fieldOfView)
         }
+    }
+
+    RenderQuality {
+        id: looks
     }
 
     LandscapeView {
@@ -178,12 +186,14 @@ View3D {
     }
 
     DirectionalLight {
+        objectName: "sun"
         eulerRotation.x: -50
         eulerRotation.y: -30
         ambientColor: "#505a60" // the far side of a model stays visible
-        castsShadow: true
+        castsShadow: looks.shadows
         shadowFactor: 55
-        shadowMapQuality: Light.ShadowMapQualityHigh
+        shadowMapQuality: looks.shadowMapQuality
+        softShadowQuality: looks.softShadowQuality
         shadowMapFar: 2500
     }
 

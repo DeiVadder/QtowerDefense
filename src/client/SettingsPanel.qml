@@ -2,8 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// The settings on a board: the loudness of the sounds, the words of the hero, the language, the size
-// of the controls and, where windows exist, the full screen. Every change is kept at once.
+// The settings on a board: the loudness of the sounds, the words of the hero, the language, the
+// size of the controls, the quality of the pictures and, where windows exist, the full screen.
+// Every change is kept at once.
 FramedPanel {
     id: root
 
@@ -55,15 +56,23 @@ FramedPanel {
         onClicked: root.close()
     }
 
-    // Rows placed by hand, they stand where they belong before the first frame.
-    Item {
+    // Rows placed by hand, they stand where they belong before the first frame. In a low window
+    // they scroll, a finger moves them up and down.
+    Flickable {
         id: rows
 
+        objectName: "settingsRows"
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: title.bottom
+        anchors.bottom: parent.bottom
         anchors.margins: root.unit * Theme.endMargin * 2
-        height: (AppInfo.windowed ? 5 : 4) * (root.row + root.unit * Theme.gap)
+        contentWidth: width
+        contentHeight: (AppInfo.windowed ? 6 : 5) * (root.row + root.unit * Theme.gap)
+        clip: true
+        interactive: contentHeight > height
+        flickableDirection: Flickable.VerticalFlick
+        boundsBehavior: Flickable.StopAtBounds
 
         Item {
             width: parent.width
@@ -118,8 +127,9 @@ FramedPanel {
                                            * Theme.chosenBorder)
                 }
 
-                // A finger needs more than the thin track.
-                MouseArea {
+                // A finger needs more than the thin track. The drag takes only sideways moves:
+                // up or down, the rows of a low window move (E-45).
+                Item {
                     function take(x: real) {
                         root.settings.volume = Math.round(Math.max(0, Math.min(1, x / track.width))
                                                           * 100);
@@ -128,9 +138,25 @@ FramedPanel {
                     anchors.fill: parent
                     anchors.topMargin: -root.row / 2
                     anchors.bottomMargin: -root.row / 2
-                    preventStealing: true
-                    onPressed: mouse => take(mouse.x)
-                    onPositionChanged: mouse => take(mouse.x)
+
+                    TapHandler {
+                        onTapped: eventPoint => parent.take(eventPoint.position.x)
+                    }
+
+                    DragHandler {
+                        target: null
+                        yAxis.enabled: false
+                        onActiveChanged: {
+                            if (active) {
+                                parent.take(centroid.position.x);
+                            }
+                        }
+                        onCentroidChanged: {
+                            if (active) {
+                                parent.take(centroid.position.x);
+                            }
+                        }
+                    }
                 }
             }
 
@@ -224,6 +250,33 @@ FramedPanel {
 
         Item {
             y: 4 * (root.row + root.unit * Theme.gap)
+            width: parent.width
+            height: root.row
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: qualityButton.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Quality of the pictures")
+            }
+
+            // Shadows and smooth edges on the map and the world map (E-45).
+            HudButton {
+                id: qualityButton
+
+                objectName: "qualityButton"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                unit: root.unit
+                width: root.unit * Theme.settingsChoice
+                text: [qsTr("Low"), qsTr("Medium"), qsTr("High")][root.settings.quality]
+                onClicked: root.settings.quality = (root.settings.quality + 1) % (GameSettings.High
+                                                                                  + 1)
+            }
+        }
+
+        Item {
+            y: 5 * (root.row + root.unit * Theme.gap)
             width: parent.width
             height: root.row
             visible: AppInfo.windowed

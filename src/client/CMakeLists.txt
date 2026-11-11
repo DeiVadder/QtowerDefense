@@ -19,7 +19,7 @@ qt_add_qml_module(qtd_client
         terrain_picture.cpp terrain_picture.h
         translation.cpp translation.h
         world_session.cpp world_session.h
-    QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml EndPanel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml GameSettings.qml MainMenu.qml SettingsPanel.qml SplashScreen.qml WordSign.qml ChainSign.qml
+    QML_FILES AssetModel.qml CardFlight.qml CardShop.qml CoinLayer.qml DiceRoll.qml EndPanel.qml FramedPanel.qml GameIcon.qml GameSounds.qml Ground.qml Hand.qml Hero.qml HeroFace.qml HeroVoice.qml Hud.qml HudButton.qml HudFrame.qml GameSettings.qml RenderQuality.qml MainMenu.qml SettingsPanel.qml SplashScreen.qml WordSign.qml ChainSign.qml
         IconPaths.js Main.qml MainScene.qml Theme.qml TowerCard.qml WorldMap.qml WorldPainting.qml WorldScene.qml)
 target_link_libraries(qtd_client PUBLIC qtd_core qtd_automation Qt6::Gui Qt6::Qml Qt6::Quick Qt6::Quick3D Qt6::Multimedia)
 # rhi/qrhi.h, only for the GPU time of a frame.

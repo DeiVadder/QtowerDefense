@@ -204,7 +204,7 @@ QtObject {
     readonly property real menuHero: 0.42 // of the width of the gate
     readonly property real menuHeroTop: 0.22
     readonly property int settingsSeed: 9
-    readonly property real settingsHeight: 9
+    readonly property real settingsHeight: 10.25
     readonly property real settingsRow: 1
     readonly property real settingsLabel: 2.2
     readonly property real settingsPercent: 1.6

@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtTest
+import QtQuick3D
 import QtowerDefense.Client
 
 // How the HUD turns and offers towers. TestCase itself is invisible: what should render or take input needs a visible parent.
@@ -71,6 +72,58 @@ Item {
         function cleanup() {
             stage.width = 640;
             stage.height = 360;
+        }
+
+        function test_theQualityTurnsShadowsAndEdgesOnAndOff_data() {
+            return [
+                        {
+                            tag: "low",
+                            quality: GameSettings.Low,
+                            shadows: false,
+                            edges: SceneEnvironment.NoAA
+                        },
+                        {
+                            tag: "medium",
+                            quality: GameSettings.Medium,
+                            shadows: true,
+                            shadowMap: Light.ShadowMapQualityMedium,
+                            softness: Light.Hard,
+                            edges: SceneEnvironment.MSAA,
+                            edgeQuality: SceneEnvironment.Medium
+                        },
+                        {
+                            tag: "high",
+                            quality: GameSettings.High,
+                            shadows: true,
+                            shadowMap: Light.ShadowMapQualityHigh,
+                            softness: Light.PCF4,
+                            edges: SceneEnvironment.MSAA,
+                            edgeQuality: SceneEnvironment.High
+                        }
+                    ];
+        }
+
+        // Each step draws the map without a crash, and the tap still finds its cell.
+        function test_theQualityTurnsShadowsAndEdgesOnAndOff(data) {
+            const game = createTemporaryObject(gameComponent, stage);
+            game.scene.quality = data.quality;
+            const sun = findChild(game.scene, "sun");
+            compare(sun.castsShadow, data.shadows);
+            if (data.shadows) {
+                compare(sun.shadowMapQuality, data.shadowMap);
+                compare(sun.softShadowQuality, data.softness);
+            }
+            compare(game.scene.environment.antialiasingMode, data.edges);
+            if (data.edgeQuality !== undefined) {
+                compare(game.scene.environment.antialiasingQuality, data.edgeQuality);
+            }
+            waitForRendering(game.scene);
+            const session = game.scene.game;
+            session.buyCard(0);
+            session.chooseCard(0);
+            const place = game.scene.cellOnScreen(4, 4);
+            mouseClick(game.scene, place.x, place.y);
+            compare(session.towerCount, 1);
         }
 
         // A tap on a tower chooses it, the next tap elsewhere only lets go of it.

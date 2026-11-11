@@ -399,3 +399,13 @@ Aus Etappe 13 (UI-Skalierung, 2026-11-09). Die Einheit von HUD und Weltkarte war
 - **Einstellung:** `GameSettings.controlSize` mit den Stufen Klein, Normal und Groß (`enum ControlSize`), im Einstellungsbrett als Knopf, der die Stufen durchläuft. Die Faktoren 0,8, 1 und 1,25 stehen in `Theme.controlScales`. Werte außerhalb der Stufen aus der INI-Datei werden zurückgeholt.
 - **Rechnung:** `Theme.hudUnit` multipliziert Fingerbreite oder Untergrenze mit dem Faktor, die Fensterbreite begrenzt danach weiter. So wirkt die Stufe auch auf dem Desktop, und ein schmales Fenster bleibt bedienbar. Mit Klein fällt die Einheit auf dem Desktop unter die 40 Pixel (32), das ist gewollt: Die Untergrenze gilt für Normal. HUD und Weltkarte rechnen beide damit, die Formel stand vorher doppelt.
 - **Nicht:** Das Hauptmenü und das Einstellungsbrett skalieren nicht mit. Sie füllen ihr Fenster ohnehin nach dessen Höhe (`menuUnitsHigh`), größer ginge nur auf Kosten des Platzes.
+
+## E-45 Qualitätsstufen
+
+Aus Etappe 13 (2026-11-09), nach dem Auftrag: Rendering in einem Budget, das schwächere GPUs erlaubt. Die Spielszene hatte bisher Schatten in hoher Qualität und keine Kantenglättung, die Weltkarte 4-faches MSAA. Es gibt nur ein Licht, die Sonne.
+
+- **Stufen:** `GameSettings.quality` mit Niedrig, Mittel und Hoch (`enum Quality`). Niedrig: keine Schatten, keine Kantenglättung. Mittel: Schatten in mittlerer Qualität mit harten Kanten, 2-faches MSAA. Hoch: Schatten in hoher Qualität mit weichen Kanten (PCF4) wie bisher, 4-faches MSAA. Die Weltkarte hat keine Schatten, bei ihr wirkt nur die Kantenglättung.
+- **Vorgabe:** Hoch auf dem Desktop, Mittel auf Android und iOS (`AppInfo.windowed`). Werte außerhalb der Stufen aus der INI-Datei werden zurückgeholt.
+- **Eine Stelle:** `RenderQuality.qml` sagt, was eine Stufe einschaltet. `MainScene` und `WorldScene` lesen beide daraus.
+- **Einstellungsbrett:** Mit sechs Zeilen passt es in niedrigen Fenstern nicht mehr ganz. Die Zeilen liegen in einer `Flickable`, die nur scrollt, wenn der Platz fehlt. Ein Finger schiebt sie senkrecht, auch über dem Lautstärkeregler: Der hält erst fest, wenn der Finger sich seitwärts bewegt, ein Tippen setzt den Wert beim Loslassen. Ein langes Halten ohne Bewegung setzt nichts, wie bei den Knöpfen. Die Tastatur scrollt die Zeilen nicht zum Fokus mit, das reicht für Touch und Maus.
+- **Nicht:** Eine automatische Wahl nach gemessener Bildrate. Dafür fehlt noch die Messung auf echten schwachen Geräten (Mobile-Prüfung).

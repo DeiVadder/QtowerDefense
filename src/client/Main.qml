@@ -83,6 +83,7 @@ Window {
         visible: window.page === Main.Page.Game && !curtain.hidesScene
         game: session
         coinUnit: hud.unit
+        quality: gameSettings.quality
     }
 
     Hud {
@@ -110,6 +111,7 @@ Window {
         endless: window.endless
         heroSpeaks: gameSettings.heroSpeaks
         controlScale: window.controlScale
+        quality: gameSettings.quality
         onPlay: section => {
             window.playing = section;
             session.startNewGame(campaign.mapFile(section), window.endless);

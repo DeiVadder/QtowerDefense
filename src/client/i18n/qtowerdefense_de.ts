@@ -336,6 +336,22 @@
         <translation>Groß</translation>
     </message>
     <message>
+        <source>Quality of the pictures</source>
+        <translation>Bildqualität</translation>
+    </message>
+    <message>
+        <source>Low</source>
+        <translation>Niedrig</translation>
+    </message>
+    <message>
+        <source>Medium</source>
+        <translation>Mittel</translation>
+    </message>
+    <message>
+        <source>High</source>
+        <translation>Hoch</translation>
+    </message>
+    <message>
         <source>Full screen</source>
         <translation>Vollbild</translation>
     </message>

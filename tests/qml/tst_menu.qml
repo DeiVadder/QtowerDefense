@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtTest
+import QtQuick3D
 import QtowerDefense.Client
 
 // TestCase itself is invisible: what should take input needs a visible parent.
@@ -111,6 +112,14 @@ Item {
             return menu;
         }
 
+        // Moves the rows of the settings until ITEM is in view, as a finger would.
+        function tapRow(menu, item) {
+            const rows = findChild(menu, "settingsRows");
+            const top = item.mapToItem(rows.contentItem, 0, 0).y;
+            rows.contentY = Math.max(0, Math.min(top, rows.contentHeight - rows.height));
+            tapCenter(item);
+        }
+
         function tapCenter(item) {
             verify(item.visible, item.objectName + " is seen");
             mouseClick(item, item.width / 2, item.height / 2);
@@ -184,7 +193,7 @@ Item {
             mouseClick(slider, slider.width / 4, slider.height / 2);
             fuzzyCompare(menu.settings.volume, 25, 1);
             mousePress(slider, slider.width / 2, slider.height / 2);
-            mouseMove(slider, slider.width + 50, slider.height / 2);
+            mouseMove(slider, slider.width + 50, slider.height / 2, -1, Qt.LeftButton);
             mouseRelease(slider, slider.width + 50, slider.height / 2);
             compare(menu.settings.volume, 100, "beyond the end is the end");
             mouseClick(slider, 1, slider.height / 2);
@@ -209,10 +218,47 @@ Item {
         function test_togglesFlipTheirSetting(data) {
             const menu = openSettings();
             const before = menu.settings[data.setting];
-            tapCenter(findChild(menu, data.toggle));
+            tapRow(menu, findChild(menu, data.toggle));
             compare(menu.settings[data.setting], !before);
-            tapCenter(findChild(menu, data.toggle));
+            tapRow(menu, findChild(menu, data.toggle));
             compare(menu.settings[data.setting], before);
+        }
+
+        function test_theQualityButtonStepsThroughTheSteps() {
+            const menu = openSettings();
+            menu.settings.quality = GameSettings.High;
+            const button = findChild(menu, "qualityButton");
+            compare(button.text, "High");
+            tapRow(menu, button);
+            compare(menu.settings.quality, GameSettings.Low);
+            compare(button.text, "Low");
+            tapRow(menu, button);
+            compare(menu.settings.quality, GameSettings.Medium);
+            compare(button.text, "Medium");
+            tapRow(menu, button);
+            compare(menu.settings.quality, GameSettings.High);
+        }
+
+        function test_aQualityOutOfRangeIsBroughtBack() {
+            const menu = createMenu();
+            menu.settings.quality = 9;
+            compare(menu.settings.quality, GameSettings.High);
+            menu.settings.quality = -2;
+            compare(menu.settings.quality, GameSettings.Low);
+            menu.settings.quality = GameSettings.High;
+        }
+
+        // The world map has no shadows, only its edges follow the step.
+        function test_theWorldMapFollowsTheQuality() {
+            const made = createTemporaryObject(worldComponent, stage, {
+                                                   file: worldFile(6)
+                                               });
+            const environment = findChild(made.map, "worldScene").environment;
+            made.map.quality = GameSettings.Low;
+            compare(environment.antialiasingMode, SceneEnvironment.NoAA);
+            made.map.quality = GameSettings.High;
+            compare(environment.antialiasingMode, SceneEnvironment.MSAA);
+            compare(environment.antialiasingQuality, SceneEnvironment.High);
         }
 
         function test_theSizeButtonStepsThroughTheSizes() {
@@ -220,14 +266,54 @@ Item {
             menu.settings.controlSize = GameSettings.Normal;
             const button = findChild(menu, "controlSizeButton");
             compare(button.text, "Normal");
-            tapCenter(button);
+            tapRow(menu, button);
             compare(menu.settings.controlSize, GameSettings.Large);
             compare(button.text, "Large");
-            tapCenter(button);
+            tapRow(menu, button);
             compare(menu.settings.controlSize, GameSettings.Small);
             compare(button.text, "Small");
-            tapCenter(button);
+            tapRow(menu, button);
             compare(menu.settings.controlSize, GameSettings.Normal);
+        }
+
+        // A finger moves the rows of a low window, the last one comes into view.
+        function test_aLowWindowScrollsTheSettings() {
+            stage.width = 480;
+            stage.height = 320;
+            const menu = openSettings();
+            const rows = findChild(menu, "settingsRows");
+            verify(rows.interactive, "more rows than room");
+            const last = findChild(menu, "fullScreenToggle");
+            verify(last.mapToItem(rows, 0, last.height).y > rows.height,
+                   "the last row starts below");
+            const middle = Qt.point(rows.width / 2, rows.height - 5);
+            mouseDrag(rows, middle.x, middle.y, 0, -rows.height + 10);
+            rows.cancelFlick();
+            verify(rows.contentY > 0, "the rows moved");
+        }
+
+        // Up or down on the slider moves the rows and leaves the volume, sideways it sets it.
+        function test_aSwipeOverTheSliderMovesTheRows() {
+            stage.width = 480;
+            stage.height = 320;
+            const menu = openSettings();
+            menu.settings.volume = 50;
+            const rows = findChild(menu, "settingsRows");
+            const slider = findChild(menu, "volumeSlider");
+            // Step by step, as a finger moves.
+            const x = slider.width / 2;
+            const finger = touchEvent(slider);
+            finger.press(0, slider, x, slider.height / 2).commit();
+            for (let step = 1; step <= 10; ++step) {
+                finger.move(0, slider, x, slider.height / 2 - step * rows.height / 20).commit();
+            }
+            finger.release(0, slider, x, slider.height / 2 - rows.height / 2).commit();
+            rows.cancelFlick();
+            compare(menu.settings.volume, 50);
+            verify(rows.contentY > 0, "the rows moved");
+            rows.contentY = 0;
+            mouseDrag(slider, slider.width / 2, slider.height / 2, slider.width / 4, 0);
+            fuzzyCompare(menu.settings.volume, 75, 1);
         }
 
         // The file belongs to the player, a size out of range comes back into it.
@@ -246,13 +332,13 @@ Item {
             menu.settings.language = Translation.System;
             const button = findChild(menu, "languageButton");
             compare(button.text, "System");
-            tapCenter(button);
+            tapRow(menu, button);
             compare(menu.settings.language, Translation.English);
             compare(button.text, "English");
-            tapCenter(button);
+            tapRow(menu, button);
             compare(menu.settings.language, Translation.German);
             compare(button.text, "Deutsch");
-            tapCenter(button);
+            tapRow(menu, button);
             compare(menu.settings.language, Translation.System);
         }
 
@@ -379,7 +465,9 @@ Item {
             const close = findChild(menu, "closeSettings");
             const corner = close.mapToItem(menu, close.width, close.height);
             verify(corner.x <= menu.width && corner.y <= menu.height);
-            // Inside the frame, not on its iron.
+            // Inside the frame, not on its iron, once the rows are moved to their end.
+            const rows = findChild(menu, "settingsRows");
+            rows.contentY = Math.max(0, rows.contentHeight - rows.height);
             const last = findChild(menu, "fullScreenToggle");
             const bottom = last.mapToItem(panel, 0, last.height).y;
             verify(bottom <= panel.height - menu.unit * Theme.inset, bottom + " of "

@@ -13,6 +13,7 @@ FramedPanel {
     required property WorldSession world
     property real density: Screen.pixelDensity
     property real controlScale: 1 // the setting for the size of the controls
+    property int quality: GameSettings.High // the setting for the quality of the pictures
     readonly property var chosen: world.sections[world.selected] ?? null
     readonly property var landscapeNames: ({
                                                meadow: qsTr("Meadow"),
@@ -139,6 +140,7 @@ FramedPanel {
             anchors.fill: parent
             anchors.margins: frame.border.width
             world: root.world
+            quality: root.quality
         }
 
         HudButton {

@@ -10,6 +10,7 @@ View3D {
     id: root
 
     required property WorldSession world
+    property alias quality: looks.quality
 
     // The place of a section on the ground of the scene.
     function placeOf(section: var, height: real): vector3d {
@@ -18,10 +19,15 @@ View3D {
     }
 
     environment: SceneEnvironment {
+        objectName: "worldEnvironment"
         clearColor: Theme.worldSea
         backgroundMode: SceneEnvironment.Color
-        antialiasingMode: SceneEnvironment.MSAA
-        antialiasingQuality: SceneEnvironment.High
+        antialiasingMode: looks.antialiasingMode
+        antialiasingQuality: looks.antialiasingQuality
+    }
+
+    RenderQuality {
+        id: looks
     }
 
     camera: eye
