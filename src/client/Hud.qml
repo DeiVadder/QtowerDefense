@@ -18,6 +18,7 @@ Item {
     property real controlScale: 1 // the setting for the size of the controls
     property bool heroSpeaks: true
     property int best: 0 // the most rounds of this map's endless game before this game
+    property bool guide: false // show the player around, the first game only
     readonly property real unit: Theme.hudUnit(density, width, controlScale)
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
     readonly property bool gameOver: game.won || game.lost
@@ -29,6 +30,7 @@ Item {
                                        })
 
     signal leave // back to the world map
+    signal guided // the guide is done or skipped
 
     Binding {
         when: root.scene !== null
@@ -233,6 +235,8 @@ Item {
         height: hero.compact ? button : hero.size + hero.ring
 
         HudButton {
+            id: pauseButton
+
             objectName: "pauseButton"
             x: topButtons.placed(0).x
             y: topButtons.placed(0).y
@@ -456,6 +460,8 @@ Item {
         spacing: root.unit * Theme.gap
 
         HudButton {
+            id: rollButton
+
             objectName: "rollButton"
             unit: root.unit
             icon: "dice"
@@ -526,6 +532,8 @@ Item {
         }
 
         HudButton {
+            id: rotateButton
+
             objectName: "rotateButton"
             unit: root.unit
             icon: "rotate"
@@ -560,6 +568,18 @@ Item {
         game: root.game
         unit: root.unit
         cardUnit: root.cardUnit
+    }
+
+    Guide {
+        anchors.fill: parent
+        game: root.game
+        unit: root.unit
+        wanted: root.guide && root.visible && !root.gameOver && !root.failed
+        rollTarget: rollButton
+        handTarget: towerList
+        turnTarget: rotateButton
+        startTarget: pauseButton
+        onFinished: root.guided()
     }
 
     EndPanel {

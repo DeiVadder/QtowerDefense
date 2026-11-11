@@ -53,6 +53,41 @@
     </message>
 </context>
 <context>
+    <name>Guide</name>
+    <message>
+        <source>Towers come as cards. Tap the dice to roll for one.</source>
+        <translation>Türme gibt es als Karten. Tippe auf den Würfel, um eine zu erwürfeln.</translation>
+    </message>
+    <message>
+        <source>A new card! Tap it to choose that tower.</source>
+        <translation>Eine neue Karte! Tippe sie an, um diesen Turm zu wählen.</translation>
+    </message>
+    <message>
+        <source>Towers can turn. Tap here to turn yours, the dark cell is where you tap the map.</source>
+        <translation>Türme lassen sich drehen. Tippe hier, um deinen zu drehen. Das dunkle Feld ist die Stelle, auf die du in der Karte tippst.</translation>
+    </message>
+    <message>
+        <source>Now tap a free field beside the path to build there. You can also drag the card onto the map.</source>
+        <translation>Tippe jetzt auf ein freies Feld neben dem Weg, um dort zu bauen. Du kannst die Karte auch auf die Karte ziehen.</translation>
+    </message>
+    <message>
+        <source>The enemies wait for you. Tap play when you are ready. Good luck!</source>
+        <translation>Die Feinde warten auf dich. Tippe auf Start, wenn du bereit bist. Viel Glück!</translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation>%1 von %2</translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation>Weiter</translation>
+    </message>
+    <message>
+        <source>Skip the guide</source>
+        <translation>Einführung überspringen</translation>
+    </message>
+</context>
+<context>
     <name>HeroVoice</name>
     <message>
         <source>Nice spot. For a beginner.</source>

@@ -25,6 +25,7 @@ browser.
 - **A hero** with moods and remarks, and two spells, Meteor and Deep Freeze, with a cooldown.
 - **Flow:** call a wave early for bonus gold, play at 1x/2x/3x speed or pause, save a running game
   and resume it later.
+- **A guide in the first game** shows how to roll, choose, turn and build, and waits for you.
 - **Controls** by mouse or touch, three control sizes and three levels of picture quality.
 - **Languages:** English and German.
 - **Sound** for building, upgrades, selling, spells, waves and the end of a game.

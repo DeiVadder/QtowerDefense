@@ -43,6 +43,8 @@ class GameSession : public QObject
     Q_PROPERTY(int chosenCard READ chosenCard NOTIFY selectionChanged)
     Q_PROPERTY(int selectedTower READ selectedTower WRITE setSelectedTower NOTIFY selectionChanged)
     Q_PROPERTY(QVariantList selectedShape READ selectedShape NOTIFY selectionChanged)
+    /// Clockwise quarter turns of the tower to build, 0 to 3.
+    Q_PROPERTY(int selectedRotation READ selectedRotation NOTIFY selectionChanged)
     Q_PROPERTY(QStringList spellNames READ spellNames NOTIFY mapChanged)
     Q_PROPERTY(QVariantList spellSeconds READ spellSeconds NOTIFY stateChanged)
     Q_PROPERTY(int selectedSpell READ selectedSpell NOTIFY selectionChanged)
@@ -172,6 +174,7 @@ public:
     /// The cells of what a tap builds, turned as it would stand, as maps with x and y from 0 and
     /// anchor for the cell that the tap names.
     [[nodiscard]] QVariantList selectedShape() const;
+    [[nodiscard]] int selectedRotation() const;
     /// What the chosen tower aims at, as an index into core::TargetPriority, -1 if none is chosen.
     [[nodiscard]] int chosenPriority() const;
     /// The gold for the next level of the chosen tower, -1 if there is none or no tower is chosen.

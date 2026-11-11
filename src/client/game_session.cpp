@@ -383,6 +383,11 @@ int GameSession::selectedTower() const
     return selectedTower_;
 }
 
+int GameSession::selectedRotation() const
+{
+    return static_cast<int>(selectedRotation_);
+}
+
 QVariantList GameSession::selectedShape() const
 {
     QVariantList shape;

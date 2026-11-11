@@ -12,6 +12,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSet>
+#include <QSettings>
 #include <QStandardPaths>
 #include <QTest>
 #include <QVariantMap>
@@ -61,9 +62,22 @@ bool showsText(const QQuickWindow *window, const QString &text)
     return false;
 }
 
-/// The game of the real window, with the first section of the world chosen on its map.
-qtd::client::GameSession *openGame(QQmlApplicationEngine *engine)
+/// The player has seen the guide of the first game (E-53), the game runs from its start.
+void skipGuide()
 {
+    QSettings settings(QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) +
+                           u"/settings.ini"_s,
+                       QSettings::IniFormat);
+    settings.setValue(u"guided"_s, true);
+}
+
+/// The game of the real window, with the first section of the world chosen on its map. Unless asked
+/// for, the player has seen the guide, which would hold the game.
+qtd::client::GameSession *openGame(QQmlApplicationEngine *engine, bool guided = true)
+{
+    if (guided) {
+        skipGuide();
+    }
     const QQuickWindow *window = openWindow(engine);
     QObject *world = window != nullptr ? window->findChild<QObject *>(u"worldMap"_s) : nullptr;
     if (world == nullptr || !QMetaObject::invokeMethod(world, "play", 0)) {
@@ -155,6 +169,19 @@ private slots:
         QVERIFY(game != nullptr);
         QVERIFY(QTest::qWaitFor([game] { return game->tick() > 0; }));
         QVERIFY(!game->paused());
+    }
+
+    // The first game waits for the player until the guide is through (E-53).
+    static void theFirstGameWaitsForTheGuide()
+    {
+        QQmlApplicationEngine engine;
+        const qtd::client::GameSession *game = openGame(&engine, false);
+        QVERIFY(game != nullptr);
+        QVERIFY(game->paused());
+        const QObject *sign =
+            engine.rootObjects().constFirst()->findChild<QObject *>(u"guideSign"_s);
+        QVERIFY(sign != nullptr);
+        QVERIFY(sign->parent()->property("visible").toBool());
     }
 
     // The menu leads to the world map and the world map back, by its button or the Back key.

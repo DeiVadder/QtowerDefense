@@ -24,6 +24,7 @@ Settings {
     property int quality: AppInfo.windowed ? GameSettings.High : GameSettings.Medium
     // The buttons and texts of the game and the world map.
     property int controlSize: GameSettings.Normal
+    property bool guided: false // the first game showed the player around (E-53)
 
     onVolumeChanged: volume = Math.max(0, Math.min(100, volume))
     onQualityChanged: quality = Math.max(GameSettings.Low, Math.min(GameSettings.High, quality))

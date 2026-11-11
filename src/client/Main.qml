@@ -103,6 +103,8 @@ Window {
         heroSpeaks: gameSettings.heroSpeaks
         controlScale: window.controlScale
         best: window.best
+        guide: !gameSettings.guided && !AppInfo.controlled // a program plays by itself
+        onGuided: gameSettings.guided = true
         onLeave: {
             window.keepRounds();
             window.page = Main.Page.World;
