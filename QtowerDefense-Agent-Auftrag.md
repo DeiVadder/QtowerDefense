@@ -191,8 +191,8 @@ Ziel: Der Agent navigiert über Sprachserver und Doku-Werkzeuge, statt große Da
 - Entscheide selbst, solange du innerhalb dieses Dokuments bleibst.
 
 ### Git
-- Git ist **rein lokal**: keine Remotes, kein Push. Hauptlinie ist `dev`.
-- **Autor:** Das Repo nutzt die lokale neutrale Identität `QtowerDefense Dev`. Ändere sie nicht. Der Mensch zieht die Identität vor dem ersten Push selbst nach.
+- Git ist ~~**rein lokal**: keine Remotes, kein Push.~~ Ersetzt (2026-11-11): Push nur zum Mac, siehe E-49 in `docs/Entscheidungen.md`; der Mac veröffentlicht auf GitHub (E-50). Hauptlinie ist `dev`.
+- **Autor:** Das Repo nutzt die lokale neutrale Identität `QtowerDefense Dev`. Ändere sie nicht. Sie bleibt auch auf GitHub, Entscheidung des Menschen vom 2026-11-11 (E-50).
 - Der erste Commit auf `dev` enthält nur Grundgerüst und Dokumente. **Danach nie mehr direkt auf `dev` oder `main` committen.**
 - **Jede Etappe und jedes Feature bekommt einen eigenen Branch (vom Menschen 2026-11-04):** `feature/<Etappe>-<kurzname>`, Teil-Etappen `feature/<Etappe>-<n>-<kurzname>`, Features außerhalb einer Etappe `feature/<kurzname>`. Im Branch darfst du kleinteilig committen, auch WIP.
 - Du **darfst selbst nach `dev` mergen**, wenn alle Prüfungen grün sind und das unabhängige Review bestanden ist. Der Merge ist ein **Squash** (`git merge --squash`): pro Etappe ein aussagekräftiger Commit, Präfix `Stage <Etappe>:`. Der Feature-Branch bleibt erhalten.
