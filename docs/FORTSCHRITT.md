@@ -52,7 +52,7 @@
 
 ## Bekannte Mängel und offene Punkte
 
-- **Mobile (E-55), offen:** Einmal endete das Spiel im iOS-Simulator kurz nach dem Start der ersten Welle, ohne Absturzbericht, danach in drei Läufen nicht wieder. Nicht auf echten Geräten geprüft, Leistung auf Telefonen ungemessen. `tst_cards.qml` (Touch) scheiterte einmal unter Last mit drei Fehlern, in drei Läufen danach grün.
+- **Mobile (E-55), offen:** Einmal endete das Spiel im iOS-Simulator kurz nach dem Start der ersten Welle, ohne Absturzbericht, danach in drei Läufen nicht wieder. Nicht auf echten Geräten geprüft, Leistung auf Telefonen ungemessen. `tst_cards.qml` (Touch) wackelt unter hoher Last (Load über 20): je Lauf scheitert mal ein anderer Test, auf `dev` 3 von 10 Läufen, mit E-55 1 von 10. Ohne Last grün. Ursache nicht untersucht, vermutlich Zeitannahmen beim Ziehen.
 
 - **Aus dem Review von `feature/13-shots`, nicht behoben:** Jedes Bild rechnen sieben Schuss-Schichten und alle Turm-Schichten neu, auch in der Pause und ohne Schüsse; jede ruft `enemyPlaces()` selbst auf. Bei heutiger Größe Mikrosekunden, für Browser und Telefone lohnt ein gemeinsamer Zwischenspeicher je Bild. Landepunkt eines Schusses merken (E-52, Grenzen).
 - **macOS, `tst_qml` (2026-11-11):** Vier Prüfungen in `tst_mainscene.qml` scheitern auf dem Mac (Metal): `test_aBuiltTowerIsDrawn`, `test_aSpellIsSeenWhereItLands` (near, far), `test_anEnemyIsDrawnOnThePath`. Alle lesen Pixel der 3D-Szene. Das gepackte Spiel zeigt Türme, Gegner und Zauber richtig, vermutlich liest der Test auf Metal anders aus (Zeitpunkt oder Ausrichtung des Bildes). Dazu Warnungen `WorldMap.qml:266: Cannot read property 'verticalCenter' of null` in `qml::Menu`. Auf Windows grün. Nicht untersucht, die Release-CI führt die Client-Tests nicht aus.
