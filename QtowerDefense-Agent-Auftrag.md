@@ -227,7 +227,7 @@ Ziel: Der Agent navigiert über Sprachserver und Doku-Werkzeuge, statt große Da
 ## 7. Annahmen (nicht im Quiz festgelegt, vom Menschen änderbar)
 
 - Sprachregeln, Branch-Schema, Etappen-Regeln und Stopp-Logik sind von QtCraft übernommen.
-- Lizenz: Projekt vorerst intern, keine Lizenzdatei.
+- Lizenz: ~~Projekt vorerst intern, keine Lizenzdatei.~~ Ersetzt (2026-11-09): GPL-3.0-or-later, siehe E-48 in `docs/Entscheidungen.md`.
 - Zahlen sind Startwerte: 30 Hz Tick, 60 FPS bei 200 Gegnern und 30 Türmen, 100-fache Echtzeit, Coverage 85 %/70 %, 60/600 Zeilen.
 - Festkomma in der Simulation ist eine Empfehlung des Auftragsverfassers, damit Replays auch auf Mobile-Hardware gelten.
 - Schwierigkeitsgrade wurden im Quiz nicht ausgewählt und sind deshalb nicht Teil des ersten Stands.

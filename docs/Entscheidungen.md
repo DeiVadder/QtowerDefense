@@ -441,3 +441,14 @@ Wunsch des Menschen (2026-11-09): ein Build für den Browser auf GitHub Pages. A
   - Größe: Das `.wasm` hat optimiert 53 MB, davon 17 MB Assets. Der erste Start lädt lange und kompiliert die Shader im Browser.
   - `wasm-opt` aus Emscripten stürzte hier zweimal ab und lief beim dritten Mal durch. Ob das am Rechner liegt (siehe die Abstürze von MSVC) oder an Binaryen, ist offen; auf GitHub zeigt es sich beim ersten Lauf.
   - Bildrate im Browser und Verhalten auf Telefonen im Browser sind ungemessen.
+
+## E-48 Lizenz: GPL-3.0-or-later
+
+Entscheidung des Menschen (2026-11-09): Der Code steht unter der GNU General Public License, Version 3 oder nach Wahl jeder späteren Version (SPDX `GPL-3.0-or-later`). Das ersetzt den Satz „Projekt vorerst intern, keine Lizenzdatei" aus Abschnitt 7 des Auftrags (Annahmen).
+
+- **Datei:** `LICENSE` ist der unveränderte Text von gnu.org (`gpl-3.0.txt`). Die README nennt die Lizenz.
+- **Nötig, nicht nur verträglich:** Qt Quick 3D, Qt Shader Tools und Qt Quick Timeline gibt es als Open Source nur unter GPL-3.0, nicht unter LGPL. Ein Spiel mit Qt Quick 3D muss deshalb unter GPL-3.0 stehen, solange keine kommerzielle Qt-Lizenz dahintersteht. Die Assets unter CC0 passen dazu.
+- **Quelltext zum Browser-Build:** Der Build für GitHub Pages bindet Qt statisch ein. Wer das Programm weitergibt, muss den ganzen zugehörigen Quelltext anbieten (GPL-3.0 §6): unseren im selben Repository, den von Qt als Verweis auf die Quellen genau dieser Version (Qt 6.12.0, `download.qt.io/archive/qt/6.12/6.12.0/single/`). Beides nennt die README. Die Seite selbst verweist noch nicht darauf; das kommt, bevor der Workflow zum ersten Mal veröffentlicht.
+- **„Oder später":** Wie es die FSF empfiehlt. Qt steht nur unter Version 3 (`GPL-3.0-only`); das fertige Programm mit Qt wird deshalb unter Version 3 weitergegeben, unser Code allein darf später auch unter einer neueren Version stehen.
+- **Rechteinhaber:** „Copyright (C) 2026 The QtowerDefense authors", Wunsch des Menschen. Die Zeile steht in der README, über dem Hinweis auf die Lizenz.
+- **Offen:** ob Quelldateien Köpfe mit SPDX-Kennung bekommen. Bis dahin gilt, was die README sagt.
