@@ -269,6 +269,25 @@ Item {
                             width: 800,
                             height: 360,
                             density: 6.3
+                        },
+                        {
+                            tag: "wide and low, large controls",
+                            width: 900,
+                            height: 320,
+                            scale: Theme.controlScales[GameSettings.Large]
+                        },
+                        {
+                            tag: "roomy, small controls",
+                            width: 1280,
+                            height: 720,
+                            scale: Theme.controlScales[GameSettings.Small]
+                        },
+                        {
+                            tag: "dense, large controls",
+                            width: 800,
+                            height: 360,
+                            density: 6.3,
+                            scale: Theme.controlScales[GameSettings.Large]
                         }
                     ];
         }
@@ -288,6 +307,7 @@ Item {
             if (data.density !== undefined) {
                 hud.density = data.density;
             }
+            hud.controlScale = data.scale ?? 1;
             const clock = findChild(hud, "buttons");
             const actions = findChild(hud, "towerActions");
             verify(made.session.buildTower(4, 4));

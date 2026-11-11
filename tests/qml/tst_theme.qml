@@ -103,6 +103,36 @@ Item {
                     ];
         }
 
+        // On a desktop the finger is smaller than the smallest unit: the setting must still change it.
+        function test_theSizeOfTheControlsScalesTheUnit_data() {
+            return [
+                        {
+                            tag: "desktop",
+                            density: 3.8
+                        },
+                        {
+                            tag: "phone",
+                            density: 6.3
+                        }
+                    ];
+        }
+
+        function test_theSizeOfTheControlsScalesTheUnit(data) {
+            const normal = Theme.hudUnit(data.density, 4000, 1);
+            verify(normal >= Theme.smallestUnit);
+            const large = Theme.controlScales[GameSettings.Large];
+            const small = Theme.controlScales[GameSettings.Small];
+            fuzzyCompare(Theme.hudUnit(data.density, 4000, large), normal * large, 0.001);
+            fuzzyCompare(Theme.hudUnit(data.density, 4000, small), normal * small, 0.001);
+            compare(Theme.controlScales[GameSettings.Normal], 1);
+        }
+
+        function test_aNarrowWindowLimitsEvenLargeControls() {
+            const width = 480;
+            const large = Theme.controlScales[GameSettings.Large];
+            compare(Theme.hudUnit(6.3, width, large), width / Theme.unitsAcross);
+        }
+
         // WCAG asks 3 for what is no text.
         function test_theHeartStandsOutOfTheWood() {
             verify(contrast(Theme.heart, Theme.wood) >= 3);

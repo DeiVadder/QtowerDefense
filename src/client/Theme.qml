@@ -132,6 +132,14 @@ QtObject {
 
     // The unit of the HUD: a finger in millimeters, at least some pixels, and a share of a window.
     readonly property real fingerSize: 9
+    // The steps of the setting for the size of the controls, in the order of GameSettings.ControlSize.
+    readonly property list<real> controlScales: [0.8, 1, 1.25]
+
+    // A finger, at least smallestUnit pixels, both made larger or smaller by the setting, but never so
+    // large that unitsAcross units do not fit across the WIDTH.
+    function hudUnit(density: real, width: real, scale: real): real {
+        return Math.min(scale * Math.max(smallestUnit, density * fingerSize), width / unitsAcross);
+    }
 
     // The world map (E-32): muted land on a grey sea, the fog covers what is not open.
     readonly property color worldSea: "#3f565c"
@@ -196,8 +204,8 @@ QtObject {
     readonly property real menuHero: 0.42 // of the width of the gate
     readonly property real menuHeroTop: 0.22
     readonly property int settingsSeed: 9
-    readonly property real settingsHeight: 7.75
-    readonly property real settingsRow: 1.1
+    readonly property real settingsHeight: 9
+    readonly property real settingsRow: 1
     readonly property real settingsLabel: 2.2
     readonly property real settingsPercent: 1.6
     readonly property real settingsToggle: 1.8

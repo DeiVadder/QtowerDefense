@@ -320,6 +320,22 @@
         <translation>System</translation>
     </message>
     <message>
+        <source>Size of the controls</source>
+        <translation>Größe der Bedienung</translation>
+    </message>
+    <message>
+        <source>Small</source>
+        <translation>Klein</translation>
+    </message>
+    <message>
+        <source>Normal</source>
+        <translation>Normal</translation>
+    </message>
+    <message>
+        <source>Large</source>
+        <translation>Groß</translation>
+    </message>
+    <message>
         <source>Full screen</source>
         <translation>Vollbild</translation>
     </message>

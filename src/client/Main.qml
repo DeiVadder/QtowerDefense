@@ -17,6 +17,7 @@ Window {
     property bool endless: false // the world map offers the endless games of won sections
     property int best: 0 // the most rounds of the played section before this game
     property int page: Main.Page.Menu
+    readonly property real controlScale: Theme.controlScales[gameSettings.controlSize]
 
     // One step back: from the settings to the menu, from the world map to the menu.
     function back() {
@@ -93,6 +94,7 @@ Window {
         game: session
         scene: gameScene
         heroSpeaks: gameSettings.heroSpeaks
+        controlScale: window.controlScale
         best: window.best
         onLeave: {
             window.keepRounds();
@@ -107,6 +109,7 @@ Window {
         world: campaign
         endless: window.endless
         heroSpeaks: gameSettings.heroSpeaks
+        controlScale: window.controlScale
         onPlay: section => {
             window.playing = section;
             session.startNewGame(campaign.mapFile(section), window.endless);

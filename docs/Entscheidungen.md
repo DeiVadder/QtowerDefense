@@ -391,3 +391,11 @@ Befund (2026-11-09): Ein Screenshot über die Steuerschnittstelle vor dem ersten
 
 - **Regel:** `screenshot` antwortet mit einem Fehler („the window is not on the screen yet“), solange das Fenster nicht sichtbar ist. Wer ein Bild will, wiederholt die Anfrage. Der Rauchtest tut das bis zu zehn Sekunden lang.
 - **Nicht:** Innerhalb der Anfrage auf das Fenster warten. Das bräuchte eine verschachtelte Ereignisschleife, und darin liefe die nächste Anfrage schon vor der Antwort auf diese.
+
+## E-44 Größe der Bedienung
+
+Aus Etappe 13 (UI-Skalierung, 2026-11-09). Die Einheit von HUD und Weltkarte war schon vorher eine Fingerbreite von 9 mm über die Pixeldichte, mindestens 40 Pixel und höchstens ein Vierzehntel der Fensterbreite. Auf dem Desktop (rund 3,8 Pixel je mm) greift fast immer die Untergrenze, dort ließ sich nichts größer stellen.
+
+- **Einstellung:** `GameSettings.controlSize` mit den Stufen Klein, Normal und Groß (`enum ControlSize`), im Einstellungsbrett als Knopf, der die Stufen durchläuft. Die Faktoren 0,8, 1 und 1,25 stehen in `Theme.controlScales`. Werte außerhalb der Stufen aus der INI-Datei werden zurückgeholt.
+- **Rechnung:** `Theme.hudUnit` multipliziert Fingerbreite oder Untergrenze mit dem Faktor, die Fensterbreite begrenzt danach weiter. So wirkt die Stufe auch auf dem Desktop, und ein schmales Fenster bleibt bedienbar. Mit Klein fällt die Einheit auf dem Desktop unter die 40 Pixel (32), das ist gewollt: Die Untergrenze gilt für Normal. HUD und Weltkarte rechnen beide damit, die Formel stand vorher doppelt.
+- **Nicht:** Das Hauptmenü und das Einstellungsbrett skalieren nicht mit. Sie füllen ihr Fenster ohnehin nach dessen Höhe (`menuUnitsHigh`), größer ginge nur auf Kosten des Platzes.

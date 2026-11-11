@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 
-// The settings on a board: the loudness of the sounds, the words of the hero, the language and, where
-// windows exist, the full screen. Every change is kept at once.
+// The settings on a board: the loudness of the sounds, the words of the hero, the language, the size
+// of the controls and, where windows exist, the full screen. Every change is kept at once.
 FramedPanel {
     id: root
 
@@ -63,7 +63,7 @@ FramedPanel {
         anchors.right: parent.right
         anchors.top: title.bottom
         anchors.margins: root.unit * Theme.endMargin * 2
-        height: 3 * (root.row + root.unit * Theme.gap)
+        height: (AppInfo.windowed ? 5 : 4) * (root.row + root.unit * Theme.gap)
 
         Item {
             width: parent.width
@@ -197,6 +197,33 @@ FramedPanel {
 
         Item {
             y: 3 * (root.row + root.unit * Theme.gap)
+            width: parent.width
+            height: root.row
+
+            Label {
+                anchors.left: parent.left
+                anchors.right: sizeButton.left
+                anchors.verticalCenter: parent.verticalCenter
+                text: qsTr("Size of the controls")
+            }
+
+            // The game and the world map, the menu always fits its window.
+            HudButton {
+                id: sizeButton
+
+                objectName: "controlSizeButton"
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                unit: root.unit
+                width: root.unit * Theme.settingsChoice
+                text: [qsTr("Small"), qsTr("Normal"), qsTr("Large")][root.settings.controlSize]
+                onClicked: root.settings.controlSize = (root.settings.controlSize + 1)
+                           % Theme.controlScales.length
+            }
+        }
+
+        Item {
+            y: 4 * (root.row + root.unit * Theme.gap)
             width: parent.width
             height: root.row
             visible: AppInfo.windowed

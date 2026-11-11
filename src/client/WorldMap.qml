@@ -12,6 +12,7 @@ FramedPanel {
 
     required property WorldSession world
     property real density: Screen.pixelDensity
+    property real controlScale: 1 // the setting for the size of the controls
     readonly property var chosen: world.sections[world.selected] ?? null
     readonly property var landscapeNames: ({
                                                meadow: qsTr("Meadow"),
@@ -92,8 +93,7 @@ FramedPanel {
         }
     }
 
-    unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
-                   / Theme.unitsAcross)
+    unit: Theme.hudUnit(density, width, controlScale)
 
     function iconOf(section: var): string {
         if (section.stars > 0) {

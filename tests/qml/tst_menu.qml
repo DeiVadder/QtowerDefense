@@ -215,6 +215,31 @@ Item {
             compare(menu.settings[data.setting], before);
         }
 
+        function test_theSizeButtonStepsThroughTheSizes() {
+            const menu = openSettings();
+            menu.settings.controlSize = GameSettings.Normal;
+            const button = findChild(menu, "controlSizeButton");
+            compare(button.text, "Normal");
+            tapCenter(button);
+            compare(menu.settings.controlSize, GameSettings.Large);
+            compare(button.text, "Large");
+            tapCenter(button);
+            compare(menu.settings.controlSize, GameSettings.Small);
+            compare(button.text, "Small");
+            tapCenter(button);
+            compare(menu.settings.controlSize, GameSettings.Normal);
+        }
+
+        // The file belongs to the player, a size out of range comes back into it.
+        function test_aSizeOutOfRangeIsBroughtBack() {
+            const menu = createMenu();
+            menu.settings.controlSize = 7;
+            compare(menu.settings.controlSize, GameSettings.Large);
+            menu.settings.controlSize = -1;
+            compare(menu.settings.controlSize, GameSettings.Small);
+            menu.settings.controlSize = GameSettings.Normal;
+        }
+
         // A language names itself in its own words, the system choice in the language that speaks.
         function test_theLanguageButtonStepsThroughTheChoices() {
             const menu = openSettings();
@@ -295,6 +320,25 @@ Item {
             compare(speakers.sounds[4].audioOutput.volume, 0);
         }
 
+        // Large controls in a wide and low window: the buttons stay inside the map.
+        function test_largeControlsFitALowWorldMap() {
+            stage.width = 900;
+            stage.height = 320;
+            const made = createTemporaryObject(worldComponent, stage, {
+                                                   file: worldFile(5)
+                                               });
+            const normal = made.map.unit;
+            made.map.controlScale = Theme.controlScales[GameSettings.Large];
+            verify(made.map.unit > normal, made.map.unit + " after " + normal);
+            made.world.selected = 0;
+            for (const name of ["menuButton", "playButton", "worldSign"]) {
+                const item = findChild(made.map, name);
+                tryVerify(() => item.visible && item.width > 0, 2000, name);
+                const corner = item.mapToItem(made.map, item.width, item.height);
+                verify(corner.x <= made.map.width && corner.y <= made.map.height, name);
+            }
+        }
+
         function test_aWonSectionGetsItsOwnWords() {
             const made = createTemporaryObject(worldComponent, stage, {
                                                    file: worldFile(3)
@@ -335,9 +379,11 @@ Item {
             const close = findChild(menu, "closeSettings");
             const corner = close.mapToItem(menu, close.width, close.height);
             verify(corner.x <= menu.width && corner.y <= menu.height);
+            // Inside the frame, not on its iron.
             const last = findChild(menu, "fullScreenToggle");
-            verify(last.mapToItem(panel, 0, last.height).y <= panel.height,
-                   "the last row is inside");
+            const bottom = last.mapToItem(panel, 0, last.height).y;
+            verify(bottom <= panel.height - menu.unit * Theme.inset, bottom + " of "
+                   + panel.height);
         }
 
         // Narrow windows give the settings all their width, the slider keeps room for a finger.

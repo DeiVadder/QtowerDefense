@@ -15,10 +15,10 @@ Item {
 
     property var dropPoint: null // while a dropped card builds
     property real density: Screen.pixelDensity
+    property real controlScale: 1 // the setting for the size of the controls
     property bool heroSpeaks: true
     property int best: 0 // the most rounds of this map's endless game before this game
-    readonly property real unit: Math.min(Math.max(Theme.smallestUnit, density * Theme.fingerSize), width
-                                          / Theme.unitsAcross)
+    readonly property real unit: Theme.hudUnit(density, width, controlScale)
     readonly property real cardUnit: Math.min(unit, height / Theme.handShare)
     readonly property bool gameOver: game.won || game.lost
     readonly property bool failed: game.error.length > 0
